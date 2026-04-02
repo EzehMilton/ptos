@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,5 +83,32 @@ public class WorkoutService {
 
     public Optional<WorkoutAssignment> getAssignment(Long assignmentId, User clientUser) {
         return workoutAssignmentRepository.findByIdAndClientRecord_ClientUser(assignmentId, clientUser);
+    }
+
+    @Transactional
+    public void startWorkout(Long assignmentId, User clientUser) {
+        WorkoutAssignment assignment = workoutAssignmentRepository.findByIdAndClientRecord_ClientUser(assignmentId, clientUser)
+                .orElseThrow(() -> new IllegalArgumentException("Workout assignment not found"));
+
+        assignment.setStatus(AssignmentStatus.IN_PROGRESS);
+        if (assignment.getStartedAt() == null) {
+            assignment.setStartedAt(LocalDateTime.now());
+        }
+        workoutAssignmentRepository.save(assignment);
+    }
+
+    @Transactional
+    public void completeWorkout(Long assignmentId, User clientUser, String notes) {
+        WorkoutAssignment assignment = workoutAssignmentRepository.findByIdAndClientRecord_ClientUser(assignmentId, clientUser)
+                .orElseThrow(() -> new IllegalArgumentException("Workout assignment not found"));
+
+        LocalDateTime now = LocalDateTime.now();
+        assignment.setStatus(AssignmentStatus.COMPLETED);
+        if (assignment.getStartedAt() == null) {
+            assignment.setStartedAt(now);
+        }
+        assignment.setCompletedAt(now);
+        assignment.setCompletionNotes(notes != null && !notes.isBlank() ? notes.trim() : null);
+        workoutAssignmentRepository.save(assignment);
     }
 }

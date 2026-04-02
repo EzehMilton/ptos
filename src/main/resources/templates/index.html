@@ -3,18 +3,30 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/default}">
 <head>
-    <title>Home</title>
+    <title>SETLY | Personal Trainer Management System</title>
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="hero">
-        <h1>PTOS</h1>
-        <p>The all-in-one operating system for personal trainers. Manage clients, assign workouts, and grow your business.</p>
+    <section class="hero">
+        <div class="hero-badge">Built for personal trainers</div>
+
+        <h1>Run your PT business like a pro.</h1>
+
+        <p class="hero-subtext">
+            Manage clients, assign workouts, track progress, and stay on top of your coaching business from one place.
+        </p>
+
         <div class="hero-actions">
             <a th:href="@{/login}" class="btn btn-primary">PT Login</a>
             <a th:href="@{/signup}" class="btn btn-secondary">Client Sign Up</a>
         </div>
-    </div>
+<p></p><p></p>
+        <div class="hero-points">
+            <span>Client management | </span>
+            <span>Workout assignment | </span>
+            <span>Progress tracking</span>
+        </div>
+    </section>
 </div>
 </body>
 </html>

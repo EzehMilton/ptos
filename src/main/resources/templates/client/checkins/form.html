@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Weekly Check-in</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/client/checkins}">&larr; My Check-ins</a>
+    </div>
+
+    <div class="page-header">
+        <h1>Weekly Check-in</h1>
+    </div>
+
+    <div class="card">
+        <form th:action="@{/client/checkins}" th:object="${checkInForm}" method="post">
+            <div class="form-group">
+                <label for="currentWeightKg">Current Weight (kg)</label>
+                <input type="number" id="currentWeightKg" th:field="*{currentWeightKg}" step="0.1" min="30" max="300">
+                <div class="form-error" th:if="${#fields.hasErrors('currentWeightKg')}" th:errors="*{currentWeightKg}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="moodScore">Mood</label>
+                <select id="moodScore" th:field="*{moodScore}">
+                    <option value="">Select mood</option>
+                    <option value="1">1 - Low</option>
+                    <option value="2">2 - Below Average</option>
+                    <option value="3">3 - Average</option>
+                    <option value="4">4 - Good</option>
+                    <option value="5">5 - Great</option>
+                </select>
+                <div class="form-error" th:if="${#fields.hasErrors('moodScore')}" th:errors="*{moodScore}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="energyScore">Energy</label>
+                <select id="energyScore" th:field="*{energyScore}">
+                    <option value="">Select energy</option>
+                    <option value="1">1 - Low</option>
+                    <option value="2">2 - Below Average</option>
+                    <option value="3">3 - Average</option>
+                    <option value="4">4 - Good</option>
+                    <option value="5">5 - Great</option>
+                </select>
+                <div class="form-error" th:if="${#fields.hasErrors('energyScore')}" th:errors="*{energyScore}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="sleepScore">Sleep Quality</label>
+                <select id="sleepScore" th:field="*{sleepScore}">
+                    <option value="">Select sleep quality</option>
+                    <option value="1">1 - Low</option>
+                    <option value="2">2 - Below Average</option>
+                    <option value="3">3 - Average</option>
+                    <option value="4">4 - Good</option>
+                    <option value="5">5 - Great</option>
+                </select>
+                <div class="form-error" th:if="${#fields.hasErrors('sleepScore')}" th:errors="*{sleepScore}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" th:field="*{notes}" rows="5"
+                          placeholder="How was your week? Any challenges or wins?"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Check-in</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

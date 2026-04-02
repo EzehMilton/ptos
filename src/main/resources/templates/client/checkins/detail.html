@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${'Check-in - ' + #temporals.format(checkIn.submittedAt, 'dd MMM yyyy')}">Check-in Detail</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/client/checkins}">&larr; My Check-ins</a>
+    </div>
+
+    <div class="page-header">
+        <h1 th:text="${'Check-in - ' + #temporals.format(checkIn.submittedAt, 'EEEE, dd MMM yyyy')}"></h1>
+        <span class="badge"
+              th:classappend="${checkIn.status.name() == 'PENDING_REVIEW'} ? 'badge-info' : 'badge-active'"
+              th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting Review' : 'Reviewed'}"></span>
+    </div>
+
+    <div class="card mb-3">
+        <h3 class="card-title">Submitted Data</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <td style="width: 180px; font-weight: 500;">Submitted</td>
+                    <td th:text="${#temporals.format(checkIn.submittedAt, 'dd MMM yyyy HH:mm')}"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Weight</td>
+                    <td th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Mood</td>
+                    <td th:text="${checkIn.moodScore != null ? checkIn.moodScore + '/5' : '—'}"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Energy</td>
+                    <td th:text="${checkIn.energyScore != null ? checkIn.energyScore + '/5' : '—'}"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Sleep</td>
+                    <td th:text="${checkIn.sleepScore != null ? checkIn.sleepScore + '/5' : '—'}"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 500;">Notes</td>
+                    <td th:text="${checkIn.notes != null and !checkIn.notes.isBlank() ? checkIn.notes : '—'}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="feedback-card" th:if="${checkIn.status.name() == 'REVIEWED' and checkIn.feedback != null}">
+        <h3 class="card-title">PT Feedback</h3>
+        <p class="mb-2" th:text="${checkIn.feedback.feedbackText}"></p>
+        <p class="text-muted"
+           th:text="${'Reviewed on ' + #temporals.format(checkIn.feedback.sentAt, 'dd MMM yyyy')}"></p>
+    </div>
+
+    <div class="card" th:if="${checkIn.status.name() == 'PENDING_REVIEW'}">
+        <p class="text-muted">Your PT hasn't reviewed this check-in yet.</p>
+    </div>
+</div>
+</body>
+</html>

@@ -1,13 +1,24 @@
 package com.ptos.controller;
 
+import com.ptos.domain.AssignmentStatus;
+import com.ptos.domain.CheckIn;
 import com.ptos.domain.ClientProfile;
+import com.ptos.domain.User;
+import com.ptos.domain.WorkoutAssignment;
+import com.ptos.dto.Milestone;
 import com.ptos.security.SecurityHelper;
+import com.ptos.service.CheckInService;
 import com.ptos.service.ClientProfileService;
+import com.ptos.service.ClientRecordService;
+import com.ptos.service.MilestoneService;
+import com.ptos.service.WorkoutService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Controller
@@ -16,6 +27,10 @@ public class HomeController {
 
     private final SecurityHelper securityHelper;
     private final ClientProfileService clientProfileService;
+    private final WorkoutService workoutService;
+    private final CheckInService checkInService;
+    private final ClientRecordService clientRecordService;
+    private final MilestoneService milestoneService;
 
     @GetMapping("/")
     public String index() {
@@ -27,11 +42,34 @@ public class HomeController {
         return "auth/login";
     }
 
-@GetMapping("/client/home")
+    @GetMapping("/client/home")
     public String clientHome(Model model) {
         Long userId = securityHelper.getCurrentUserId();
-        String fullName = securityHelper.getCurrentUserDetails().getUser().getFullName();
+        User clientUser = securityHelper.getCurrentUserDetails().getUser();
+        String fullName = clientUser.getFullName();
         model.addAttribute("fullName", fullName);
+
+        List<WorkoutAssignment> todaysWorkouts = workoutService.getAssignmentsForClient(clientUser).stream()
+                .filter(assignment -> assignment.getStatus() == AssignmentStatus.ASSIGNED
+                        || assignment.getStatus() == AssignmentStatus.IN_PROGRESS)
+                .toList();
+        model.addAttribute("todaysWorkouts", todaysWorkouts);
+
+        Optional<CheckIn> latestCheckIn = checkInService.getLatestCheckInForClient(clientUser);
+        boolean hasRecentCheckIn = latestCheckIn
+                .map(checkIn -> !checkIn.getSubmittedAt().isBefore(LocalDateTime.now().minusDays(7)))
+                .orElse(false);
+        model.addAttribute("hasRecentCheckIn", hasRecentCheckIn);
+        model.addAttribute("latestCheckIn", latestCheckIn.orElse(null));
+
+        clientRecordService.getClientRecord(clientUser).ifPresent(record -> {
+            List<Milestone> milestones = milestoneService.getMilestones(record, clientUser);
+            List<Milestone> achievedMilestones = milestones.stream()
+                    .filter(milestone -> milestone.getAchievedDate() != null)
+                    .toList();
+            model.addAttribute("achievedMilestoneCount", achievedMilestones.size());
+            model.addAttribute("recentAchievedMilestones", achievedMilestones.stream().limit(3).toList());
+        });
 
         Optional<ClientProfile> profileOpt = clientProfileService.getProfileForUser(userId);
         if (profileOpt.isPresent()) {
@@ -47,6 +85,11 @@ public class HomeController {
             model.addAttribute("completion", completion);
         } else {
             model.addAttribute("hasProfile", false);
+        }
+
+        if (!model.containsAttribute("achievedMilestoneCount")) {
+            model.addAttribute("achievedMilestoneCount", 0);
+            model.addAttribute("recentAchievedMilestones", List.of());
         }
 
         return "client/home";

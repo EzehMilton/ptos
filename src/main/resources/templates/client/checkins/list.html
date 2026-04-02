@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>My Check-ins</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1>My Check-ins</h1>
+        <a th:href="@{/client/checkins/new}" class="btn btn-primary">Submit Check-in</a>
+    </div>
+
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+    <div th:if="${checkIns.isEmpty()}" class="card text-center">
+        <p class="text-muted">No check-ins yet. Submit your first check-in to update your PT.</p>
+    </div>
+
+    <div th:if="${!checkIns.isEmpty()}" class="checkin-list">
+        <div class="card checkin-card" th:each="checkIn : ${checkIns}">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <h3 class="card-title" style="margin-bottom: 6px;"
+                        th:text="${#temporals.format(checkIn.submittedAt, 'EEEE, dd MMM yyyy')}"></h3>
+                    <p th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'"></p>
+                </div>
+                <span class="badge"
+                      th:classappend="${checkIn.status.name() == 'PENDING_REVIEW'} ? 'badge-info' : 'badge-active'"
+                      th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting Review' : 'Reviewed'}"></span>
+            </div>
+
+            <div class="checkin-metrics mb-2">
+                <span class="metric-pill"
+                      th:text="${checkIn.moodScore != null ? 'Mood: ' + checkIn.moodScore + '/5' : 'Mood: —'}"></span>
+                <span class="metric-pill"
+                      th:text="${checkIn.energyScore != null ? 'Energy: ' + checkIn.energyScore + '/5' : 'Energy: —'}"></span>
+                <span class="metric-pill"
+                      th:text="${checkIn.sleepScore != null ? 'Sleep: ' + checkIn.sleepScore + '/5' : 'Sleep: —'}"></span>
+            </div>
+
+            <a th:href="@{/client/checkins/{id}(id=${checkIn.id})}">View Details</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

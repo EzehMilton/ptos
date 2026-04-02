@@ -14,11 +14,11 @@
         <h1>Create Workout</h1>
     </div>
 
-    <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
-        <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
-    </div>
-
     <form th:action="@{/pt/workouts}" th:object="${workoutForm}" method="post">
+        <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
+            <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+        </div>
+
         <div class="card mb-3">
             <h3 class="card-title">Workout Details</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
