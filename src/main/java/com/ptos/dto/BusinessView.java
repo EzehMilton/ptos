@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter @AllArgsConstructor @Builder
@@ -16,6 +17,8 @@ public class BusinessView {
     private int activeClientCount;
     private int clientsNeedingAttention;
     private int profileCompletionRate;
+    private int checkInComplianceRate;
+    private int workoutCompletionRate;
     private List<ClientBusinessRow> clientBreakdown;
     private int completeProfileCount;
     private int totalClientCount;
@@ -28,6 +31,9 @@ public class BusinessView {
         private ClientStatus status;
         private BigDecimal packagePrice;
         private int profileCompletion;
+        private LocalDateTime lastCheckInDate;
+        private long workoutsAssigned;
+        private long workoutsCompleted;
         private String healthLabel;
     }
 }

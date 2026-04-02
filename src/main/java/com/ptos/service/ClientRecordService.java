@@ -32,6 +32,10 @@ public class ClientRecordService {
         return clientRecordRepository.findByIdAndPtUser(id, ptUser);
     }
 
+    public Optional<ClientRecord> getClientRecord(User clientUser) {
+        return clientRecordRepository.findByClientUser(clientUser);
+    }
+
     public ClientRecord createRecord(User ptUser, User clientUser) {
         ClientRecord record = ClientRecord.builder()
                 .ptUser(ptUser)
@@ -60,6 +64,10 @@ public class ClientRecordService {
     public Optional<ClientDetailView> getClientDetail(Long id, User ptUser) {
         return clientRecordRepository.findByIdAndPtUser(id, ptUser)
                 .map(this::toClientDetailView);
+    }
+
+    public ClientDetailView getClientDetail(ClientRecord record) {
+        return toClientDetailView(record);
     }
 
     public List<ClientListView> getClientListForPT(User ptUser) {

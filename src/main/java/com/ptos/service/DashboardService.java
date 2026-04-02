@@ -1,13 +1,17 @@
 package com.ptos.service;
 
 import com.ptos.domain.ClientStatus;
+import com.ptos.domain.CheckIn;
+import com.ptos.domain.AssignmentStatus;
 import com.ptos.domain.User;
 import com.ptos.dto.ClientListView;
 import com.ptos.dto.DashboardView;
+import com.ptos.repository.WorkoutAssignmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +22,8 @@ import java.util.stream.Collectors;
 public class DashboardService {
 
     private final ClientRecordService clientRecordService;
+    private final CheckInService checkInService;
+    private final WorkoutAssignmentRepository workoutAssignmentRepository;
 
     public DashboardView getDashboardData(User ptUser) {
         Map<ClientStatus, Long> counts = clientRecordService.getStatusCounts(ptUser);
@@ -45,6 +51,14 @@ public class DashboardService {
                 .filter(c -> c.getStatus() == ClientStatus.ACTIVE && c.getMonthlyPackagePrice() == null)
                 .count();
 
+        List<CheckIn> pendingCheckIns = checkInService.getPendingCheckIns(ptUser);
+        long totalWorkoutsAssigned = workoutAssignmentRepository.countByClientRecord_PtUser(ptUser);
+        long workoutsCompletedThisWeek = workoutAssignmentRepository.countByClientRecord_PtUserAndStatusAndCompletedAtAfter(
+                ptUser,
+                AssignmentStatus.COMPLETED,
+                LocalDateTime.now().minusDays(7)
+        );
+
         return DashboardView.builder()
                 .totalClients(total)
                 .activeClients(active)
@@ -53,6 +67,10 @@ public class DashboardService {
                 .recentlyUpdatedClients(recentlyUpdated)
                 .estimatedMonthlyRevenue(revenue)
                 .clientsWithoutPackagePrice(noPrice)
+                .pendingCheckInCount(pendingCheckIns.size())
+                .recentPendingCheckIns(pendingCheckIns.stream().limit(3).toList())
+                .totalWorkoutsAssigned(totalWorkoutsAssigned)
+                .workoutsCompletedThisWeek(workoutsCompletedThisWeek)
                 .build();
     }
 }

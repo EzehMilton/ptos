@@ -112,15 +112,15 @@
             <tbody>
                 <tr>
                     <td style="width:200px; font-weight:500;">Age</td>
-                    <td th:text="${detail.age != null} ? ${detail.age} : '—'"></td>
+                    <td th:text="${detail.age != null ? detail.age : '—'}"></td>
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Height</td>
-                    <td th:text="${detail.heightCm != null} ? ${detail.heightCm} + ' cm' : '—'"></td>
+                    <td th:text="${detail.heightCm != null ? detail.heightCm + ' cm' : '—'}"></td>
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Current Weight</td>
-                    <td th:text="${detail.currentWeightKg != null} ? ${detail.currentWeightKg} + ' kg' : '—'"></td>
+                    <td th:text="${detail.currentWeightKg != null ? detail.currentWeightKg + ' kg' : '—'}"></td>
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Goal</td>
@@ -137,7 +137,7 @@
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Target Weight</td>
-                    <td th:text="${detail.targetWeightKg != null} ? ${detail.targetWeightKg} + ' kg' : '—'"></td>
+                    <td th:text="${detail.targetWeightKg != null ? detail.targetWeightKg + ' kg' : '—'}"></td>
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Experience</td>
@@ -152,21 +152,37 @@
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Injuries / Conditions</td>
-                    <td th:text="${detail.injuriesOrConditions != null and !detail.injuriesOrConditions.isBlank()} ? ${detail.injuriesOrConditions} : '—'"></td>
+                    <td th:text="${detail.injuriesOrConditions != null and !detail.injuriesOrConditions.isBlank() ? detail.injuriesOrConditions : '—'}"></td>
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Dietary Preferences</td>
-                    <td th:text="${detail.dietaryPreferences != null and !detail.dietaryPreferences.isBlank()} ? ${detail.dietaryPreferences} : '—'"></td>
+                    <td th:text="${detail.dietaryPreferences != null and !detail.dietaryPreferences.isBlank() ? detail.dietaryPreferences : '—'}"></td>
                 </tr>
                 <tr>
                     <td style="font-weight:500;">Client Notes</td>
-                    <td th:text="${detail.clientNotes != null and !detail.clientNotes.isBlank()} ? ${detail.clientNotes} : '—'"></td>
+                    <td th:text="${detail.clientNotes != null and !detail.clientNotes.isBlank() ? detail.clientNotes : '—'}"></td>
                 </tr>
             </tbody>
         </table>
     </div>
 
     <!-- Section 3: PT Notes & Settings -->
+    <div class="card mb-3">
+        <h3 class="card-title">Milestones</h3>
+        <div class="milestone-list">
+            <div th:each="milestone : ${milestones}" class="milestone-row"
+                 th:classappend="${milestone.achievedDate == null ? 'milestone-row-pending' : ''}">
+                <div>
+                    <p style="font-weight: 600;"
+                       th:text="${(milestone.achievedDate != null ? '✅ ' : '○ ') + milestone.title}"></p>
+                    <p class="text-muted"
+                       th:text="${milestone.achievedDate != null ? #temporals.format(milestone.achievedDate, 'dd MMM yyyy') : 'Not yet'}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: PT Notes & Settings -->
     <div class="card mb-3">
         <h3 class="card-title">PT Notes &amp; Settings</h3>
         <form th:action="@{/pt/clients/{id}(id=${detail.clientRecordId})}" th:object="${updateForm}" method="post">
@@ -194,15 +210,78 @@
         </form>
     </div>
 
-    <!-- Section 4: Placeholders -->
+    <!-- Section 5: Activity -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div class="card">
-            <h3 class="card-title">Assigned Workouts</h3>
-            <p class="text-muted">No workouts assigned yet.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <h3 class="card-title" style="margin-bottom: 0;">Assigned Workouts</h3>
+                <a th:href="@{/pt/workouts}" class="btn btn-secondary btn-sm">Assign Workout</a>
+            </div>
+            <p class="text-muted mb-2"
+               th:text="${assignmentCount + ' workouts assigned, ' + completedAssignmentCount + ' completed'}"></p>
+
+            <div th:if="${assignmentCount == 0}">
+                <p class="text-muted">No workouts assigned yet. Assign one from the Workouts page.</p>
+            </div>
+
+            <table th:if="${assignmentCount > 0}">
+                <thead>
+                    <tr>
+                        <th>Workout</th>
+                        <th>Assigned Date</th>
+                        <th>Status</th>
+                        <th>Completed Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="assignment : ${assignments}">
+                        <td>
+                            <a th:href="@{/pt/workouts/{id}(id=${assignment.workout.id})}"
+                               th:text="${assignment.workout.name}"></a>
+                        </td>
+                        <td th:text="${#temporals.format(assignment.assignedDate, 'dd MMM yyyy')}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${assignment.status.name() == 'ASSIGNED'} ? 'badge-info' :
+                                                 (${assignment.status.name() == 'IN_PROGRESS'} ? 'badge-warning' : 'badge-active')"
+                                  th:text="${assignment.status.name().replace('_', ' ')}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${assignment.completedAt != null}"
+                                  th:text="${#temporals.format(assignment.completedAt, 'dd MMM yyyy')}"></span>
+                            <span th:if="${assignment.completedAt == null}" class="text-muted">&mdash;</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <div class="card">
             <h3 class="card-title">Recent Check-ins</h3>
-            <p class="text-muted">No check-ins yet.</p>
+            <div th:if="${recentCheckIns.isEmpty()}">
+                <p class="text-muted">No check-ins yet.</p>
+            </div>
+            <table th:if="${!recentCheckIns.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Weight</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="checkIn : ${recentCheckIns}">
+                        <td th:text="${#temporals.format(checkIn.submittedAt, 'dd MMM yyyy')}"></td>
+                        <td th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${checkIn.status.name() == 'PENDING_REVIEW'} ? 'badge-info' : 'badge-active'"
+                                  th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting Review' : 'Reviewed'}"></span>
+                        </td>
+                        <td><a th:href="@{/pt/checkins/{id}(id=${checkIn.id})}">Review</a></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

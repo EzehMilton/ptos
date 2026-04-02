@@ -5,14 +5,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title layout:title-pattern="$CONTENT_TITLE - PTOS">PTOS</title>
+    <title layout:title-pattern="$CONTENT_TITLE - PTOS">SETLY</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
 <nav class="navbar">
     <div class="container">
-        <a class="navbar-brand" th:href="@{/}">PTOS</a>
+        <a class="navbar-brand" th:href="@{/}">SETLY</a>
         <ul class="navbar-nav">
             <!-- PT navigation -->
             <li sec:authorize="hasRole('PT')">
@@ -28,6 +28,13 @@
                    th:classappend="${currentPath.startsWith('/pt/workouts')} ? 'nav-active'">Workouts</a>
             </li>
             <li sec:authorize="hasRole('PT')">
+                <a th:href="@{/pt/checkins}"
+                   th:classappend="${currentPath.startsWith('/pt/checkins')} ? 'nav-active'">
+                    Check-ins
+                    <span th:if="${ptPendingCheckInCount > 0}" class="nav-count" th:text="${ptPendingCheckInCount}"></span>
+                </a>
+            </li>
+            <li sec:authorize="hasRole('PT')">
                 <a th:href="@{/pt/business}"
                    th:classappend="${currentPath == '/pt/business'} ? 'nav-active'">Business</a>
             </li>
@@ -36,6 +43,14 @@
             <li sec:authorize="hasRole('CLIENT')">
                 <a th:href="@{/client/home}"
                    th:classappend="${currentPath == '/client/home'} ? 'nav-active'">Home</a>
+            </li>
+            <li sec:authorize="hasRole('CLIENT')">
+                <a th:href="@{/client/workouts}"
+                   th:classappend="${currentPath.startsWith('/client/workouts')} ? 'nav-active'">My Workouts</a>
+            </li>
+            <li sec:authorize="hasRole('CLIENT')">
+                <a th:href="@{/client/checkins}"
+                   th:classappend="${currentPath.startsWith('/client/checkins')} ? 'nav-active'">My Check-ins</a>
             </li>
             <li sec:authorize="hasRole('CLIENT')">
                 <a th:href="@{/client/profile}"
@@ -61,7 +76,7 @@
 
 <footer class="footer">
     <div class="container">
-        PTOS MVP
+        SETLY MVP
     </div>
 </footer>
 

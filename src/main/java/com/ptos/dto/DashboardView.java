@@ -1,5 +1,6 @@
 package com.ptos.dto;
 
+import com.ptos.domain.CheckIn;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,4 +18,8 @@ public class DashboardView {
     private List<ClientListView> recentlyUpdatedClients;
     private BigDecimal estimatedMonthlyRevenue;
     private long clientsWithoutPackagePrice;
+    private long pendingCheckInCount;
+    private List<CheckIn> recentPendingCheckIns;
+    private long totalWorkoutsAssigned;
+    private long workoutsCompletedThisWeek;
 }

@@ -33,6 +33,18 @@
                  th:text="${b.clientsNeedingAttention}"></div>
             <div class="stat-label">Needs Attention</div>
         </div>
+        <div class="card stat-card">
+            <div class="stat-value"
+                 th:style="${b.checkInComplianceRate < 60} ? 'color: #d97706;' : 'color: #16a34a;'"
+                 th:text="${b.checkInComplianceRate} + '%'"></div>
+            <div class="stat-label">Check-in Rate</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-value"
+                 th:style="${b.workoutCompletionRate < 50} ? 'color: #d97706;' : 'color: #16a34a;'"
+                 th:text="${b.workoutCompletionRate} + '%'"></div>
+            <div class="stat-label">Workout Completion Rate</div>
+        </div>
     </div>
 
     <!-- Row 2: Client Overview table -->
@@ -47,7 +59,8 @@
                     <th>Name</th>
                     <th>Status</th>
                     <th>Package</th>
-                    <th>Profile</th>
+                    <th>Last Check-in</th>
+                    <th>Workouts</th>
                     <th>Health</th>
                 </tr>
             </thead>
@@ -68,9 +81,12 @@
                         <span th:if="${c.packagePrice == null}" class="text-muted">&mdash;</span>
                     </td>
                     <td>
-                        <span class="badge"
-                              th:classappend="${c.profileCompletion >= 4} ? 'badge-active' : 'badge-warning'"
-                              th:text="${c.profileCompletion} + '/6'"></span>
+                        <span th:if="${c.lastCheckInDate != null}"
+                              th:text="${#temporals.format(c.lastCheckInDate, 'dd MMM yyyy')}"></span>
+                        <span th:if="${c.lastCheckInDate == null}" class="text-muted">&mdash;</span>
+                    </td>
+                    <td>
+                        <span th:text="${c.workoutsCompleted + '/' + c.workoutsAssigned}"></span>
                     </td>
                     <td>
                         <span th:if="${c.healthLabel == 'Good'}" style="color: #16a34a; font-weight: 500;">Good</span>
@@ -106,6 +122,26 @@
         <p th:if="${b.incompleteProfileClients.isEmpty()}" class="mt-1" style="color: #16a34a;">
             All clients have complete profiles.
         </p>
+    </div>
+
+    <div class="mt-3">
+        <div class="card" th:if="${suggestedActions.isEmpty()}" style="border-left: 4px solid #22c55e;">
+            <h3 class="card-title">Suggested Actions</h3>
+            <p style="color: #166534;">All caught up! No actions needed right now.</p>
+        </div>
+
+        <div class="card" th:if="${!suggestedActions.isEmpty()}">
+            <h3 class="card-title">Suggested Actions</h3>
+            <div th:each="action : ${suggestedActions}" class="suggested-action-row"
+                 th:classappend="${action.priority.name() == 'HIGH'} ? 'suggested-action-high' :
+                                (${action.priority.name() == 'MEDIUM'} ? 'suggested-action-medium' : 'suggested-action-low')">
+                <div class="suggested-action-copy">
+                    <span class="suggested-action-icon" th:text="${action.icon}"></span>
+                    <span th:text="${action.message}"></span>
+                </div>
+                <a class="btn btn-secondary btn-sm" th:href="${action.actionUrl}" th:text="${action.actionLabel}"></a>
+            </div>
+        </div>
     </div>
 </div>
 </body>
