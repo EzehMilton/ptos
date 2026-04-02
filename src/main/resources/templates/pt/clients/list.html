@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>My Clients</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1>My Clients</h1>
+    </div>
+
+    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+    <!-- Search -->
+    <div class="card mb-3">
+        <form th:action="@{/pt/clients}" method="get" style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" name="q" th:value="${query}" placeholder="Search by name or email..."
+                   style="flex: 1; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
+            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+            <a th:href="@{/pt/clients}" class="btn btn-secondary btn-sm">Clear</a>
+        </form>
+    </div>
+
+    <p class="text-muted mb-2" th:text="'Showing ' + ${clientCount} + ' client' + (${clientCount} != 1 ? 's' : '')"></p>
+
+    <!-- Client table -->
+    <div th:if="${clientCount > 0}" class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Goal</th>
+                    <th>Weight</th>
+                    <th>Status</th>
+                    <th>Package</th>
+                    <th>Start Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="c : ${clients}">
+                    <td>
+                        <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.clientName}"></a>
+                    </td>
+                    <td th:text="${c.clientEmail}"></td>
+                    <td>
+                        <span th:if="${c.goalType != null}" th:switch="${c.goalType.name()}">
+                            <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
+                            <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
+                            <span th:case="'STRENGTH'">Strength</span>
+                            <span th:case="'ENDURANCE'">Endurance</span>
+                            <span th:case="'GENERAL_FITNESS'">General Fitness</span>
+                        </span>
+                        <span th:if="${c.goalType == null}" class="text-muted">&mdash;</span>
+                    </td>
+                    <td>
+                        <span th:if="${c.currentWeightKg != null}">
+                            <span th:text="${c.currentWeightKg}"></span>
+                            <span th:if="${c.targetWeightKg != null}">
+                                &rarr; <span th:text="${c.targetWeightKg}"></span>
+                            </span>
+                            kg
+                        </span>
+                        <span th:if="${c.currentWeightKg == null}" class="text-muted">&mdash;</span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${c.status.name() == 'ACTIVE'} ? 'badge-active' :
+                                             (${c.status.name() == 'AT_RISK'} ? 'badge-warning' :
+                                             'badge-neutral')"
+                              th:text="${c.status.name()}"></span>
+                    </td>
+                    <td>
+                        <span th:if="${c.monthlyPackagePrice != null}"
+                              th:text="'£' + ${#numbers.formatDecimal(c.monthlyPackagePrice, 1, 2)} + '/mo'"></span>
+                        <span th:if="${c.monthlyPackagePrice == null}" class="text-muted">&mdash;</span>
+                    </td>
+                    <td th:text="${#temporals.format(c.startDate, 'dd MMM yyyy')}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${clientCount == 0}" class="card text-center">
+        <p class="text-muted" th:if="${query != null}">No clients matching your search.</p>
+        <p class="text-muted" th:if="${query == null}">No clients yet.</p>
+    </div>
+</div>
+</body>
+</html>

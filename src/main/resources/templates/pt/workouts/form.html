@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Create Workout</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/workouts}">&larr; All Workouts</a>
+    </div>
+    <div class="page-header">
+        <h1>Create Workout</h1>
+    </div>
+
+    <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
+        <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+    </div>
+
+    <form th:action="@{/pt/workouts}" th:object="${workoutForm}" method="post">
+        <div class="card mb-3">
+            <h3 class="card-title">Workout Details</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" th:field="*{name}" placeholder="e.g. Upper Body A">
+                    <div class="form-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" th:field="*{category}">
+                        <option value="">Select...</option>
+                        <option th:each="c : ${T(com.ptos.domain.WorkoutCategory).values()}"
+                                th:value="${c}" th:text="${c.name()}"></option>
+                    </select>
+                    <div class="form-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" th:field="*{description}" rows="2"
+                          placeholder="Optional description"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" th:field="*{template}" style="width: auto; margin-right: 6px;">
+                    Save as template
+                </label>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <h3 class="card-title">Exercises</h3>
+            <div id="exercise-list">
+                <div th:each="ex, iter : *{exercises}" class="exercise-row"
+                     style="display: grid; grid-template-columns: 2fr 80px 100px 1.5fr auto; gap: 10px; align-items: start; margin-bottom: 12px;">
+                    <div>
+                        <input type="text" th:field="*{exercises[__${iter.index}__].exerciseName}"
+                               placeholder="Exercise name">
+                    </div>
+                    <div>
+                        <input type="number" th:field="*{exercises[__${iter.index}__].setsCount}"
+                               placeholder="Sets" min="1" max="20">
+                    </div>
+                    <div>
+                        <input type="text" th:field="*{exercises[__${iter.index}__].repsText}"
+                               placeholder="Reps (e.g. 8-12)">
+                    </div>
+                    <div>
+                        <input type="text" th:field="*{exercises[__${iter.index}__].notes}"
+                               placeholder="Notes (optional)">
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary btn-sm remove-exercise"
+                                onclick="removeExercise(this)">&times;</button>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm mt-1" onclick="addExercise()">+ Add Exercise</button>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Workout</button>
+    </form>
+</div>
+
+<script th:inline="javascript">
+    function addExercise() {
+        var list = document.getElementById('exercise-list');
+        var rows = list.querySelectorAll('.exercise-row');
+        var idx = rows.length;
+
+        var div = document.createElement('div');
+        div.className = 'exercise-row';
+        div.style.cssText = 'display: grid; grid-template-columns: 2fr 80px 100px 1.5fr auto; gap: 10px; align-items: start; margin-bottom: 12px;';
+        div.innerHTML =
+            '<div><input type="text" name="exercises[' + idx + '].exerciseName" placeholder="Exercise name"></div>' +
+            '<div><input type="number" name="exercises[' + idx + '].setsCount" placeholder="Sets" min="1" max="20"></div>' +
+            '<div><input type="text" name="exercises[' + idx + '].repsText" placeholder="Reps (e.g. 8-12)"></div>' +
+            '<div><input type="text" name="exercises[' + idx + '].notes" placeholder="Notes (optional)"></div>' +
+            '<div><button type="button" class="btn btn-secondary btn-sm remove-exercise" onclick="removeExercise(this)">&times;</button></div>';
+        list.appendChild(div);
+    }
+
+    function removeExercise(btn) {
+        var list = document.getElementById('exercise-list');
+        if (list.querySelectorAll('.exercise-row').length <= 1) return;
+        btn.closest('.exercise-row').remove();
+        // Re-index remaining rows
+        var rows = list.querySelectorAll('.exercise-row');
+        rows.forEach(function(row, i) {
+            row.querySelectorAll('input').forEach(function(input) {
+                var name = input.getAttribute('name');
+                if (name) {
+                    input.setAttribute('name', name.replace(/exercises\[\d+\]/, 'exercises[' + i + ']'));
+                }
+                var id = input.getAttribute('id');
+                if (id) {
+                    input.setAttribute('id', id.replace(/exercises\d+/, 'exercises' + i));
+                }
+            });
+        });
+    }
+</script>
+</body>
+</html>

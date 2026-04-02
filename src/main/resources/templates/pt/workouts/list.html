@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>My Workouts</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1>My Workouts</h1>
+        <a th:href="@{/pt/workouts/new}" class="btn btn-primary">Create Workout</a>
+    </div>
+
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+    <div th:if="${workouts.isEmpty()}" class="card text-center">
+        <p class="text-muted">No workouts yet. Create your first workout.</p>
+    </div>
+
+    <div th:if="${!workouts.isEmpty()}" class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Exercises</th>
+                    <th>Type</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="w : ${workouts}">
+                    <td>
+                        <a th:href="@{/pt/workouts/{id}(id=${w.id})}" th:text="${w.name}"></a>
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral" th:text="${w.category.name()}"></span>
+                    </td>
+                    <td th:text="${w.exercises.size()}"></td>
+                    <td>
+                        <span th:if="${w.template}" class="badge badge-active">Template</span>
+                    </td>
+                    <td th:text="${#temporals.format(w.createdAt, 'dd MMM yyyy')}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

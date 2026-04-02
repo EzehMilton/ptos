@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1 th:text="'Welcome back, ' + ${ptName}"></h1>
+    </div>
+
+    <!-- Row 1: Summary stats -->
+    <div class="stat-grid mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon">&#128101;</div>
+            <div class="stat-value" th:text="${d.totalClients}"></div>
+            <div class="stat-label">Total Clients</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-value" style="color: #16a34a;" th:text="${d.activeClients}"></div>
+            <div class="stat-label">Active</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-value" th:style="${d.atRiskClients > 0} ? 'color: #d97706;' : 'color: #16a34a;'"
+                 th:text="${d.atRiskClients}"></div>
+            <div class="stat-label">At Risk</div>
+        </div>
+        <div class="card stat-card">
+            <div th:if="${d.estimatedMonthlyRevenue.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                <div class="stat-value"
+                     th:text="'£' + ${#numbers.formatDecimal(d.estimatedMonthlyRevenue, 1, 2)}"></div>
+                <div class="stat-label">Est. Monthly Revenue</div>
+                <div th:if="${d.clientsWithoutPackagePrice > 0}" class="stat-note text-muted"
+                     th:text="${d.clientsWithoutPackagePrice} + ' client(s) missing price'"></div>
+            </div>
+            <div th:if="${d.estimatedMonthlyRevenue.compareTo(T(java.math.BigDecimal).ZERO) == 0}">
+                <div class="stat-value text-muted">&mdash;</div>
+                <div class="stat-label">
+                    <a th:href="@{/pt/clients}">Set up package prices</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Recently Updated Clients -->
+    <div class="card mb-3">
+        <h3 class="card-title">Recently Updated Clients</h3>
+        <div th:if="${d.recentlyUpdatedClients.isEmpty()}">
+            <p class="text-muted">No client updates yet.</p>
+        </div>
+        <div th:if="${!d.recentlyUpdatedClients.isEmpty()}">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Goal</th>
+                        <th>Weight</th>
+                        <th>Status</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${d.recentlyUpdatedClients}">
+                        <td>
+                            <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.clientName}"></a>
+                        </td>
+                        <td>
+                            <span th:if="${c.goalType != null}" th:switch="${c.goalType.name()}">
+                                <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
+                                <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
+                                <span th:case="'STRENGTH'">Strength</span>
+                                <span th:case="'ENDURANCE'">Endurance</span>
+                                <span th:case="'GENERAL_FITNESS'">General Fitness</span>
+                            </span>
+                            <span th:if="${c.goalType == null}" class="text-muted">&mdash;</span>
+                        </td>
+                        <td>
+                            <span th:if="${c.currentWeightKg != null}">
+                                <span th:text="${c.currentWeightKg}"></span>
+                                <span th:if="${c.targetWeightKg != null}">
+                                    &rarr; <span th:text="${c.targetWeightKg}"></span>
+                                </span>
+                                kg
+                            </span>
+                            <span th:if="${c.currentWeightKg == null}" class="text-muted">&mdash;</span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${c.status.name() == 'ACTIVE'} ? 'badge-active' :
+                                                 (${c.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
+                                  th:text="${c.status.name()}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${c.profileLastUpdated != null}"
+                                  th:text="${#temporals.format(c.profileLastUpdated, 'dd MMM yyyy')}"></span>
+                            <span th:if="${c.profileLastUpdated == null}" class="text-muted">&mdash;</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="mt-2"><a th:href="@{/pt/clients}">View all clients &rarr;</a></p>
+    </div>
+
+    <!-- Row 3: Quick Actions -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+        <a th:href="@{/pt/clients}" class="card quick-action-card" style="text-decoration: none; color: inherit;">
+            <h3 class="card-title">Manage Clients</h3>
+            <p class="text-muted">View and manage your client roster</p>
+        </a>
+        <a th:href="@{/pt/business}" class="card quick-action-card" style="text-decoration: none; color: inherit;">
+            <h3 class="card-title">Business Overview</h3>
+            <p class="text-muted">Revenue and business metrics</p>
+        </a>
+        <div class="card quick-action-card" style="opacity: 0.6;">
+            <h3 class="card-title">Create Workout</h3>
+            <p class="text-muted">Coming soon</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

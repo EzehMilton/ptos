@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${workout.name}">Workout Detail</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/workouts}">&larr; All Workouts</a>
+    </div>
+    <div class="page-header">
+        <h1 th:text="${workout.name}"></h1>
+        <div>
+            <span class="badge badge-neutral" th:text="${workout.category.name()}"></span>
+            <span th:if="${workout.template}" class="badge badge-active" style="margin-left: 6px;">Template</span>
+        </div>
+    </div>
+
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+
+    <!-- Workout Info -->
+    <div class="card mb-3">
+        <h3 class="card-title">Workout Details</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <td style="width:160px; font-weight:500;">Description</td>
+                    <td th:text="${workout.description != null and !workout.description.isBlank()} ? ${workout.description} : '—'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Category</td>
+                    <td th:text="${workout.category.name()}"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Created</td>
+                    <td th:text="${#temporals.format(workout.createdAt, 'dd MMM yyyy')}"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Exercises</td>
+                    <td th:text="${workout.exercises.size()}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Exercise Table -->
+    <div class="card mb-3">
+        <h3 class="card-title">Exercises</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>Exercise</th>
+                    <th>Sets</th>
+                    <th>Reps</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="ex, iter : ${workout.exercises}">
+                    <td th:text="${iter.count}"></td>
+                    <td th:text="${ex.exerciseName}"></td>
+                    <td th:text="${ex.setsCount}"></td>
+                    <td th:text="${ex.repsText != null} ? ${ex.repsText} : '—'"></td>
+                    <td th:text="${ex.notes != null and !ex.notes.isBlank()} ? ${ex.notes} : '—'"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Assign to Client -->
+    <div class="card">
+        <h3 class="card-title">Assign to Client</h3>
+        <div th:if="${activeClients.isEmpty()}">
+            <p class="text-muted">No active clients to assign to.</p>
+        </div>
+        <form th:if="${!activeClients.isEmpty()}"
+              th:action="@{/pt/workouts/{id}/assign(id=${workout.id})}" method="post"
+              style="display: flex; gap: 12px; align-items: end;">
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                <label for="clientRecordId">Client</label>
+                <select id="clientRecordId" name="clientRecordId">
+                    <option th:each="cr : ${activeClients}"
+                            th:value="${cr.id}"
+                            th:text="${cr.clientUser.fullName}"></option>
+                </select>
+            </div>
+            <div class="form-group" style="width: 180px; margin-bottom: 0;">
+                <label for="assignedDate">Date</label>
+                <input type="date" id="assignedDate" name="assignedDate" th:value="${today}">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom: 0;">Assign</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

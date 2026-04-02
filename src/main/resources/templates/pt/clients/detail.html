@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${detail.clientName}">Client Detail</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/clients}">&larr; All Clients</a>
+    </div>
+    <div class="page-header">
+        <h1 th:text="${detail.clientName}"></h1>
+        <span class="badge"
+              th:classappend="${detail.status.name() == 'ACTIVE'} ? 'badge-active' :
+                             (${detail.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
+              th:text="${detail.status.name()}"></span>
+    </div>
+
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+    <!-- Section 1: Client Overview -->
+    <div class="card mb-3">
+        <h3 class="card-title">Client Overview</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td style="width:160px; font-weight:500;">Email</td>
+                            <td th:text="${detail.clientEmail}"></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:500;">Start Date</td>
+                            <td th:text="${#temporals.format(detail.startDate, 'dd MMM yyyy')}"></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:500;">Days as Client</td>
+                            <td th:text="${detail.daysSinceStart} + ' days'"></td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:500;">Package</td>
+                            <td>
+                                <span th:if="${detail.monthlyPackagePrice != null}"
+                                      th:text="'£' + ${#numbers.formatDecimal(detail.monthlyPackagePrice, 1, 2)} + '/mo'"></span>
+                                <span th:if="${detail.monthlyPackagePrice == null}" class="text-muted">&mdash;</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td style="width:160px; font-weight:500;">Profile</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${detail.profileComplete} ? 'badge-active' : 'badge-warning'"
+                                      th:text="${detail.profileCompletionCount} + '/6 complete'"></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:500;">Goal</td>
+                            <td>
+                                <span th:if="${detail.goalType != null}" th:switch="${detail.goalType.name()}">
+                                    <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
+                                    <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
+                                    <span th:case="'STRENGTH'">Strength</span>
+                                    <span th:case="'ENDURANCE'">Endurance</span>
+                                    <span th:case="'GENERAL_FITNESS'">General Fitness</span>
+                                </span>
+                                <span th:if="${detail.goalType == null}" class="text-muted">&mdash;</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:500;">Weight</td>
+                            <td>
+                                <span th:if="${detail.currentWeightKg != null}">
+                                    <span th:text="${detail.currentWeightKg}"></span>
+                                    <span th:if="${detail.targetWeightKg != null}">
+                                        &rarr; <span th:text="${detail.targetWeightKg}"></span>
+                                    </span>
+                                    kg
+                                </span>
+                                <span th:if="${detail.currentWeightKg == null}" class="text-muted">&mdash;</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:500;">Experience</td>
+                            <td>
+                                <span th:if="${detail.trainingExperience != null}" th:switch="${detail.trainingExperience.name()}">
+                                    <span th:case="'BEGINNER'">Beginner</span>
+                                    <span th:case="'INTERMEDIATE'">Intermediate</span>
+                                    <span th:case="'ADVANCED'">Advanced</span>
+                                </span>
+                                <span th:if="${detail.trainingExperience == null}" class="text-muted">&mdash;</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Profile Details -->
+    <div class="card mb-3">
+        <h3 class="card-title">Profile Details</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <td style="width:200px; font-weight:500;">Age</td>
+                    <td th:text="${detail.age != null} ? ${detail.age} : '—'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Height</td>
+                    <td th:text="${detail.heightCm != null} ? ${detail.heightCm} + ' cm' : '—'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Current Weight</td>
+                    <td th:text="${detail.currentWeightKg != null} ? ${detail.currentWeightKg} + ' kg' : '—'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Goal</td>
+                    <td>
+                        <span th:if="${detail.goalType != null}" th:switch="${detail.goalType.name()}">
+                            <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
+                            <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
+                            <span th:case="'STRENGTH'">Strength</span>
+                            <span th:case="'ENDURANCE'">Endurance</span>
+                            <span th:case="'GENERAL_FITNESS'">General Fitness</span>
+                        </span>
+                        <span th:if="${detail.goalType == null}">&mdash;</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Target Weight</td>
+                    <td th:text="${detail.targetWeightKg != null} ? ${detail.targetWeightKg} + ' kg' : '—'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Experience</td>
+                    <td>
+                        <span th:if="${detail.trainingExperience != null}" th:switch="${detail.trainingExperience.name()}">
+                            <span th:case="'BEGINNER'">Beginner</span>
+                            <span th:case="'INTERMEDIATE'">Intermediate</span>
+                            <span th:case="'ADVANCED'">Advanced</span>
+                        </span>
+                        <span th:if="${detail.trainingExperience == null}">&mdash;</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Injuries / Conditions</td>
+                    <td th:text="${detail.injuriesOrConditions != null and !detail.injuriesOrConditions.isBlank()} ? ${detail.injuriesOrConditions} : '—'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Dietary Preferences</td>
+                    <td th:text="${detail.dietaryPreferences != null and !detail.dietaryPreferences.isBlank()} ? ${detail.dietaryPreferences} : '—'"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:500;">Client Notes</td>
+                    <td th:text="${detail.clientNotes != null and !detail.clientNotes.isBlank()} ? ${detail.clientNotes} : '—'"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Section 3: PT Notes & Settings -->
+    <div class="card mb-3">
+        <h3 class="card-title">PT Notes &amp; Settings</h3>
+        <form th:action="@{/pt/clients/{id}(id=${detail.clientRecordId})}" th:object="${updateForm}" method="post">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" th:field="*{status}">
+                        <option th:each="s : ${T(com.ptos.domain.ClientStatus).values()}"
+                                th:value="${s}" th:text="${s.name()}"></option>
+                    </select>
+                    <div class="form-error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="monthlyPackagePrice">Monthly Package (£)</label>
+                    <input type="number" id="monthlyPackagePrice" th:field="*{monthlyPackagePrice}" step="0.01" min="0">
+                    <div class="form-error" th:if="${#fields.hasErrors('monthlyPackagePrice')}" th:errors="*{monthlyPackagePrice}"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ptNotes">PT Notes</label>
+                <textarea id="ptNotes" th:field="*{ptNotes}" rows="4"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('ptNotes')}" th:errors="*{ptNotes}"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+
+    <!-- Section 4: Placeholders -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="card">
+            <h3 class="card-title">Assigned Workouts</h3>
+            <p class="text-muted">No workouts assigned yet.</p>
+        </div>
+        <div class="card">
+            <h3 class="card-title">Recent Check-ins</h3>
+            <p class="text-muted">No check-ins yet.</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
