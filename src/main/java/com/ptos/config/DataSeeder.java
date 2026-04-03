@@ -2,10 +2,15 @@ package com.ptos.config;
 
 import com.ptos.domain.*;
 import com.ptos.repository.CheckInFeedbackRepository;
+import com.ptos.repository.CheckInPhotoRepository;
 import com.ptos.repository.CheckInRepository;
+import com.ptos.repository.ClientInvitationRepository;
 import com.ptos.repository.ClientProfileRepository;
 import com.ptos.repository.ClientRecordRepository;
+import com.ptos.repository.ClientRecordNoteRepository;
 import com.ptos.repository.ConversationRepository;
+import com.ptos.repository.MealComplianceLogRepository;
+import com.ptos.repository.MealPlanRepository;
 import com.ptos.repository.MessageRepository;
 import com.ptos.repository.PTProfileRepository;
 import com.ptos.repository.UserRepository;
@@ -37,7 +42,12 @@ public class DataSeeder implements CommandLineRunner {
     private final WorkoutRepository workoutRepository;
     private final WorkoutAssignmentRepository workoutAssignmentRepository;
     private final CheckInRepository checkInRepository;
+    private final CheckInPhotoRepository checkInPhotoRepository;
     private final CheckInFeedbackRepository checkInFeedbackRepository;
+    private final ClientRecordNoteRepository clientRecordNoteRepository;
+    private final ClientInvitationRepository clientInvitationRepository;
+    private final MealPlanRepository mealPlanRepository;
+    private final MealComplianceLogRepository mealComplianceLogRepository;
     private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
     private final PasswordEncoder passwordEncoder;
@@ -167,7 +177,7 @@ public class DataSeeder implements CommandLineRunner {
                         .notes("Wants structured hypertrophy program"),
                 ClientStatus.ACTIVE, new BigDecimal("140.00"), today.minusDays(15)));
 
-        records.add(seedClient(pt, encoded, "Funmi Ogunleye", "funmi@ptos.local",
+        records.add(seedClient(pt, encoded, "Yemi Ogunleye", "funmi@ptos.local",
                 ClientProfile.builder()
                         .age(34).heightCm(167.0).currentWeightKg(76.0)
                         .goalType(GoalType.GENERAL_FITNESS)
@@ -199,8 +209,11 @@ public class DataSeeder implements CommandLineRunner {
                 ClientStatus.AT_RISK, new BigDecimal("100.00"), today.minusDays(80)));
 
         seedHistoricalActivity(pt, records, today);
+        seedMealPlans(pt, records, today);
+        seedClientNotes(pt, records, today);
+        seedInvitations(pt, records, today);
         seedConversations(pt, records, today);
-        log.info("Seeded {} clients with profiles, workouts, assignments, and check-ins", records.size());
+        log.info("Seeded {} managed client records with profiles, workouts, check-ins, nutrition, notes, invitations, and messages", records.size());
     }
 
     private ClientRecord seedClient(User pt, String encodedPassword, String fullName, String email,
@@ -280,6 +293,36 @@ public class DataSeeder implements CommandLineRunner {
                         "Lifts are moving well.", true, "Great momentum. Keep pushing calories slightly up."),
                 new CheckInSeed(today.minusDays(1).atTime(20, 5), 71.0, 5, 4, 4,
                         "Feeling stronger and recovering better.", false, null));
+        List<CheckIn> jamieCheckIns = checkInRepository.findByClientRecordOrderBySubmittedAtDesc(records.get(1));
+        if (jamieCheckIns.size() >= 2) {
+            CheckIn jamieCurrentCheckIn = jamieCheckIns.get(0);
+            CheckIn jamiePreviousCheckIn = jamieCheckIns.get(1);
+
+            seedProgressPhoto(jamieCurrentCheckIn, PhotoType.FRONT,
+                    "photos/checkins/jamie-chen-front.svg",
+                    "jamie-chen-front.svg",
+                    1602L);
+            seedProgressPhoto(jamieCurrentCheckIn, PhotoType.SIDE,
+                    "photos/checkins/jamie-chen-side.svg",
+                    "jamie-chen-side.svg",
+                    1624L);
+            seedProgressPhoto(jamieCurrentCheckIn, PhotoType.BACK,
+                    "photos/checkins/jamie-chen-back.svg",
+                    "jamie-chen-back.svg",
+                    1615L);
+            seedProgressPhoto(jamiePreviousCheckIn, PhotoType.FRONT,
+                    "photos/checkins/jamie-chen-front-previous.svg",
+                    "jamie-chen-front-previous.svg",
+                    1598L);
+            seedProgressPhoto(jamiePreviousCheckIn, PhotoType.SIDE,
+                    "photos/checkins/jamie-chen-side-previous.svg",
+                    "jamie-chen-side-previous.svg",
+                    1609L);
+            seedProgressPhoto(jamiePreviousCheckIn, PhotoType.BACK,
+                    "photos/checkins/jamie-chen-back-previous.svg",
+                    "jamie-chen-back-previous.svg",
+                    1601L);
+        }
 
         seedAssignments(records.get(3),
                 new AssignmentSeed(fatLoss, today.minusDays(18), AssignmentStatus.COMPLETED,
@@ -422,6 +465,142 @@ public class DataSeeder implements CommandLineRunner {
         );
     }
 
+    private void seedMealPlans(User pt, List<ClientRecord> records, LocalDate today) {
+        MealPlan alexLegacyPlan = seedMealPlan(pt, records.get(0),
+                "Reset Nutrition Plan",
+                "Earlier calorie deficit structure used at the start of the block.",
+                """
+                        Breakfast: Overnight oats with protein powder
+                        Lunch: Chicken wrap with fruit
+                        Dinner: Salmon, potatoes, green veg
+                        Snacks: Protein shake or fruit as needed
+                        """,
+                false,
+                today.minusDays(46).atTime(9, 0));
+        alexLegacyPlan.setUpdatedAt(today.minusDays(32).atTime(17, 30));
+        mealPlanRepository.save(alexLegacyPlan);
+
+        MealPlan alexPlan = seedMealPlan(pt, records.get(0),
+                "Lean Cut Plan",
+                "Calorie deficit plan targeting roughly 2100 kcal/day with high protein and repeatable weekday meals.",
+                """
+                        Breakfast: 3 eggs, sourdough toast, berries
+                        Lunch: Chicken breast, rice, mixed vegetables
+                        Snack: Greek yogurt, banana, whey protein
+                        Dinner: Lean beef mince, potatoes, salad
+                        Notes: Keep water intake high and aim for 8k+ steps daily.
+                        """,
+                true,
+                today.minusDays(21).atTime(10, 15));
+        seedComplianceLog(records.get(0), alexPlan, today.minusDays(6), ComplianceLevel.FOLLOWED, "Meals were easy to prep.");
+        seedComplianceLog(records.get(0), alexPlan, today.minusDays(5), ComplianceLevel.FOLLOWED, "Hit protein target.");
+        seedComplianceLog(records.get(0), alexPlan, today.minusDays(3), ComplianceLevel.PARTIALLY_FOLLOWED, "Dinner was off plan at a work event.");
+        seedComplianceLog(records.get(0), alexPlan, today.minusDays(2), ComplianceLevel.FOLLOWED, "Back on track straight away.");
+        seedComplianceLog(records.get(0), alexPlan, today.minusDays(1), ComplianceLevel.FOLLOWED, "Weekend structure felt manageable.");
+
+        MealPlan jamiePlan = seedMealPlan(pt, records.get(1),
+                "Lean Gain Structure",
+                "Small calorie surplus plan focused on consistent protein intake and easy post-workout meals.",
+                """
+                        Breakfast: Protein oats with peanut butter
+                        Lunch: Turkey pasta bowl with olive oil
+                        Snack: Bagel with cottage cheese and fruit
+                        Dinner: Chicken thighs, rice, roasted vegetables
+                        Notes: Keep the evening snack in on training days.
+                        """,
+                true,
+                today.minusDays(18).atTime(8, 45));
+        seedComplianceLog(records.get(1), jamiePlan, today.minusDays(7), ComplianceLevel.FOLLOWED, "Calories felt easier this week.");
+        seedComplianceLog(records.get(1), jamiePlan, today.minusDays(5), ComplianceLevel.PARTIALLY_FOLLOWED, "Missed the evening snack once.");
+        seedComplianceLog(records.get(1), jamiePlan, today.minusDays(4), ComplianceLevel.FOLLOWED, "Good appetite after training.");
+        seedComplianceLog(records.get(1), jamiePlan, today.minusDays(2), ComplianceLevel.FOLLOWED, "Stayed consistent across the weekend.");
+
+        MealPlan nnuolaPlan = seedMealPlan(pt, records.get(3),
+                "Vegetarian Fat Loss Plan",
+                "Moderate calorie deficit built around vegetarian staples and simpler evening meals.",
+                """
+                        Breakfast: Greek yogurt, granola, berries
+                        Lunch: Lentil and quinoa bowl with feta
+                        Snack: Apple with peanut butter
+                        Dinner: Tofu stir-fry with noodles and vegetables
+                        Notes: Prioritise fibre and avoid skipping lunch on busy days.
+                        """,
+                true,
+                today.minusDays(14).atTime(7, 50));
+        seedComplianceLog(records.get(3), nnuolaPlan, today.minusDays(6), ComplianceLevel.FOLLOWED, "Energy stayed stable all day.");
+        seedComplianceLog(records.get(3), nnuolaPlan, today.minusDays(4), ComplianceLevel.FOLLOWED, "Meal prep made the week easier.");
+        seedComplianceLog(records.get(3), nnuolaPlan, today.minusDays(1), ComplianceLevel.PARTIALLY_FOLLOWED, "Late dinner but portions stayed controlled.");
+
+        MealPlan miaPlan = seedMealPlan(pt, records.get(7),
+                "Routine Builder Plan",
+                "Simple structure to support weight loss while making weekdays more repeatable.",
+                """
+                        Breakfast: Protein smoothie and toast
+                        Lunch: Chicken salad wrap and fruit
+                        Snack: Boiled eggs or yogurt
+                        Dinner: Salmon, couscous, vegetables
+                        Notes: Prepare lunch the night before when possible.
+                        """,
+                true,
+                today.minusDays(12).atTime(12, 20));
+        seedComplianceLog(records.get(7), miaPlan, today.minusDays(9), ComplianceLevel.NOT_FOLLOWED, "Week started off routine.");
+        seedComplianceLog(records.get(7), miaPlan, today.minusDays(6), ComplianceLevel.PARTIALLY_FOLLOWED, "Better structure but snacks were inconsistent.");
+        seedComplianceLog(records.get(7), miaPlan, today.minusDays(3), ComplianceLevel.FOLLOWED, "Much stronger routine this week.");
+        seedComplianceLog(records.get(7), miaPlan, today.minusDays(1), ComplianceLevel.FOLLOWED, "Prepared meals ahead of time.");
+    }
+
+    private void seedClientNotes(User pt, List<ClientRecord> records, LocalDate today) {
+        seedClientNote(records.get(0), pt,
+                "Travel week handled well. Keep daily steps above 8k when work gets busy.",
+                today.minusDays(20).atTime(14, 10));
+        seedClientNote(records.get(0), pt,
+                "Bench press confidence is improving. Progress load conservatively next block.",
+                today.minusDays(6).atTime(10, 5));
+        seedClientNote(records.get(1), pt,
+                "Technique cues are landing well. Keep instructions short and specific.",
+                today.minusDays(9).atTime(18, 0));
+        seedClientNote(records.get(1), pt,
+                "Monitor hip tightness next week and adjust the second lower session if needed.",
+                today.minusDays(2).atTime(8, 40));
+        seedClientNote(records.get(3), pt,
+                "Recovery is noticeably better when sleep stays above seven hours.",
+                today.minusDays(12).atTime(7, 30));
+        seedClientNote(records.get(4), pt,
+                "Travel schedule is still disruptive. Keep sessions short and flexible.",
+                today.minusDays(16).atTime(9, 20));
+    }
+
+    private void seedInvitations(User pt, List<ClientRecord> records, LocalDate today) {
+        seedInvitation(pt,
+                "Layla Green",
+                "layla.green@example.com",
+                "17c49f6b-1c3e-4e80-a5ab-3489c1d0ab10",
+                InvitationStatus.PENDING,
+                today.minusDays(2).atTime(11, 15),
+                null);
+        seedInvitation(pt,
+                records.get(15).getClientUser().getFullName(),
+                records.get(15).getClientUser().getEmail(),
+                "5c35d18e-fb42-47c7-8dd2-48d7d45c64d8",
+                InvitationStatus.ACCEPTED,
+                today.minusDays(9).atTime(9, 0),
+                today.minusDays(8).atTime(17, 45));
+        seedInvitation(pt,
+                "Priya Shah",
+                "priya.shah@example.com",
+                "2475e147-2b9c-4c70-90ce-b4a6ca20f9a2",
+                InvitationStatus.EXPIRED,
+                today.minusDays(11).atTime(14, 20),
+                null);
+        seedInvitation(pt,
+                "Daniel Foster",
+                "daniel.foster@example.com",
+                "2f5b0fb4-4f83-4c60-b7d4-9f79b5c1df58",
+                InvitationStatus.PENDING,
+                today.minusDays(1).atTime(16, 45),
+                null);
+    }
+
     private void seedConversation(User pt, ClientRecord record, MessageSeed... seeds) {
         Conversation conversation = conversationRepository.save(Conversation.builder()
                 .ptUser(pt)
@@ -459,6 +638,96 @@ public class DataSeeder implements CommandLineRunner {
         conversation.setUnreadCountPt(unreadCountPt);
         conversation.setUnreadCountClient(unreadCountClient);
         conversationRepository.save(conversation);
+    }
+
+    private void seedProgressPhoto(ClientRecord record,
+                                   PhotoType photoType,
+                                   String storageKey,
+                                   String originalFilename,
+                                   long fileSize) {
+        checkInRepository.findTopByClientRecordOrderBySubmittedAtDesc(record).ifPresent(checkIn ->
+                seedProgressPhoto(checkIn, photoType, storageKey, originalFilename, fileSize)
+        );
+    }
+
+    private void seedProgressPhoto(CheckIn checkIn,
+                                   PhotoType photoType,
+                                   String storageKey,
+                                   String originalFilename,
+                                   long fileSize) {
+        checkInPhotoRepository.save(CheckInPhoto.builder()
+                .checkIn(checkIn)
+                .photoType(photoType)
+                .storageKey(storageKey)
+                .originalFilename(originalFilename)
+                .fileSize(fileSize)
+                .build());
+    }
+
+    private MealPlan seedMealPlan(User pt,
+                                  ClientRecord record,
+                                  String title,
+                                  String overview,
+                                  String dailyGuidance,
+                                  boolean active,
+                                  LocalDateTime createdAt) {
+        MealPlan mealPlan = mealPlanRepository.save(MealPlan.builder()
+                .ptUser(pt)
+                .clientRecord(record)
+                .title(title)
+                .overview(overview)
+                .dailyGuidance(dailyGuidance)
+                .active(active)
+                .build());
+        mealPlan.setCreatedAt(createdAt);
+        mealPlan.setUpdatedAt(createdAt.plusDays(2));
+        return mealPlanRepository.save(mealPlan);
+    }
+
+    private void seedComplianceLog(ClientRecord record,
+                                   MealPlan mealPlan,
+                                   LocalDate date,
+                                   ComplianceLevel compliance,
+                                   String notes) {
+        MealComplianceLog log = mealComplianceLogRepository.save(MealComplianceLog.builder()
+                .clientRecord(record)
+                .mealPlan(mealPlan)
+                .date(date)
+                .compliance(compliance)
+                .notes(notes)
+                .build());
+        log.setLoggedAt(date.atTime(20, 0));
+        mealComplianceLogRepository.save(log);
+    }
+
+    private void seedClientNote(ClientRecord record, User pt, String noteText, LocalDateTime createdAt) {
+        ClientRecordNote note = clientRecordNoteRepository.save(ClientRecordNote.builder()
+                .clientRecord(record)
+                .ptUser(pt)
+                .noteText(noteText)
+                .build());
+        note.setCreatedAt(createdAt);
+        clientRecordNoteRepository.save(note);
+    }
+
+    private void seedInvitation(User pt,
+                                String fullName,
+                                String email,
+                                String token,
+                                InvitationStatus status,
+                                LocalDateTime createdAt,
+                                LocalDateTime acceptedAt) {
+        ClientInvitation invitation = clientInvitationRepository.save(ClientInvitation.builder()
+                .ptUser(pt)
+                .email(email)
+                .fullName(fullName)
+                .token(token)
+                .status(status)
+                .expiresAt(createdAt.plusDays(7))
+                .acceptedAt(acceptedAt)
+                .build());
+        invitation.setCreatedAt(createdAt);
+        clientInvitationRepository.save(invitation);
     }
 
     private record AssignmentSeed(Workout workout,

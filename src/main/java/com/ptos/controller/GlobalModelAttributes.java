@@ -48,12 +48,9 @@ public class GlobalModelAttributes {
         if (authentication == null || !(authentication.getPrincipal() instanceof PtosUserDetails userDetails)) {
             return 0;
         }
-        if (userDetails.getRole() == Role.PT) {
-            return messagingService.getUnreadCountForPT(userDetails.getUser());
+        if (userDetails.getRole() != Role.PT) {
+            return 0;
         }
-        if (userDetails.getRole() == Role.CLIENT) {
-            return messagingService.getUnreadCountForClient(userDetails.getUser());
-        }
-        return 0;
+        return messagingService.getUnreadCountForPT(userDetails.getUser());
     }
 }

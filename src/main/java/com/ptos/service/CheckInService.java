@@ -1,7 +1,6 @@
 package com.ptos.service;
 
 import com.ptos.domain.*;
-import com.ptos.dto.CheckInForm;
 import com.ptos.integration.FileStorageGateway;
 import com.ptos.repository.CheckInFeedbackRepository;
 import com.ptos.repository.CheckInPhotoRepository;
@@ -40,7 +39,11 @@ public class CheckInService {
 
     @Transactional
     public CheckIn submitCheckIn(User clientUser,
-                                 CheckInForm form,
+                                 Double currentWeightKg,
+                                 Integer moodScore,
+                                 Integer energyScore,
+                                 Integer sleepScore,
+                                 String notes,
                                  MultipartFile frontPhoto,
                                  MultipartFile sidePhoto,
                                  MultipartFile backPhoto) {
@@ -54,11 +57,11 @@ public class CheckInService {
         CheckIn checkIn = CheckIn.builder()
                 .clientRecord(clientRecord)
                 .submittedAt(LocalDateTime.now())
-                .currentWeightKg(form.getCurrentWeightKg())
-                .moodScore(form.getMoodScore())
-                .energyScore(form.getEnergyScore())
-                .sleepScore(form.getSleepScore())
-                .notes(trimToNull(form.getNotes()))
+                .currentWeightKg(currentWeightKg)
+                .moodScore(moodScore)
+                .energyScore(energyScore)
+                .sleepScore(sleepScore)
+                .notes(trimToNull(notes))
                 .status(CheckInStatus.PENDING_REVIEW)
                 .build();
         checkIn = checkInRepository.save(checkIn);
@@ -77,7 +80,7 @@ public class CheckInService {
                 .orElseGet(() -> ClientProfile.builder()
                         .user(userRepository.getReferenceById(clientUser.getId()))
                         .build());
-        profile.setCurrentWeightKg(form.getCurrentWeightKg());
+        profile.setCurrentWeightKg(currentWeightKg);
         clientProfileRepository.save(profile);
 
         return checkIn;

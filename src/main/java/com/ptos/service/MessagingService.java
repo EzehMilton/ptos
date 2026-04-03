@@ -56,6 +56,10 @@ public class MessagingService {
         return conversationRepository.findByClientUser(clientUser);
     }
 
+    public Optional<Conversation> getConversationForPTAndClient(User ptUser, User clientUser) {
+        return conversationRepository.findByPtUserAndClientUser(ptUser, clientUser);
+    }
+
     public Optional<Conversation> getConversationForPT(Long conversationId, User ptUser) {
         return conversationRepository.findByIdAndPtUser(conversationId, ptUser);
     }

@@ -2,26 +2,24 @@
 
 ## What This Application Is
 
-PTOS (branded as **SETLY** in the UI) is a server-rendered personal training platform built for two user roles:
+PTOS (branded as **SETLY** in the UI) is a server-rendered personal training management platform built exclusively for PT users. Clients exist as managed data — they do not have web access to this application.
 
-- `PT` users, who manage clients, create workouts, review check-ins, manage nutrition plans, communicate via messaging, and monitor business/engagement signals
-- `CLIENT` users, who complete their profile, view assigned workouts, submit check-ins, follow meal plans, message their PT, and track progress
+- `PT` users sign up, build a client roster, create workouts, assign meal plans, review check-ins, communicate via messaging, and monitor business/engagement signals
+- `CLIENT` user accounts exist in the database for identity, but clients do not log in or interact with the application through a browser. Their only web touchpoint is accepting an invitation link to register.
 
-At its current stage, PTOS covers the core PT-client workflow plus client acquisition, messaging, nutrition tracking, and health scoring:
+At its current stage, PTOS covers the full PT management workflow:
 
 1. A PT signs up and completes their business profile (onboarding)
 2. The PT invites clients or creates client accounts directly
-3. Clients accept invitations and complete their profile (onboarding)
-4. The PT creates workouts and assigns them to clients
-5. The PT creates meal plans for clients
-6. Clients start and complete workouts
-7. Clients log daily meal compliance
-8. Clients submit periodic check-ins (with optional progress photos)
-9. The PT reviews those check-ins and sends feedback
-10. The PT and client communicate via in-app messaging
-11. The PT monitors client health scores, churn risk, and business metrics from the dashboard and business views
+3. Clients accept invitations to register (their only web interaction)
+4. The PT manages client profiles, status, and notes
+5. The PT creates workouts and assigns them to clients
+6. The PT creates and manages meal plans for clients
+7. The PT reviews client check-ins and sends feedback
+8. The PT communicates with clients via in-app messaging
+9. The PT monitors client health scores, churn risk, and business metrics
 
-This is a traditional Spring Boot MVC application. It does not currently expose a REST API. The app renders HTML on the server using Thymeleaf.
+This is a traditional Spring Boot MVC application. It does not expose a REST API. The app renders HTML on the server using Thymeleaf.
 
 ## Tech Stack
 
@@ -56,6 +54,7 @@ The codebase follows a standard Spring MVC layered structure:
   - Validates forms
   - Delegates business logic to services
   - Returns Thymeleaf views
+  - All controllers are PT-facing except InviteController (public)
 - `service`
   - Contains business logic
   - Owns read/write workflows
@@ -65,7 +64,7 @@ The codebase follows a standard Spring MVC layered structure:
   - Encapsulate persistence access and query methods
 - `domain`
   - JPA entities and enums
-  - Represent users, client records, profiles, PT profiles, workouts, workout assignments, check-ins, feedback, conversations, messages, meal plans, compliance logs, invitations, and check-in photos
+  - Represent users, PT profiles, client records, client record notes, client profiles, workouts, workout assignments, check-ins, check-in photos, feedback, conversations, messages, meal plans, compliance logs, and invitations
 - `dto`
   - Form objects and view models
   - Used to keep controller/service interactions explicit and stable
@@ -77,7 +76,8 @@ The codebase follows a standard Spring MVC layered structure:
   - `integration.dummy` — rule-based stub implementations (e.g. insight generation without an AI provider)
   - `integration.local` — local implementations (e.g. filesystem storage, no-op message delivery)
 - `templates`
-  - Thymeleaf views for PT and client pages
+  - Thymeleaf views — all under `pt/` (PT-facing) or `auth/` (public)
+  - No client-facing templates exist
 - `config`
   - Security setup
   - Seed data
@@ -85,12 +85,11 @@ The codebase follows a standard Spring MVC layered structure:
 
 ## Security Model
 
-Security is role-based.
+This is a PT-only application. Client accounts cannot log in.
 
 - Public routes:
   - `/`
   - `/login`
-  - `/signup`
   - `/pt/signup`
   - `/invite/**`
   - `/uploads/**`
@@ -99,15 +98,13 @@ Security is role-based.
 - PT-only routes:
   - `/pt/onboarding`, `/pt/onboarding/**`
   - `/pt/**`
-- Client-only routes:
-  - `/client/**`
+- All other requests: `permitAll()` (no client-gated routes exist)
 
-After login, users are redirected based on role and onboarding status:
+After login:
 
-- PT with completed profile -> `/pt/dashboard`
-- PT without completed profile -> `/pt/onboarding`
-- Client with completed profile -> `/client/home`
-- Client without completed profile -> `/client/onboarding`
+- PT with completed onboarding -> `/pt/dashboard`
+- PT without completed onboarding -> `/pt/onboarding`
+- CLIENT attempting login -> session invalidated, redirected to `/login?clientAccess=true` with error message "Client accounts do not have web access in this application"
 
 This behavior is defined in [SecurityConfig.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/config/SecurityConfig.java).
 
@@ -124,6 +121,8 @@ Fields include:
 - `fullName`
 - `role` (`PT` or `CLIENT`)
 - `enabled`
+
+CLIENT users exist for identity/linking purposes but cannot access the web UI.
 
 ### 2. PTProfile
 
@@ -150,14 +149,25 @@ Key fields:
 - `status` (`ACTIVE`, `AT_RISK`, `INACTIVE`, `ARCHIVED`)
 - `startDate`
 - `monthlyPackagePrice`
-- `ptNotes`
+- `ptNotes` (latest note text — also stored individually in ClientRecordNote)
 
-Important point:
+Important points:
 
 - This is the record that makes a client belong to a PT
-- A client account can exist without a `ClientRecord`, but many client features assume one exists
+- Deleting a client record cascades to all related data (conversations, messages, invitations, compliance logs, meal plans, assignments, notes, check-ins). If the client user is not linked to any other PT, the user account and profile are also deleted.
 
-### 4. ClientProfile
+### 4. ClientRecordNote
+
+Timestamped PT notes attached to a client record. Notes are stored individually rather than overwriting a single field, preserving the full history.
+
+Key fields:
+
+- `clientRecord` (many-to-one)
+- `ptUser` (many-to-one)
+- `noteText` (max 2000 chars)
+- `createdAt`
+
+### 5. ClientProfile
 
 Represents the client's personal and goal data.
 
@@ -174,7 +184,7 @@ Key fields:
 - notes
 - `onboardingComplete`
 
-### 5. Workout
+### 6. Workout
 
 A PT-created reusable workout definition.
 
@@ -188,7 +198,7 @@ Key fields:
 
 A workout contains ordered `WorkoutExercise` rows.
 
-### 6. WorkoutAssignment
+### 7. WorkoutAssignment
 
 Represents a workout assigned to a specific client.
 
@@ -202,7 +212,7 @@ Key fields:
 - completedAt
 - completionNotes
 
-### 7. CheckIn
+### 8. CheckIn
 
 A client-submitted progress update.
 
@@ -218,7 +228,7 @@ Key fields:
 - status (`PENDING_REVIEW`, `REVIEWED`)
 - `photos` (one-to-many list of `CheckInPhoto`)
 
-### 8. CheckInPhoto
+### 9. CheckInPhoto
 
 A progress photo attached to a check-in.
 
@@ -231,7 +241,7 @@ Key fields:
 - `fileSize`
 - `uploadedAt`
 
-### 9. CheckInFeedback
+### 10. CheckInFeedback
 
 PT feedback attached to a check-in.
 
@@ -242,7 +252,7 @@ Key fields:
 - feedback text
 - sentAt
 
-### 10. ClientInvitation
+### 11. ClientInvitation
 
 An invitation from a PT for a client to join the platform.
 
@@ -257,7 +267,7 @@ Key fields:
 - `acceptedAt`
 - `createdAt`
 
-### 11. Conversation
+### 12. Conversation
 
 A messaging thread between a PT and a client.
 
@@ -271,7 +281,7 @@ Key fields:
 - `unreadCountClient`
 - `createdAt`
 
-### 12. Message
+### 13. Message
 
 An individual message within a conversation.
 
@@ -284,7 +294,7 @@ Key fields:
 - `readAt`
 - `createdAt`
 
-### 13. MealPlan
+### 14. MealPlan
 
 A nutrition plan created by a PT for a specific client.
 
@@ -299,7 +309,7 @@ Key fields:
 - `createdAt`
 - `updatedAt`
 
-### 14. MealComplianceLog
+### 15. MealComplianceLog
 
 Daily meal plan adherence entry.
 
@@ -449,14 +459,16 @@ The app seeds a demo PT and a roster of demo clients on startup when the databas
 
 Seed characteristics:
 
-- 1 PT account with PT profile (business name, specialisation, location, bio, onboarding marked complete)
-- multiple client accounts
-- client records linking those clients to the PT
-- profiles with varied completeness (onboarding marked complete on seeded clients)
-- workouts
-- workout assignments in mixed states
-- check-ins in mixed states
-- some reviewed feedback
+- 1 PT account with PT profile (business name: "Big Mike Fitness", specialisation, location, bio, onboarding marked complete)
+- 17 client accounts with varied profiles (all onboarding marked complete)
+- client records linking clients to the PT with mixed statuses (ACTIVE, AT_RISK, INACTIVE)
+- workouts (Fat Loss Foundation, Strength Builder, Mobility Reset)
+- workout assignments in mixed states (ASSIGNED, IN_PROGRESS, COMPLETED)
+- check-ins with mixed states and progress photos (seeded for Jamie Chen's check-ins)
+- reviewed feedback on some check-ins
+- meal plans with compliance logs (active plans for Alex, Jamie, Nnuola, Mia; one legacy plan for Alex)
+- client record notes (timestamped coaching observations for multiple clients)
+- client invitations in mixed states (PENDING, ACCEPTED, EXPIRED)
 - conversations with realistic multi-message threads between PT and clients (with varying read statuses)
 
 Current seeded PT login:
@@ -464,20 +476,18 @@ Current seeded PT login:
 - email: `pt@ptos.local`
 - password: `password123`
 
-Seeded client accounts also use `password123`.
+Seeded client accounts also use `password123` but cannot log in to the web UI.
 
 This seed behavior lives in [DataSeeder.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/config/DataSeeder.java).
 
-## User Roles and Capabilities
-
-### PT Capabilities
+## PT Capabilities
 
 A PT can currently:
 
 - sign up for a PT account at `/pt/signup`
 - complete business profile onboarding (or skip it)
-- log in
-- view the PT dashboard
+- edit their business profile at `/pt/profile`
+- log in and view the PT dashboard
 - view business metrics and health analytics
 - browse all assigned clients
 - search clients by name or email
@@ -485,23 +495,23 @@ A PT can currently:
 - directly create client accounts with a temporary password
 - view pending and past invitations
 - open an individual client detail page
-- update client status
-- update monthly package price
-- update PT notes for a client
+- update client status and monthly package price
+- add timestamped coaching notes to client records (preserved as history)
 - view client profile completion and profile details
-- view assigned workouts for a client
-- view recent client check-ins
-- view derived client milestones
-- view client health score and risk level
+- view client health score, risk level, and risk insight
+- delete a client record (with name confirmation; cascading delete of all related data)
 - create a workout
 - view workouts they have created
+- delete a workout (cascading delete of all assignments)
 - open a workout detail page
-- assign a workout to an active client
-- create, edit, and view meal plans for clients
+- assign a workout to an active client with a specific date
+- unassign a workout from a client
+- create, edit, delete, and view meal plans for clients
 - view client meal compliance logs and compliance rate
 - browse pending/reviewed/all client check-ins
 - open an individual check-in review page
 - compare current and previous check-ins
+- view progress photos on check-ins
 - submit written feedback on a pending client check-in
 - view suggested actions generated from health scores and engagement rules
 - see recent milestone activity across clients
@@ -509,33 +519,16 @@ A PT can currently:
 - send and receive messages with clients
 - view unread message count in navigation
 - view conversation inbox with all client threads
+- start a new conversation from a client record
 
-### Client Capabilities
+## Client Interaction Model
 
-A client can currently:
+Clients do not log in or use this application. Their only web interaction is:
 
-- sign up for a client account
-- accept an invitation from a PT (creates account if needed, links to PT)
-- complete profile onboarding
-- log in
-- view their client home page
-- complete or update their profile
-- see profile completion progress
-- view assigned workouts by status
-- open a workout detail page
-- start an assigned workout
-- complete an in-progress workout
-- submit completion notes
-- browse their check-in history
-- submit a new check-in (with optional progress photos)
-- view check-in details
-- read PT feedback on reviewed check-ins
-- view a progress card showing achieved milestones
-- view their active meal plan
-- log daily meal compliance (followed, partially followed, not followed) with notes
-- view recent compliance history
-- send and receive messages with their PT
-- view unread message count in navigation
+- Accepting an invitation link at `/invite/{token}` to create their account and link to a PT
+- After accepting, they see a confirmation page. There is no further web access.
+
+All other client data (profiles, check-ins, workouts, compliance logs, messages) is managed by the PT through the PT UI, or submitted through external channels (future mobile app, API, etc.).
 
 ## Main PT Flow
 
@@ -553,30 +546,30 @@ The PT logs in and lands on `/pt/dashboard` (or `/pt/onboarding` if not yet comp
 
 The dashboard gives a quick operational snapshot:
 
-- total clients
-- active clients
-- churn risk count
+- total clients, active clients, churn risk count
 - pending check-ins
-- workouts completed this week
-- total workouts assigned
+- workouts completed this week, total workouts assigned
 - estimated monthly revenue
 - health overview (healthy / watch / at risk / churning breakdown)
 - recent pending check-ins
 - recent milestones
 - weekly client summaries
 - recently updated clients
-- quick links
+- quick links (manage clients, business overview, review check-ins)
 - suggested actions
+
+When no clients exist, the dashboard links to "Add a new Client".
 
 ### 4. Add clients
 
-From `/pt/clients`, the PT can:
+From `/pt/clients/new`, the PT can:
 
-- invite a client by email (generates a shareable link)
+- invite a client by email (generates a shareable link valid for 7 days)
 - directly create a client account with a temporary password
-- view pending and past invitations
 
-### 5. Review client list
+From `/pt/clients`, the PT can view pending and past invitations.
+
+### 5. Manage client roster
 
 From `/pt/clients`, the PT can:
 
@@ -590,20 +583,26 @@ On `/pt/clients/{id}`, the PT can:
 
 - review client overview and profile information
 - see profile completion
-- update status, package price, and PT notes
+- view health score, risk level, and risk insight
+- update status and package price
+- add coaching notes (preserved as timestamped history)
 - review assigned workouts and completion state
+- unassign workouts
 - review recent check-ins
 - inspect milestone progress
-- view/create/edit meal plans
-- view meal compliance logs
+- view active meal plan
+- open conversation with client
+- delete the client record (with name confirmation)
 
-### 7. Create or assign workouts
+### 7. Create, assign, or delete workouts
 
 The PT can:
 
 - create a workout at `/pt/workouts/new`
 - view workout details at `/pt/workouts/{id}`
-- assign that workout to an active client from the workout detail page
+- assign that workout to an active client with a specific date
+- unassign a workout from a client
+- delete a workout (cascading to all assignments)
 
 ### 8. Manage nutrition
 
@@ -611,6 +610,7 @@ The PT can:
 
 - create a meal plan for a client at `/pt/clients/{id}/nutrition/new`
 - edit the active meal plan at `/pt/clients/{id}/nutrition/edit`
+- delete the active meal plan
 - view client meal compliance logs and compliance rate
 
 ### 9. Review check-ins
@@ -652,101 +652,9 @@ From `/pt/business`, the PT can monitor:
 - re-engagement candidates
 - incomplete profile clients
 
-## Main Client Flow
+### 12. Edit profile
 
-This is the intended client journey in the app today.
-
-### 1. Sign up or accept invitation
-
-Clients can sign up at `/signup`, or accept a PT's invitation at `/invite/{token}`.
-
-After accepting an invitation, the client account is created (if it doesn't exist) and linked to the PT.
-
-### 2. Onboard
-
-After first login, clients are redirected to `/client/onboarding` to complete their profile (age, height, weight, goals, training experience, injuries, dietary preferences).
-
-### 3. Log in
-
-Clients log in at `/login` and land on `/client/home` (or `/client/onboarding` if not yet completed).
-
-### 4. Complete profile
-
-From `/client/profile`, the client can update:
-
-- body metrics
-- goal data
-- injuries/limitations
-- dietary preferences
-- training experience
-- general notes
-
-Profile completeness is surfaced throughout the app.
-
-### 5. View assigned workouts
-
-From `/client/workouts`, the client sees workouts grouped into:
-
-- Upcoming
-- In Progress
-- Completed
-
-### 6. Perform workout
-
-On `/client/workouts/{assignmentId}`:
-
-- an `ASSIGNED` workout can be started
-- an `IN_PROGRESS` workout can be completed with optional notes
-- a `COMPLETED` workout shows started/completed times, duration, and notes
-
-### 7. Submit check-ins
-
-From `/client/checkins/new`, the client submits:
-
-- current weight
-- mood
-- energy
-- sleep quality
-- notes
-- optional progress photos (front, side, back — JPEG/PNG/WEBP, max 10MB each)
-
-Submitting a check-in also updates `ClientProfile.currentWeightKg`.
-
-### 8. Review check-in history
-
-On `/client/checkins`, the client can browse previous submissions.
-
-On `/client/checkins/{id}`, the client can:
-
-- review the submitted data
-- see whether it is pending or reviewed
-- read PT feedback once available
-
-### 9. Follow meal plan
-
-From `/client/nutrition`, the client can:
-
-- view their active meal plan (title, overview, daily guidance)
-- log daily meal compliance (followed / partially followed / not followed) with notes
-- view recent compliance history (last 14 days)
-
-### 10. Message PT
-
-From `/client/messages`, the client can:
-
-- view their conversation thread with their PT
-- send and receive messages
-- see unread message indicator in navigation
-
-### 11. Track progress
-
-On `/client/home`, the client can see:
-
-- profile completion card
-- today's active workouts
-- check-in status card (due or submitted)
-- meal plan card (active plan and today's compliance status)
-- milestone count and recent achieved milestones
+From `/pt/profile`, the PT can update their business name, specialisation, location, bio, and logo URL.
 
 ## Endpoint Reference
 
@@ -760,35 +668,12 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 | `GET` | `/login` | Login page |
 | `POST` | `/login` | Spring Security login processing |
 | `POST` | `/logout` | Logout |
-| `GET` | `/signup` | Client signup form |
-| `POST` | `/signup` | Creates a new client user account |
 | `GET` | `/pt/signup` | PT signup form |
 | `POST` | `/pt/signup` | Creates a new PT user account (auto-authenticates) |
 | `GET` | `/invite/{token}` | Invitation acceptance form |
-| `POST` | `/invite/{token}` | Accept invitation, create account if needed |
+| `POST` | `/invite/{token}` | Accept invitation, create client account |
+| `GET` | `/invite/{token}/accepted` | Invitation accepted confirmation page |
 | `GET` | `/h2-console` | H2 console entry point |
-
-### Client Endpoints
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/client/onboarding` | Client onboarding form |
-| `POST` | `/client/onboarding` | Save onboarding profile, redirect to home |
-| `GET` | `/client/home` | Client home dashboard |
-| `GET` | `/client/profile` | View/edit client profile |
-| `POST` | `/client/profile` | Save profile |
-| `GET` | `/client/workouts` | List assigned workouts grouped by status |
-| `GET` | `/client/workouts/{assignmentId}` | Workout assignment detail |
-| `POST` | `/client/workouts/{assignmentId}/start` | Mark assignment as in progress |
-| `POST` | `/client/workouts/{assignmentId}/complete` | Mark assignment as completed |
-| `GET` | `/client/checkins` | List client's check-ins |
-| `GET` | `/client/checkins/new` | New check-in form |
-| `POST` | `/client/checkins` | Submit new check-in |
-| `GET` | `/client/checkins/{id}` | View one check-in and any PT feedback |
-| `GET` | `/client/nutrition` | View active meal plan and compliance logs |
-| `POST` | `/client/nutrition/log` | Log daily meal compliance |
-| `GET` | `/client/messages` | View conversation with PT |
-| `POST` | `/client/messages` | Send message to PT |
 
 ### PT Endpoints
 
@@ -797,6 +682,8 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 | `GET` | `/pt/onboarding` | PT onboarding form |
 | `POST` | `/pt/onboarding` | Save business profile |
 | `GET` | `/pt/onboarding/skip` | Skip onboarding |
+| `GET` | `/pt/profile` | Edit PT profile |
+| `POST` | `/pt/profile` | Update PT profile |
 | `GET` | `/pt/dashboard` | PT dashboard |
 | `GET` | `/pt/business` | Business analytics view |
 | `GET` | `/pt/clients` | Client roster, optional search via `q` |
@@ -804,17 +691,22 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 | `POST` | `/pt/clients/invite` | Send client invitation |
 | `POST` | `/pt/clients/create-direct` | Directly create client account |
 | `GET` | `/pt/clients/{id}` | Client detail |
-| `POST` | `/pt/clients/{id}` | Update client status, package price, and PT notes |
+| `POST` | `/pt/clients/{id}` | Update client status, package price, add notes |
+| `GET` | `/pt/clients/{id}/delete` | Client deletion confirmation page |
+| `POST` | `/pt/clients/{id}/delete` | Delete client record (with name confirmation) |
 | `GET` | `/pt/clients/{clientRecordId}/nutrition` | View client meal plan and compliance |
 | `GET` | `/pt/clients/{clientRecordId}/nutrition/new` | New meal plan form |
 | `POST` | `/pt/clients/{clientRecordId}/nutrition` | Create meal plan |
 | `GET` | `/pt/clients/{clientRecordId}/nutrition/edit` | Edit active meal plan form |
 | `POST` | `/pt/clients/{clientRecordId}/nutrition/update` | Update active meal plan |
+| `POST` | `/pt/clients/{clientRecordId}/nutrition/delete` | Delete active meal plan |
 | `GET` | `/pt/workouts` | PT workout library |
 | `GET` | `/pt/workouts/new` | Create workout form |
 | `POST` | `/pt/workouts` | Create workout |
 | `GET` | `/pt/workouts/{id}` | Workout detail |
 | `POST` | `/pt/workouts/{id}/assign` | Assign workout to a client |
+| `POST` | `/pt/workouts/{id}/delete` | Delete workout |
+| `POST` | `/pt/workouts/assignments/{assignmentId}/delete` | Unassign workout |
 | `GET` | `/pt/checkins` | List check-ins, optional `filter=pending\|reviewed\|all` |
 | `GET` | `/pt/checkins/{id}` | Review one client check-in |
 | `POST` | `/pt/checkins/{id}/feedback` | Submit PT feedback for a pending check-in |
@@ -827,51 +719,29 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 
 ### AuthController
 
-- client signup
 - PT signup (with auto-authentication and redirect to onboarding)
+- No client signup exists
 
 ### HomeController
 
 - public landing page
 - login page
-- client home page
 
 ### InviteController
 
 - invitation acceptance (unauthenticated)
 - token validation, expiry handling
 - account creation and PT linking
+- post-acceptance confirmation page
 
 ### PTOnboardingController
 
 - PT business profile setup
 - skip onboarding option
 
-### ClientOnboardingController
+### PtProfileController
 
-- client profile onboarding
-- redirect to home after completion
-
-### ClientProfileController
-
-- create/update client profile
-
-### ClientWorkoutController
-
-- client workout list/detail/start/complete
-
-### ClientCheckInController
-
-- client check-in history, submission (with photo upload), and detail
-
-### ClientNutritionController
-
-- view active meal plan
-- log daily meal compliance
-
-### ClientMessageController
-
-- view and send messages in conversation with PT
+- PT profile editing (separate from onboarding)
 
 ### PtDashboardController
 
@@ -881,16 +751,19 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 ### PtClientsController
 
 - PT client roster
-- PT client detail
-- PT-side client updates
+- PT client detail (with health score, risk insight, notes history, meal plan, conversation link)
+- PT-side client updates (status, package price, notes)
 - client invitation and direct creation
+- client deletion (with name confirmation)
 
 ### PtWorkoutController
 
 - PT workout list
 - workout creation
 - workout detail
-- workout assignment
+- workout assignment with date
+- workout deletion
+- workout unassignment
 
 ### PtCheckInController
 
@@ -901,7 +774,7 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 ### PtNutritionController
 
 - view client meal plan and compliance
-- create and edit meal plans
+- create, edit, and delete meal plans
 
 ### PtMessageController
 
@@ -912,15 +785,14 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 ### GlobalModelAttributes
 
 - provides `currentPath` for navigation highlighting
-- provides `ptPendingCheckInCount` for check-in badge
-- provides `unreadMessageCount` for message badge (both PT and client)
+- provides `ptPendingCheckInCount` for check-in badge (PT only)
+- provides `unreadMessageCount` for message badge (PT only)
 
 ## Service Layer Summary
 
 ### UserService
 
 - checks duplicate emails
-- creates client accounts with encoded passwords
 - creates PT accounts with encoded passwords
 
 ### PTProfileService
@@ -938,6 +810,9 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 
 - loads PT rosters and detail views
 - updates PT-managed client settings
+- adds timestamped coaching notes (ClientRecordNote)
+- retrieves notes history for a client record
+- deletes client records with cascading cleanup (conversations, messages, invitations, compliance logs, meal plans, assignments, notes, check-ins, profile, user account if orphaned)
 - computes profile completion for list/detail views
 
 ### ClientInvitationService
@@ -952,20 +827,21 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 
 - creates workouts and exercise rows
 - assigns workouts to clients
-- loads client assignments
-- starts and completes assignments
+- deletes workouts (cascading to assignments)
+- unassigns workouts from clients
 
 ### CheckInService
 
 - creates check-ins (with photo uploads)
 - updates profile weight on check-in submission
-- loads check-ins for PTs and clients
+- loads check-ins for PTs
 - submits PT feedback and marks a check-in reviewed
 
 ### NutritionService
 
 - creates meal plans (deactivates previous active plan)
 - updates active meal plans
+- deletes meal plans (cascading to compliance logs)
 - logs daily meal compliance
 - retrieves compliance logs and compliance rate
 - calculates meal plan coverage across PT's clients
@@ -973,7 +849,7 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 ### MessagingService
 
 - creates or retrieves conversations (lazy initialization)
-- lists conversations for PTs and clients
+- lists conversations for PTs
 - sends messages and updates conversation state
 - marks messages as read and updates unread counts
 - provides unread count for navigation badges
@@ -1042,21 +918,9 @@ The business page currently includes:
 - re-engagement opportunities (at-risk/churning clients with 14–60 day inactivity)
 - improving vs stable vs slipping breakdown
 
-## Current Client Home Content
-
-The client home page currently includes:
-
-- welcome header
-- profile completion card
-- today's workouts card
-- check-in status card (due or submitted)
-- meal plan card (active plan and today's compliance)
-- my progress / milestones card
-- quick links (workouts, check-in, nutrition)
-
 ## Navigation Structure
 
-### PT Navigation
+### PT Navigation (authenticated)
 
 - Dashboard
 - Clients
@@ -1064,27 +928,26 @@ The client home page currently includes:
 - Check-ins (with pending-count badge)
 - Messages (with unread-count badge)
 - Business
+- Profile icon (links to `/pt/profile`)
+- Logout button
 
-### Client Navigation
+### Unauthenticated Navigation
 
-- Home
-- My Workouts
-- My Check-ins
-- Nutrition
-- Messages (with unread-count badge)
-- My Profile
+- Login
+- PT Sign Up
+
+There is no client navigation. Clients cannot access the web UI.
 
 ## What The Application Does Not Yet Do
 
 As of now, PTOS does not yet provide:
 
+- client-facing web UI (clients cannot log in or interact with the app)
 - admin role or admin console
 - automatic email sending for invitations (invite links are generated for manual sharing)
 - real-time messaging (WebSocket/SSE)
 - push notifications or email notifications
-- workout editing
-- workout deletion
-- unassigning a workout
+- workout editing (only creation and deletion)
 - check-in editing after submission
 - check-in reminders/notifications
 - scheduling/calendar
@@ -1097,8 +960,9 @@ As of now, PTOS does not yet provide:
 
 The app is designed around a few practical ideas:
 
+- this is a PT management tool — the PT is the only web user
+- clients exist as data, not as active platform users
 - keep the PT workflow simple and operational
-- make the client workflow low-friction
 - store only core records, and derive as much insight as possible from them
 - use server-rendered HTML so the product can move quickly without a separate frontend application
 - use a gateway pattern for external integrations so implementations can be swapped without changing core logic
@@ -1118,6 +982,7 @@ The gateway pattern enables future integration with:
 - AI providers (e.g. Claude) for smarter client insights
 - Cloud storage (e.g. S3) for file hosting
 - Real-time messaging (e.g. WebSocket) for notifications
+- A future client-facing mobile app or API
 
 ## Good Starting Points For Future Contributors
 
@@ -1128,29 +993,32 @@ If you are updating the app, these are the main files to begin with:
 - Web config (file uploads): [WebConfig.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/config/WebConfig.java)
 - Shared layout/nav: [default.html](/Users/dev/Desktop/ptos/src/main/resources/templates/layout/default.html)
 - PT dashboard flow: [PtDashboardController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtDashboardController.java)
-- Client workflow: [HomeController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/HomeController.java), [ClientWorkoutController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/ClientWorkoutController.java), [ClientCheckInController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/ClientCheckInController.java)
 - PT workflow: [PtClientsController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtClientsController.java), [PtWorkoutController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtWorkoutController.java), [PtCheckInController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtCheckInController.java)
-- Messaging: [PtMessageController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtMessageController.java), [ClientMessageController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/ClientMessageController.java), [MessagingService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/MessagingService.java)
-- Nutrition: [PtNutritionController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtNutritionController.java), [ClientNutritionController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/ClientNutritionController.java), [NutritionService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/NutritionService.java)
+- Messaging: [PtMessageController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtMessageController.java), [MessagingService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/MessagingService.java)
+- Nutrition: [PtNutritionController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtNutritionController.java), [NutritionService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/NutritionService.java)
 - Client acquisition: [InviteController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/InviteController.java), [ClientInvitationService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/ClientInvitationService.java)
+- PT profile: [PtProfileController.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/controller/PtProfileController.java), [PTProfileService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/PTProfileService.java)
 - Health scoring: [HealthScoreService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/HealthScoreService.java)
+- Client record management: [ClientRecordService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/ClientRecordService.java)
 - Derived analytics and engagement logic: [DashboardService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/DashboardService.java), [BusinessService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/BusinessService.java), [SuggestedActionsService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/SuggestedActionsService.java), [MilestoneService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/MilestoneService.java), [InsightService.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/service/InsightService.java)
 - Integration gateways: [ClientInsightGateway.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/integration/ClientInsightGateway.java), [FileStorageGateway.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/integration/FileStorageGateway.java), [MessageDeliveryGateway.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/integration/MessageDeliveryGateway.java)
 - Seed/demo data: [DataSeeder.java](/Users/dev/Desktop/ptos/src/main/java/com/ptos/config/DataSeeder.java)
 
 ## Short Summary
 
-PTOS (branded as SETLY) currently supports the full loop of online personal training:
+PTOS (branded as SETLY) is a PT-only management platform. Clients do not have web access.
 
-- PT signs up and sets up business profile
-- PT invites clients or creates client accounts
-- clients onboard and complete their profile
-- PT creates and assigns workouts
-- PT creates meal plans for clients
-- client completes workouts and logs meal compliance
-- client submits check-ins with optional progress photos
-- PT reviews progress and sends feedback
-- PT and client communicate via in-app messaging
-- the app surfaces health scores, risk levels, business metrics, insights, and engagement signals on top of those core records
+The PT can:
+
+- sign up, onboard, and manage their business profile
+- invite or directly create client accounts
+- manage a client roster with status tracking, coaching notes, and health scoring
+- create, assign, unassign, and delete workouts
+- create, edit, and delete meal plans with compliance tracking
+- review client check-ins with progress photos and send feedback
+- communicate with clients via in-app messaging
+- monitor business health through dashboards with revenue, health scores, risk levels, and engagement signals
+
+Client accounts exist for identity and data linking. Their only web interaction is accepting an invitation. All other client data is managed through the PT interface.
 
 That is the product as it exists today.

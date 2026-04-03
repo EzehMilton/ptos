@@ -32,6 +32,15 @@ public class WorkoutService {
     }
 
     @Transactional
+    public void deleteWorkout(Long workoutId, User ptUser) {
+        Workout workout = workoutRepository.findByIdAndPtUser(workoutId, ptUser)
+                .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
+
+        workoutAssignmentRepository.deleteAll(workoutAssignmentRepository.findByWorkout(workout));
+        workoutRepository.delete(workout);
+    }
+
+    @Transactional
     public Workout createWorkout(User ptUser, WorkoutForm form) {
         Workout workout = Workout.builder()
                 .ptUser(ptUser)
@@ -75,6 +84,15 @@ public class WorkoutService {
                 .assignedDate(date)
                 .build();
         workoutAssignmentRepository.save(assignment);
+    }
+
+    @Transactional
+    public WorkoutAssignment unassignWorkout(Long assignmentId, User ptUser) {
+        WorkoutAssignment assignment = workoutAssignmentRepository.findByIdAndClientRecord_PtUser(assignmentId, ptUser)
+                .orElseThrow(() -> new IllegalArgumentException("Workout assignment not found"));
+
+        workoutAssignmentRepository.delete(assignment);
+        return assignment;
     }
 
     public List<WorkoutAssignment> getAssignmentsForClient(User clientUser) {

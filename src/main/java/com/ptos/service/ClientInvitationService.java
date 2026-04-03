@@ -8,7 +8,6 @@ import com.ptos.domain.Role;
 import com.ptos.domain.User;
 import com.ptos.dto.DirectCreateClientForm;
 import com.ptos.dto.InvitationAcceptResult;
-import com.ptos.dto.InviteAcceptForm;
 import com.ptos.dto.InviteClientForm;
 import com.ptos.repository.ClientInvitationRepository;
 import com.ptos.repository.ClientRecordRepository;
@@ -78,7 +77,7 @@ public class ClientInvitationService {
     }
 
     @Transactional
-    public InvitationAcceptResult acceptInvitation(String token, InviteAcceptForm form) {
+    public InvitationAcceptResult acceptInvitation(String token, String rawPassword) {
         ClientInvitation invitation = getRequiredInvitation(token);
         User ptUser = invitation.getPtUser();
 
@@ -100,7 +99,7 @@ public class ClientInvitationService {
                 .orElseGet(() -> userRepository.save(User.builder()
                         .fullName(invitation.getFullName())
                         .email(invitation.getEmail())
-                        .password(passwordEncoder.encode(form.getPassword()))
+                        .password(passwordEncoder.encode(rawPassword))
                         .role(Role.CLIENT)
                         .enabled(true)
                         .build()));

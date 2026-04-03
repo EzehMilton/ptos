@@ -153,4 +153,24 @@ public class PtNutritionController {
         redirectAttributes.addFlashAttribute("success", "Meal plan updated");
         return "redirect:/pt/clients/" + clientRecordId + "/nutrition";
     }
+
+    @PostMapping("/delete")
+    public String deleteMealPlan(@PathVariable Long clientRecordId, RedirectAttributes redirectAttributes) {
+        User ptUser = securityHelper.getCurrentUserDetails().getUser();
+        Optional<ClientRecord> clientRecordOpt = clientRecordService.getClientRecord(clientRecordId, ptUser);
+        if (clientRecordOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Client not found.");
+            return "redirect:/pt/clients";
+        }
+
+        Optional<MealPlan> mealPlanOpt = nutritionService.getActiveMealPlan(clientRecordOpt.get());
+        if (mealPlanOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "No active meal plan to delete.");
+            return "redirect:/pt/clients/" + clientRecordId + "/nutrition";
+        }
+
+        nutritionService.deleteMealPlan(ptUser, mealPlanOpt.get().getId());
+        redirectAttributes.addFlashAttribute("success", "Meal plan deleted");
+        return "redirect:/pt/clients/" + clientRecordId + "/nutrition";
+    }
 }

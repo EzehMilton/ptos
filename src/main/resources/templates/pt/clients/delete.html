@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Delete Client</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/clients/{id}(id=${detail.clientRecordId})}">&larr; Back to Client</a>
+    </div>
+
+    <div class="page-header">
+        <h1>Delete Client</h1>
+    </div>
+
+    <div class="card" style="max-width: 720px;">
+        <p style="font-weight: 600;" th:text="|You are about to delete ${detail.clientName}.|"></p>
+        <p class="text-muted mb-2"
+           th:text="|To confirm, type ${detail.clientName} exactly as shown in the box below, then click Delete Client.|"></p>
+        <p class="text-muted mb-3">This action removes the client from your PTOS records.</p>
+
+        <form th:action="@{/pt/clients/{id}/delete(id=${detail.clientRecordId})}"
+              th:object="${deleteClientForm}"
+              method="post">
+            <div class="form-group">
+                <label for="confirmationName">Client Name</label>
+                <input type="text" id="confirmationName" th:field="*{confirmationName}" autocomplete="off">
+                <div class="form-error" th:if="${#fields.hasErrors('confirmationName')}" th:errors="*{confirmationName}"></div>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-danger">Delete Client</button>
+                <a th:href="@{/pt/clients}" class="btn btn-secondary">Cancel</a>
+                <a th:href="@{/pt/clients/{id}(id=${detail.clientRecordId})}">Back to client's page</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
