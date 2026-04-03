@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${isEdit ? 'Edit Meal Plan' : 'Create Meal Plan'}">Meal Plan Form</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/clients/{id}/nutrition(id=${detail.clientRecordId})}">&larr; Meal Plan</a>
+    </div>
+
+    <div class="page-header">
+        <h1 th:text="${isEdit ? 'Edit Meal Plan' : 'Create Meal Plan'}"></h1>
+    </div>
+
+    <div class="card" th:if="${!isEdit}">
+        <form th:action="@{/pt/clients/{id}/nutrition(id=${detail.clientRecordId})}"
+              th:object="${mealPlanForm}"
+              method="post">
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input id="title" type="text" th:field="*{title}">
+                <div class="form-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="overview">Overview</label>
+                <textarea id="overview" th:field="*{overview}" rows="4"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('overview')}" th:errors="*{overview}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="dailyGuidance">Daily Guidance</label>
+                <textarea id="dailyGuidance"
+                          th:field="*{dailyGuidance}"
+                          rows="12"
+                          placeholder="Write the full meal plan here. Include meals, portions, timing, and any notes. Example:&#10;&#10;Breakfast: 3 eggs, 2 toast, avocado&#10;Snack: Greek yogurt with berries&#10;Lunch: Chicken breast, rice, vegetables&#10;Dinner: Salmon, potatoes, salad"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('dailyGuidance')}" th:errors="*{dailyGuidance}"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" th:text="${isEdit ? 'Save Changes' : 'Create Meal Plan'}"></button>
+        </form>
+    </div>
+
+    <div class="card" th:if="${isEdit}">
+        <form th:action="@{/pt/clients/{id}/nutrition/update(id=${detail.clientRecordId})}"
+              th:object="${mealPlanForm}"
+              method="post">
+            <div class="form-group">
+                <label for="edit-title">Title</label>
+                <input id="edit-title" type="text" th:field="*{title}">
+                <div class="form-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-overview">Overview</label>
+                <textarea id="edit-overview" th:field="*{overview}" rows="4"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('overview')}" th:errors="*{overview}"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-dailyGuidance">Daily Guidance</label>
+                <textarea id="edit-dailyGuidance"
+                          th:field="*{dailyGuidance}"
+                          rows="12"
+                          placeholder="Write the full meal plan here. Include meals, portions, timing, and any notes. Example:&#10;&#10;Breakfast: 3 eggs, 2 toast, avocado&#10;Snack: Greek yogurt with berries&#10;Lunch: Chicken breast, rice, vegetables&#10;Dinner: Salmon, potatoes, salad"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('dailyGuidance')}" th:errors="*{dailyGuidance}"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

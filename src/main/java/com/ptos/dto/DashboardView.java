@@ -13,8 +13,12 @@ public class DashboardView {
 
     private long totalClients;
     private long activeClients;
-    private long atRiskClients;
+    private long churnRiskCount;
     private long inactiveOrArchived;
+    private long healthyClients;
+    private long watchClients;
+    private long atRiskClients;
+    private long churningClients;
     private List<ClientListView> recentlyUpdatedClients;
     private BigDecimal estimatedMonthlyRevenue;
     private long clientsWithoutPackagePrice;

@@ -35,6 +35,13 @@
                 </a>
             </li>
             <li sec:authorize="hasRole('PT')">
+                <a th:href="@{/pt/messages}"
+                   th:classappend="${currentPath.startsWith('/pt/messages')} ? 'nav-active'">
+                    Messages
+                    <span th:if="${unreadMessageCount > 0}" class="nav-count" th:text="${unreadMessageCount}"></span>
+                </a>
+            </li>
+            <li sec:authorize="hasRole('PT')">
                 <a th:href="@{/pt/business}"
                    th:classappend="${currentPath == '/pt/business'} ? 'nav-active'">Business</a>
             </li>
@@ -51,6 +58,17 @@
             <li sec:authorize="hasRole('CLIENT')">
                 <a th:href="@{/client/checkins}"
                    th:classappend="${currentPath.startsWith('/client/checkins')} ? 'nav-active'">My Check-ins</a>
+            </li>
+            <li sec:authorize="hasRole('CLIENT')">
+                <a th:href="@{/client/nutrition}"
+                   th:classappend="${currentPath.startsWith('/client/nutrition')} ? 'nav-active'">Nutrition</a>
+            </li>
+            <li sec:authorize="hasRole('CLIENT')">
+                <a th:href="@{/client/messages}"
+                   th:classappend="${currentPath.startsWith('/client/messages')} ? 'nav-active'">
+                    Messages
+                    <span th:if="${unreadMessageCount > 0}" class="nav-count" th:text="${unreadMessageCount}"></span>
+                </a>
             </li>
             <li sec:authorize="hasRole('CLIENT')">
                 <a th:href="@{/client/profile}"

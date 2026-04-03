@@ -18,6 +18,10 @@ public interface ClientRecordRepository extends JpaRepository<ClientRecord, Long
 
     Optional<ClientRecord> findByIdAndPtUser(Long id, User ptUser);
 
+    boolean existsByPtUserAndClientUser(User ptUser, User clientUser);
+
+    boolean existsByClientUser(User clientUser);
+
     long countByPtUser(User ptUser);
 
     long countByPtUserAndStatus(User ptUser, ClientStatus status);

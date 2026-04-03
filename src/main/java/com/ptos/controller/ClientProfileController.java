@@ -43,7 +43,8 @@ public class ClientProfileController {
             form.setTrainingExperience(profile.getTrainingExperience());
             form.setNotes(profile.getNotes());
             model.addAttribute("profile", profile);
-            model.addAttribute("completion", computeCompletion(profile));
+            model.addAttribute("completion", clientProfileService.computeCompletion(profile));
+            model.addAttribute("onboardingComplete", profile.isOnboardingComplete());
         }
 
         model.addAttribute("profileForm", form);
@@ -60,7 +61,8 @@ public class ClientProfileController {
             Long userId = securityHelper.getCurrentUserId();
             clientProfileService.getProfileForUser(userId).ifPresent(profile -> {
                 model.addAttribute("profile", profile);
-                model.addAttribute("completion", computeCompletion(profile));
+                model.addAttribute("completion", clientProfileService.computeCompletion(profile));
+                model.addAttribute("onboardingComplete", profile.isOnboardingComplete());
             });
             model.addAttribute("fullName", securityHelper.getCurrentUserDetails().getUser().getFullName());
             return "client/profile";
@@ -70,16 +72,5 @@ public class ClientProfileController {
         clientProfileService.createOrUpdateProfile(userId, form);
         redirectAttributes.addFlashAttribute("success", "Profile updated");
         return "redirect:/client/profile";
-    }
-
-    private int computeCompletion(ClientProfile profile) {
-        int count = 0;
-        if (profile.getAge() != null) count++;
-        if (profile.getHeightCm() != null) count++;
-        if (profile.getCurrentWeightKg() != null) count++;
-        if (profile.getGoalType() != null) count++;
-        if (profile.getTargetWeightKg() != null) count++;
-        if (profile.getTrainingExperience() != null) count++;
-        return count;
     }
 }

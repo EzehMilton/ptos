@@ -77,6 +77,52 @@
     </div>
 
     <div class="card mb-3">
+        <h3 class="card-title">Progress Photos</h3>
+        <div th:if="${currentPhotoUrls.isEmpty()}">
+            <p class="text-muted">No photos submitted with this check-in.</p>
+        </div>
+        <div th:if="${!currentPhotoUrls.isEmpty()}">
+            <p style="font-weight: 600; margin-bottom: 12px;"
+               th:text="${'Current (' + #temporals.format(checkIn.submittedAt, 'dd MMM yyyy') + ')'}"></p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div th:each="photoType : ${photoTypes}">
+                    <p style="font-weight: 600; margin-bottom: 8px;" th:text="${photoType.name()}"></p>
+                    <div th:if="${currentPhotoUrls[photoType] != null}">
+                        <a th:href="${currentPhotoUrls[photoType]}" target="_blank" rel="noopener noreferrer">
+                            <img th:src="${currentPhotoUrls[photoType]}" th:alt="${photoType.name() + ' current photo'}"
+                                 style="max-width: 300px; width: 100%; border-radius: 8px;">
+                        </a>
+                    </div>
+                    <p th:if="${currentPhotoUrls[photoType] == null}" class="text-muted">No photo</p>
+                </div>
+            </div>
+
+            <div th:if="${previousCheckIn != null and !previousPhotoUrls.isEmpty()}">
+                <p style="font-weight: 600; margin-bottom: 12px;"
+                   th:text="${'Previous (' + #temporals.format(previousCheckIn.submittedAt, 'dd MMM yyyy') + ')'}"></p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                    <div th:each="photoType : ${photoTypes}">
+                        <p style="font-weight: 600; margin-bottom: 8px;" th:text="${photoType.name()}"></p>
+                        <div th:if="${previousPhotoUrls[photoType] != null}">
+                            <a th:href="${previousPhotoUrls[photoType]}" target="_blank" rel="noopener noreferrer">
+                                <img th:src="${previousPhotoUrls[photoType]}" th:alt="${photoType.name() + ' previous photo'}"
+                                     style="max-width: 300px; width: 100%; border-radius: 8px;">
+                            </a>
+                        </div>
+                        <p th:if="${previousPhotoUrls[photoType] == null}" class="text-muted">No photo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card generated-insight-card mb-3">
+        <h3 class="card-title">Analysis</h3>
+        <p th:text="${checkInInsight}"></p>
+        <p class="generated-insight-note">This analysis is generated automatically from client data.</p>
+    </div>
+
+    <div class="card mb-3">
         <h3 class="card-title">Client Info</h3>
         <table>
             <tbody>

@@ -1,6 +1,7 @@
 package com.ptos.dto;
 
 import com.ptos.domain.ClientStatus;
+import com.ptos.domain.RiskLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,15 +15,22 @@ public class BusinessView {
 
     private BigDecimal estimatedMonthlyRevenue;
     private BigDecimal averageRevenuePerClient;
+    private BigDecimal estimatedClientLifetimeValue;
     private int activeClientCount;
-    private int clientsNeedingAttention;
+    private int churnRiskCount;
+    private double averageHealthScore;
+    private int clientsImproving;
+    private int clientsStable;
+    private int clientsSlipping;
     private int profileCompletionRate;
     private int checkInComplianceRate;
     private int workoutCompletionRate;
+    private int mealPlanCoverage;
     private List<ClientBusinessRow> clientBreakdown;
     private int completeProfileCount;
     private int totalClientCount;
     private List<ClientBusinessRow> incompleteProfileClients;
+    private List<ClientHealthScoreResult> reEngagementCandidates;
 
     @Getter @AllArgsConstructor @Builder
     public static class ClientBusinessRow {
@@ -34,6 +42,7 @@ public class BusinessView {
         private LocalDateTime lastCheckInDate;
         private long workoutsAssigned;
         private long workoutsCompleted;
-        private String healthLabel;
+        private int healthScore;
+        private RiskLevel riskLevel;
     }
 }

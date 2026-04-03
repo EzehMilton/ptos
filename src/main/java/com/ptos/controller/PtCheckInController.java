@@ -1,14 +1,18 @@
 package com.ptos.controller;
 
 import com.ptos.domain.CheckIn;
+import com.ptos.domain.CheckInPhoto;
 import com.ptos.domain.CheckInStatus;
 import com.ptos.domain.GoalType;
+import com.ptos.domain.PhotoType;
 import com.ptos.domain.User;
 import com.ptos.dto.CheckInFeedbackForm;
 import com.ptos.dto.ClientDetailView;
+import com.ptos.integration.FileStorageGateway;
 import com.ptos.security.SecurityHelper;
 import com.ptos.service.CheckInService;
 import com.ptos.service.ClientRecordService;
+import com.ptos.service.InsightService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -22,7 +26,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -32,6 +38,8 @@ public class PtCheckInController {
 
     private final CheckInService checkInService;
     private final ClientRecordService clientRecordService;
+    private final InsightService insightService;
+    private final FileStorageGateway fileStorageGateway;
     private final SecurityHelper securityHelper;
 
     @GetMapping
@@ -72,6 +80,8 @@ public class PtCheckInController {
         model.addAttribute("clientDetail", clientDetail);
         model.addAttribute("previousCheckIn", previousCheckIn.orElse(null));
         model.addAttribute("weightComparison", buildWeightComparison(checkIn, previousCheckIn.orElse(null), clientDetail));
+        model.addAttribute("checkInInsight", insightService.getCheckInInsight(checkIn.getClientRecord(), checkIn));
+        addPhotoAttributes(model, checkIn, previousCheckIn.orElse(null));
 
         if (checkIn.getStatus() == CheckInStatus.PENDING_REVIEW) {
             model.addAttribute("feedbackForm", new CheckInFeedbackForm());
@@ -105,6 +115,8 @@ public class PtCheckInController {
             model.addAttribute("clientDetail", clientDetail);
             model.addAttribute("previousCheckIn", previousCheckIn.orElse(null));
             model.addAttribute("weightComparison", buildWeightComparison(checkIn, previousCheckIn.orElse(null), clientDetail));
+            model.addAttribute("checkInInsight", insightService.getCheckInInsight(checkIn.getClientRecord(), checkIn));
+            addPhotoAttributes(model, checkIn, previousCheckIn.orElse(null));
             return "pt/checkins/review";
         }
 
@@ -157,5 +169,22 @@ public class PtCheckInController {
     }
 
     public record WeightComparisonView(String text, String cssClass) {
+    }
+
+    private void addPhotoAttributes(Model model, CheckIn checkIn, CheckIn previousCheckIn) {
+        List<CheckInPhoto> previousPhotos = previousCheckIn == null
+                ? List.of()
+                : checkInService.getPreviousCheckInPhotos(checkIn.getClientRecord(), checkIn.getId());
+        model.addAttribute("photoTypes", PhotoType.values());
+        model.addAttribute("currentPhotoUrls", buildPhotoUrls(checkInService.getPhotosForCheckIn(checkIn.getId())));
+        model.addAttribute("previousPhotoUrls", previousPhotos.isEmpty() ? Map.of() : buildPhotoUrls(previousPhotos));
+    }
+
+    private Map<PhotoType, String> buildPhotoUrls(List<CheckInPhoto> photos) {
+        Map<PhotoType, String> urls = new EnumMap<>(PhotoType.class);
+        for (CheckInPhoto photo : photos) {
+            urls.put(photo.getPhotoType(), fileStorageGateway.getUrl(photo.getStorageKey()));
+        }
+        return urls;
     }
 }

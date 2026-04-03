@@ -16,7 +16,7 @@
     </div>
 
     <div class="card">
-        <form th:action="@{/client/checkins}" th:object="${checkInForm}" method="post">
+        <form th:action="@{/client/checkins}" th:object="${checkInForm}" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="currentWeightKg">Current Weight (kg)</label>
                 <input type="number" id="currentWeightKg" th:field="*{currentWeightKg}" step="0.1" min="30" max="300">
@@ -67,6 +67,30 @@
                 <textarea id="notes" th:field="*{notes}" rows="5"
                           placeholder="How was your week? Any challenges or wins?"></textarea>
                 <div class="form-error" th:if="${#fields.hasErrors('notes')}" th:errors="*{notes}"></div>
+            </div>
+
+            <div class="card mb-3" style="background: #fafaf9;">
+                <h3 class="card-title">Progress Photos</h3>
+                <p class="text-muted mb-2">Optional. Take photos in similar lighting and position each week for best comparison.</p>
+                <p class="text-muted mb-2">Max 10MB per photo</p>
+                <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
+                    <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 24px;">
+                    <div class="form-group">
+                        <label for="frontPhoto">Front Photo</label>
+                        <input type="file" id="frontPhoto" name="frontPhoto" accept="image/jpeg,image/png,image/webp">
+                    </div>
+                    <div class="form-group">
+                        <label for="sidePhoto">Side Photo</label>
+                        <input type="file" id="sidePhoto" name="sidePhoto" accept="image/jpeg,image/png,image/webp">
+                    </div>
+                    <div class="form-group">
+                        <label for="backPhoto">Back Photo</label>
+                        <input type="file" id="backPhoto" name="backPhoto" accept="image/jpeg,image/png,image/webp">
+                    </div>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-primary">Submit Check-in</button>

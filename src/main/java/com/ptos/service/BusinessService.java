@@ -3,16 +3,20 @@ package com.ptos.service;
 import com.ptos.domain.*;
 import com.ptos.dto.BusinessView;
 import com.ptos.dto.BusinessView.ClientBusinessRow;
+import com.ptos.dto.ClientHealthScoreResult;
 import com.ptos.repository.CheckInRepository;
 import com.ptos.repository.ClientProfileRepository;
 import com.ptos.repository.ClientRecordRepository;
+import com.ptos.repository.MealPlanRepository;
 import com.ptos.repository.WorkoutAssignmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -26,13 +30,16 @@ public class BusinessService {
     private final ClientProfileRepository clientProfileRepository;
     private final CheckInRepository checkInRepository;
     private final WorkoutAssignmentRepository workoutAssignmentRepository;
+    private final MealPlanRepository mealPlanRepository;
+    private final HealthScoreService healthScoreService;
 
     public BusinessView getBusinessData(User ptUser) {
         List<ClientRecord> records = clientRecordRepository.findByPtUser(ptUser);
         LocalDateTime recentThreshold = LocalDateTime.now().minusDays(7);
+        LocalDateTime twoWeeksAgo = LocalDateTime.now().minusDays(14);
 
         List<ClientBusinessRow> rows = records.stream()
-                .map(record -> toRow(record, recentThreshold))
+                .map(this::toRow)
                 .sorted(Comparator.comparing(ClientBusinessRow::getName, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
 
@@ -48,10 +55,6 @@ public class BusinessService {
         BigDecimal avgRevenue = activeCount > 0
                 ? revenue.divide(BigDecimal.valueOf(activeCount), 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
-
-        int needingAttention = (int) rows.stream()
-                .filter(r -> "Needs Attention".equals(r.getHealthLabel()))
-                .count();
 
         int completeCount = (int) rows.stream()
                 .filter(r -> r.getProfileCompletion() >= 4)
@@ -71,6 +74,53 @@ public class BusinessService {
         int workoutCompletionRate = totalAssignments > 0
                 ? (int) ((completedAssignments * 100) / totalAssignments)
                 : 0;
+        int mealPlanCoverage = activeCount > 0
+                ? (int) ((records.stream()
+                .filter(record -> record.getStatus() == ClientStatus.ACTIVE)
+                .filter(record -> mealPlanRepository.findByClientRecordAndActiveTrue(record).isPresent())
+                .count() * 100) / activeCount)
+                : 0;
+
+        List<ClientRecord> activeRecords = records.stream()
+                .filter(record -> record.getStatus() == ClientStatus.ACTIVE)
+                .toList();
+        List<ClientHealthScoreResult> currentScores = activeRecords.stream()
+                .map(healthScoreService::calculateHealthScore)
+                .toList();
+
+        double averageHealthScore = currentScores.stream()
+                .mapToInt(ClientHealthScoreResult::getOverallScore)
+                .average()
+                .orElse(0);
+        int churnRiskCount = (int) currentScores.stream()
+                .filter(score -> score.getRiskLevel() == RiskLevel.AT_RISK || score.getRiskLevel() == RiskLevel.CHURNING)
+                .count();
+        int clientsImproving = 0;
+        int clientsSlipping = 0;
+        for (ClientRecord activeRecord : activeRecords) {
+            int current = healthScoreService.calculateHealthScore(activeRecord).getOverallScore();
+            int previous = healthScoreService.calculateHealthScore(activeRecord, twoWeeksAgo).getOverallScore();
+            if (current > previous) {
+                clientsImproving++;
+            } else if (current < previous) {
+                clientsSlipping++;
+            }
+        }
+        int clientsStable = activeRecords.size() - clientsImproving - clientsSlipping;
+
+        List<ClientHealthScoreResult> reEngagementCandidates = currentScores.stream()
+                .filter(score -> score.getRiskLevel() == RiskLevel.AT_RISK || score.getRiskLevel() == RiskLevel.CHURNING)
+                .filter(score -> score.getDaysSinceLastCheckIn() != null)
+                .filter(score -> score.getDaysSinceLastCheckIn() > 14 && score.getDaysSinceLastCheckIn() < 60)
+                .sorted(Comparator.comparing(ClientHealthScoreResult::getOverallScore))
+                .toList();
+
+        double averageTenureMonths = activeRecords.stream()
+                .mapToDouble(record -> Math.max(1, ChronoUnit.DAYS.between(record.getStartDate(), LocalDate.now())) / 30.0)
+                .average()
+                .orElse(0);
+        BigDecimal estimatedClientLifetimeValue = avgRevenue.multiply(BigDecimal.valueOf(averageTenureMonths))
+                .setScale(2, RoundingMode.HALF_UP);
 
         List<ClientBusinessRow> incomplete = rows.stream()
                 .filter(r -> r.getProfileCompletion() < 4)
@@ -79,19 +129,26 @@ public class BusinessService {
         return BusinessView.builder()
                 .estimatedMonthlyRevenue(revenue)
                 .averageRevenuePerClient(avgRevenue)
+                .estimatedClientLifetimeValue(estimatedClientLifetimeValue)
                 .activeClientCount(activeCount)
-                .clientsNeedingAttention(needingAttention)
+                .churnRiskCount(churnRiskCount)
+                .averageHealthScore(averageHealthScore)
+                .clientsImproving(clientsImproving)
+                .clientsStable(clientsStable)
+                .clientsSlipping(clientsSlipping)
                 .profileCompletionRate(completionRate)
                 .checkInComplianceRate(checkInComplianceRate)
                 .workoutCompletionRate(workoutCompletionRate)
+                .mealPlanCoverage(mealPlanCoverage)
                 .clientBreakdown(rows)
                 .completeProfileCount(completeCount)
                 .totalClientCount(totalCount)
                 .incompleteProfileClients(incomplete)
+                .reEngagementCandidates(reEngagementCandidates)
                 .build();
     }
 
-    private ClientBusinessRow toRow(ClientRecord record, LocalDateTime recentThreshold) {
+    private ClientBusinessRow toRow(ClientRecord record) {
         User client = record.getClientUser();
         Optional<ClientProfile> profileOpt = clientProfileRepository.findByUserId(client.getId());
         Optional<CheckIn> latestCheckIn = checkInRepository.findTopByClientRecordOrderBySubmittedAtDesc(record);
@@ -110,19 +167,7 @@ public class BusinessService {
             if (p.getTrainingExperience() != null) completion++;
         }
 
-        boolean hasRecentCheckIn = latestCheckIn
-                .map(checkIn -> !checkIn.getSubmittedAt().isBefore(recentThreshold))
-                .orElse(false);
-        boolean hasCompletedWorkout = workoutsCompleted > 0;
-
-        String health;
-        if (record.getStatus() == ClientStatus.INACTIVE || record.getStatus() == ClientStatus.ARCHIVED) {
-            health = "Inactive";
-        } else if (record.getStatus() == ClientStatus.ACTIVE && hasRecentCheckIn && hasCompletedWorkout) {
-            health = "Good";
-        } else {
-            health = "Needs Attention";
-        }
+        ClientHealthScoreResult healthScore = healthScoreService.calculateHealthScore(record);
 
         return ClientBusinessRow.builder()
                 .clientRecordId(record.getId())
@@ -133,7 +178,8 @@ public class BusinessService {
                 .lastCheckInDate(latestCheckIn.map(CheckIn::getSubmittedAt).orElse(null))
                 .workoutsAssigned(workoutsAssigned)
                 .workoutsCompleted(workoutsCompleted)
-                .healthLabel(health)
+                .healthScore(healthScore.getOverallScore())
+                .riskLevel(healthScore.getRiskLevel())
                 .build();
     }
 }

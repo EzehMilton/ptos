@@ -3,6 +3,8 @@ package com.ptos.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
@@ -40,4 +42,8 @@ public class CheckIn {
 
     @OneToOne(mappedBy = "checkIn", cascade = CascadeType.ALL)
     private CheckInFeedback feedback;
+
+    @OneToMany(mappedBy = "checkIn", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<CheckInPhoto> photos = new ArrayList<>();
 }

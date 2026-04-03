@@ -375,6 +375,237 @@ a:hover {
     padding-top: 0;
 }
 
+.message-list {
+    display: grid;
+    gap: 12px;
+}
+
+.message-list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.message-list-row:hover {
+    text-decoration: none;
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.conversation-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 240px;
+    max-height: 560px;
+    overflow-y: auto;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.message-row {
+    display: flex;
+}
+
+.message-row-incoming {
+    justify-content: flex-start;
+}
+
+.message-row-outgoing {
+    justify-content: flex-end;
+}
+
+.message-bubble {
+    max-width: 72%;
+    padding: 12px 14px;
+    border-radius: 12px;
+}
+
+.message-bubble-incoming {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.message-bubble-outgoing {
+    background-color: #dbeafe;
+    color: #1e3a8a;
+}
+
+.message-meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.health-score-cell {
+    min-width: 120px;
+}
+
+.health-score-track {
+    width: 100%;
+    height: 8px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background-color: #e2e8f0;
+    overflow: hidden;
+}
+
+.health-score-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.health-score-fill-healthy {
+    background-color: #16a34a;
+}
+
+.health-score-fill-watch {
+    background-color: #d97706;
+}
+
+.health-score-fill-risk {
+    background-color: #dc2626;
+}
+
+.health-score-fill-churning {
+    background-color: #7f1d1d;
+}
+
+.health-summary-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.health-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.health-summary-healthy {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.health-summary-watch {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.health-summary-risk {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.health-summary-churning {
+    background-color: #e2e8f0;
+    color: #7f1d1d;
+}
+
+.health-score-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.health-score-number {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.health-score-text-healthy {
+    color: #16a34a;
+}
+
+.health-score-text-watch {
+    color: #d97706;
+}
+
+.health-score-text-risk {
+    color: #dc2626;
+}
+
+.health-score-text-churning {
+    color: #7f1d1d;
+}
+
+.component-score-list {
+    display: grid;
+    gap: 10px;
+}
+
+.component-score-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 70px;
+    gap: 12px;
+    align-items: center;
+}
+
+.component-score-label {
+    font-weight: 500;
+}
+
+.component-score-track {
+    height: 8px;
+    border-radius: 999px;
+    background-color: #e2e8f0;
+    overflow: hidden;
+}
+
+.component-score-fill {
+    height: 100%;
+    border-radius: 999px;
+    background-color: #2563eb;
+}
+
+.component-score-value {
+    text-align: right;
+    font-weight: 600;
+    color: #475569;
+}
+
+.generated-insight-card {
+    background: #f5f7ff;
+    border-left: 4px solid #94a3b8;
+}
+
+.generated-insight-note {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.risk-insight-card {
+    background: #fffaf0;
+}
+
+.risk-insight-watch {
+    border-left: 4px solid #f59e0b;
+}
+
+.risk-insight-risk {
+    border-left: 4px solid #dc2626;
+    background: #fef2f2;
+}
+
+.risk-insight-churning {
+    border-left: 4px solid #7f1d1d;
+    background: #fef2f2;
+}
+
 /* ===== Tables ===== */
 table {
     width: 100%;

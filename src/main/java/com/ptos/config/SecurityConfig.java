@@ -1,6 +1,10 @@
 package com.ptos.config;
 
+import com.ptos.domain.ClientProfile;
+import com.ptos.domain.PTProfile;
 import com.ptos.security.PtosUserDetails;
+import com.ptos.service.ClientProfileService;
+import com.ptos.service.PTProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -20,11 +24,13 @@ import java.io.IOException;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthenticationSuccessHandler roleBasedSuccessHandler) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/signup", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login", "/signup", "/pt/signup", "/invite/**", "/uploads/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/pt/onboarding", "/pt/onboarding/**").hasRole("PT")
                 .requestMatchers("/pt/**").hasRole("PT")
                 .requestMatchers("/client/**").hasRole("CLIENT")
                 .anyRequest().authenticated()
@@ -32,7 +38,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .successHandler(roleBasedSuccessHandler())
+                .successHandler(roleBasedSuccessHandler)
                 .failureUrl("/login?error=true")
                 .permitAll()
             )
@@ -51,7 +57,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationSuccessHandler roleBasedSuccessHandler() {
+    public AuthenticationSuccessHandler roleBasedSuccessHandler(PTProfileService ptProfileService,
+                                                                ClientProfileService clientProfileService) {
         return new AuthenticationSuccessHandler() {
             @Override
             public void onAuthenticationSuccess(HttpServletRequest request,
@@ -59,8 +66,14 @@ public class SecurityConfig {
                                                 Authentication authentication) throws IOException {
                 PtosUserDetails userDetails = (PtosUserDetails) authentication.getPrincipal();
                 String targetUrl = switch (userDetails.getRole()) {
-                    case PT -> "/pt/dashboard";
-                    case CLIENT -> "/client/home";
+                    case PT -> ptProfileService.getProfileForUser(userDetails.getUserId())
+                            .filter(PTProfile::isOnboardingComplete)
+                            .map(profile -> "/pt/dashboard")
+                            .orElse("/pt/onboarding");
+                    case CLIENT -> clientProfileService.getProfileForUser(userDetails.getUserId())
+                            .filter(ClientProfile::isOnboardingComplete)
+                            .map(profile -> "/client/home")
+                            .orElse("/client/onboarding");
                 };
                 response.sendRedirect(targetUrl);
             }

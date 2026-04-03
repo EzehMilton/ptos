@@ -18,6 +18,10 @@
               th:text="${detail.status.name()}"></span>
     </div>
 
+    <div class="mb-2">
+        <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="btn btn-secondary btn-sm">Send Message</a>
+    </div>
+
     <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
     <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
 
@@ -107,6 +111,66 @@
 
     <!-- Section 2: Profile Details -->
     <div class="card mb-3">
+        <h3 class="card-title">Health Score</h3>
+        <div class="health-score-hero">
+            <div class="health-score-number"
+                 th:classappend="${healthScore.overallScore >= 70} ? 'health-score-text-healthy' :
+                                (${healthScore.overallScore >= 50} ? 'health-score-text-watch' :
+                                (${healthScore.overallScore >= 30} ? 'health-score-text-risk' : 'health-score-text-churning'))"
+                 th:text="${healthScore.overallScore}"></div>
+            <span class="badge"
+                  th:classappend="${healthScore.riskLevel.name() == 'HEALTHY'} ? 'badge-active' :
+                                 (${healthScore.riskLevel.name() == 'WATCH'} ? 'badge-warning' :
+                                 (${healthScore.riskLevel.name() == 'AT_RISK'} ? 'badge-danger' : 'badge-neutral'))"
+                  th:text="${healthScore.riskLevel.name().replace('_', ' ')}"></span>
+        </div>
+        <p class="mt-2"
+           th:if="${healthScore.riskLevel.name() == 'HEALTHY'}">This client is actively engaged and making progress.</p>
+        <p class="mt-2"
+           th:if="${healthScore.riskLevel.name() == 'WATCH'}">Engagement is declining. Consider reaching out.</p>
+        <p class="mt-2"
+           th:if="${healthScore.riskLevel.name() == 'AT_RISK'}">This client is at risk of dropping off. Take action.</p>
+        <p class="mt-2"
+           th:if="${healthScore.riskLevel.name() == 'CHURNING'}">This client has not engaged recently. Urgent attention needed.</p>
+
+        <div class="component-score-list mt-2">
+            <div class="component-score-row">
+                <div class="component-score-label">Profile Completion</div>
+                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.profileCompletionScore * 100) / 10} + '%'"></div></div>
+                <div class="component-score-value" th:text="${healthScore.profileCompletionScore} + '/10'"></div>
+            </div>
+            <div class="component-score-row">
+                <div class="component-score-label">Check-in Activity</div>
+                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.checkInActivityScore * 100) / 30} + '%'"></div></div>
+                <div class="component-score-value" th:text="${healthScore.checkInActivityScore} + '/30'"></div>
+            </div>
+            <div class="component-score-row">
+                <div class="component-score-label">Workout Activity</div>
+                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.workoutActivityScore * 100) / 30} + '%'"></div></div>
+                <div class="component-score-value" th:text="${healthScore.workoutActivityScore} + '/30'"></div>
+            </div>
+            <div class="component-score-row">
+                <div class="component-score-label">Goal Progress</div>
+                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.goalProgressScore * 100) / 15} + '%'"></div></div>
+                <div class="component-score-value" th:text="${healthScore.goalProgressScore} + '/15'"></div>
+            </div>
+            <div class="component-score-row">
+                <div class="component-score-label">Communication</div>
+                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.communicationScore * 100) / 15} + '%'"></div></div>
+                <div class="component-score-value" th:text="${healthScore.communicationScore} + '/15'"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3"
+         th:if="${healthScore.riskLevel.name() == 'WATCH' or healthScore.riskLevel.name() == 'AT_RISK' or healthScore.riskLevel.name() == 'CHURNING'}"
+         th:classappend="${healthScore.riskLevel.name() == 'WATCH'} ? 'risk-insight-card risk-insight-watch' :
+                        (${healthScore.riskLevel.name() == 'AT_RISK'} ? 'risk-insight-card risk-insight-risk' : 'risk-insight-card risk-insight-churning')">
+        <h3 class="card-title">Insight</h3>
+        <p th:text="${riskInsight}"></p>
+    </div>
+
+    <div class="card mb-3">
         <h3 class="card-title">Profile Details</h3>
         <table>
             <tbody>
@@ -182,7 +246,27 @@
         </div>
     </div>
 
-    <!-- Section 4: PT Notes & Settings -->
+    <!-- Section 4: Meal Plan -->
+    <div class="card mb-3">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <h3 class="card-title" style="margin-bottom: 0;">Meal Plan</h3>
+            <a th:if="${activeMealPlan != null}"
+               th:href="@{/pt/clients/{id}/nutrition(id=${detail.clientRecordId})}"
+               class="btn btn-secondary btn-sm">View</a>
+        </div>
+        <div th:if="${activeMealPlan != null}">
+            <p style="font-weight: 600;" th:text="${activeMealPlan.title}"></p>
+            <p class="text-muted mt-1">Active nutrition guidance is available for this client.</p>
+        </div>
+        <div th:if="${activeMealPlan == null}">
+            <p class="text-muted">
+                No meal plan.
+                <a th:href="@{/pt/clients/{id}/nutrition/new(id=${detail.clientRecordId})}">Create one &rarr;</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Section 5: PT Notes & Settings -->
     <div class="card mb-3">
         <h3 class="card-title">PT Notes &amp; Settings</h3>
         <form th:action="@{/pt/clients/{id}(id=${detail.clientRecordId})}" th:object="${updateForm}" method="post">
@@ -210,7 +294,7 @@
         </form>
     </div>
 
-    <!-- Section 5: Activity -->
+    <!-- Section 6: Activity -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
