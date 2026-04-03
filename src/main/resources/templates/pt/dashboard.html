@@ -11,6 +11,8 @@
         <h1 th:text="'Welcome back, ' + ${ptName}"></h1>
     </div>
 
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+
     <!-- Row 1: Summary stats -->
     <div class="stat-grid mb-3">
         <div class="card stat-card">
@@ -23,9 +25,9 @@
             <div class="stat-label">Active</div>
         </div>
         <div class="card stat-card">
-            <div class="stat-value" th:style="${d.atRiskClients > 0} ? 'color: #d97706;' : 'color: #16a34a;'"
-                 th:text="${d.atRiskClients}"></div>
-            <div class="stat-label">At Risk</div>
+            <div class="stat-value" th:style="${d.churnRiskCount > 0} ? 'color: #d97706;' : 'color: #16a34a;'"
+                 th:text="${d.churnRiskCount}"></div>
+            <div class="stat-label">Churn Risk</div>
         </div>
         <div class="card stat-card">
             <div class="stat-value"
@@ -55,6 +57,16 @@
                     <a th:href="@{/pt/clients}">Set up package prices</a>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <h3 class="card-title">Health Overview</h3>
+        <div class="health-summary-grid">
+            <div class="health-summary-pill health-summary-healthy" th:text="${d.healthyClients + ' healthy'}"></div>
+            <div class="health-summary-pill health-summary-watch" th:text="${d.watchClients + ' watch'}"></div>
+            <div class="health-summary-pill health-summary-risk" th:text="${d.atRiskClients + ' at risk'}"></div>
+            <div class="health-summary-pill health-summary-churning" th:text="${d.churningClients + ' churning'}"></div>
         </div>
     </div>
 
@@ -88,6 +100,21 @@
         <h3 class="card-title">Recent Milestones</h3>
         <div th:each="item : ${recentMilestoneFeed}" class="milestone-feed-row">
             <p th:text="${item}"></p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <h3 class="card-title">Weekly Summaries</h3>
+        <div th:if="${weeklySummaries.isEmpty()}">
+            <p class="text-muted">No recent client activity yet.</p>
+        </div>
+        <div th:if="${!weeklySummaries.isEmpty()}">
+            <div th:each="item : ${weeklySummaries}" class="milestone-feed-row">
+                <p>
+                    <a th:href="@{/pt/clients/{id}(id=${item.clientRecordId})}" th:text="${item.clientName}"></a>
+                    <span th:text="${' — ' + item.summary}"></span>
+                </p>
+            </div>
         </div>
     </div>
 

@@ -50,6 +50,25 @@
         </table>
     </div>
 
+    <div class="card mb-3">
+        <h3 class="card-title">Progress Photos</h3>
+        <div th:if="${photoUrls.isEmpty()}">
+            <p class="text-muted">No photos submitted with this check-in.</p>
+        </div>
+        <div th:if="${!photoUrls.isEmpty()}" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+            <div th:each="photoType : ${photoTypes}">
+                <p style="font-weight: 600; margin-bottom: 8px;" th:text="${photoType.name()}"></p>
+                <div th:if="${photoUrls[photoType] != null}">
+                    <a th:href="${photoUrls[photoType]}" target="_blank" rel="noopener noreferrer">
+                        <img th:src="${photoUrls[photoType]}" th:alt="${photoType.name() + ' photo'}"
+                             style="max-width: 300px; width: 100%; border-radius: 8px;">
+                    </a>
+                </div>
+                <p th:if="${photoUrls[photoType] == null}" class="text-muted">No photo</p>
+            </div>
+        </div>
+    </div>
+
     <div class="feedback-card" th:if="${checkIn.status.name() == 'REVIEWED' and checkIn.feedback != null}">
         <h3 class="card-title">PT Feedback</h3>
         <p class="mb-2" th:text="${checkIn.feedback.feedbackText}"></p>

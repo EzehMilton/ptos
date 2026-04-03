@@ -57,6 +57,7 @@
     <!-- Edit Profile Form -->
     <div class="card">
         <h3 class="card-title">Edit Profile</h3>
+        <p th:if="${onboardingComplete}" class="text-muted mb-2">Your profile is set up. You can update any details below.</p>
 
         <form th:action="@{/client/profile}" th:object="${profileForm}" method="post">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">

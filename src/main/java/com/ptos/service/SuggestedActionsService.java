@@ -7,7 +7,9 @@ import com.ptos.domain.ClientProfile;
 import com.ptos.domain.ClientRecord;
 import com.ptos.domain.ClientStatus;
 import com.ptos.domain.User;
+import com.ptos.domain.RiskLevel;
 import com.ptos.dto.SuggestedAction;
+import com.ptos.dto.ClientHealthScoreResult;
 import com.ptos.repository.CheckInRepository;
 import com.ptos.repository.ClientProfileRepository;
 import com.ptos.repository.ClientRecordRepository;
@@ -30,6 +32,7 @@ public class SuggestedActionsService {
     private final ClientRecordRepository clientRecordRepository;
     private final ClientProfileRepository clientProfileRepository;
     private final WorkoutAssignmentRepository workoutAssignmentRepository;
+    private final HealthScoreService healthScoreService;
 
     public List<SuggestedAction> getActions(User ptUser) {
         List<SuggestedAction> actions = new ArrayList<>();
@@ -49,14 +52,29 @@ public class SuggestedActionsService {
                         .build()));
 
         records.stream()
-                .filter(record -> record.getStatus() == ClientStatus.AT_RISK)
-                .sorted(Comparator.comparing(record -> record.getClientUser().getFullName(), String.CASE_INSENSITIVE_ORDER))
-                .forEach(record -> actions.add(SuggestedAction.builder()
+                .filter(record -> record.getStatus() == com.ptos.domain.ClientStatus.ACTIVE)
+                .map(record -> java.util.Map.entry(record, healthScoreService.calculateHealthScore(record)))
+                .filter(entry -> entry.getValue().getRiskLevel() == RiskLevel.CHURNING)
+                .sorted(Comparator.comparing(entry -> entry.getKey().getClientUser().getFullName(), String.CASE_INSENSITIVE_ORDER))
+                .forEach(entry -> actions.add(SuggestedAction.builder()
                         .priority(SuggestedAction.Priority.HIGH)
                         .icon("⚠️")
-                        .message(record.getClientUser().getFullName() + " is marked at risk")
-                        .actionUrl("/pt/clients/" + record.getId())
-                        .actionLabel("View Client")
+                        .message(entry.getKey().getClientUser().getFullName() + " is churning and needs urgent re-engagement")
+                        .actionUrl("/pt/messages/new/" + entry.getKey().getId())
+                        .actionLabel("Send Message")
+                        .build()));
+
+        records.stream()
+                .filter(record -> record.getStatus() == com.ptos.domain.ClientStatus.ACTIVE)
+                .map(record -> java.util.Map.entry(record, healthScoreService.calculateHealthScore(record)))
+                .filter(entry -> entry.getValue().getRiskLevel() == RiskLevel.AT_RISK)
+                .sorted(Comparator.comparing(entry -> entry.getKey().getClientUser().getFullName(), String.CASE_INSENSITIVE_ORDER))
+                .forEach(entry -> actions.add(SuggestedAction.builder()
+                        .priority(SuggestedAction.Priority.MEDIUM)
+                        .icon("⚠️")
+                        .message(entry.getKey().getClientUser().getFullName() + " is at risk and needs attention")
+                        .actionUrl("/pt/messages/new/" + entry.getKey().getId())
+                        .actionLabel("Send Message")
                         .build()));
 
         records.stream()
@@ -108,10 +126,10 @@ public class SuggestedActionsService {
     }
 
     private Optional<SuggestedAction> buildCheckInRecencyAction(ClientRecord record, LocalDate today) {
-        Optional<CheckIn> latestCheckIn = checkInRepository.findTopByClientRecordOrderBySubmittedAtDesc(record);
-        long daysSinceCheckIn = latestCheckIn
-                .map(checkIn -> daysAgo(checkIn.getSubmittedAt().toLocalDate(), today))
-                .orElse(daysAgo(record.getStartDate(), today));
+        ClientHealthScoreResult healthScore = healthScoreService.calculateHealthScore(record);
+        long daysSinceCheckIn = healthScore.getDaysSinceLastCheckIn() != null
+                ? healthScore.getDaysSinceLastCheckIn()
+                : daysAgo(record.getStartDate(), today);
 
         if (daysSinceCheckIn < 14) {
             return Optional.empty();

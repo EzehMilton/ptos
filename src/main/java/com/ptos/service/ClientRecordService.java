@@ -36,6 +36,10 @@ public class ClientRecordService {
         return clientRecordRepository.findByClientUser(clientUser);
     }
 
+    public Optional<ClientRecord> getClientRecord(User ptUser, User clientUser) {
+        return clientRecordRepository.findByPtUserAndClientUser(ptUser, clientUser);
+    }
+
     public ClientRecord createRecord(User ptUser, User clientUser) {
         ClientRecord record = ClientRecord.builder()
                 .ptUser(ptUser)

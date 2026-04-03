@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${ptName != null ? 'Messages with ' + ptName : 'Messages'}">Messages</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1 th:text="${ptName != null ? 'Messages with ' + ptName : 'Messages'}"></h1>
+    </div>
+
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+    <div class="conversation-thread mb-3">
+        <div th:if="${conversation == null}" class="text-muted">
+            No messages yet. Your PT will reach out to you.
+        </div>
+        <div th:if="${conversation != null and messages.isEmpty()}" class="text-muted">
+            No messages yet. Start the conversation below.
+        </div>
+        <div th:each="message : ${messages}"
+             class="message-row"
+             th:classappend="${message.senderRole.name() == 'CLIENT'} ? 'message-row-outgoing' : 'message-row-incoming'">
+            <div class="message-bubble"
+                 th:classappend="${message.senderRole.name() == 'CLIENT'} ? 'message-bubble-outgoing' : 'message-bubble-incoming'">
+                <p style="white-space: pre-line;" th:text="${message.content}"></p>
+                <p class="message-meta"
+                   th:text="${#temporals.format(message.createdAt, 'dd MMM yyyy HH:mm') + ' • ' + (message.readAt != null ? 'Read' : 'Unread')}"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" th:if="${ptName != null}">
+        <form th:action="@{/client/messages}" th:object="${messageForm}" method="post">
+            <div class="form-group">
+                <label for="content">Message</label>
+                <textarea id="content" th:field="*{content}" rows="4"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

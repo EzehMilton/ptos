@@ -7,10 +7,12 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
         <h1>My Clients</h1>
+        <a th:href="@{/pt/clients/new}" class="btn btn-primary">Add Client</a>
     </div>
 
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
     <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
 
     <!-- Search -->
@@ -87,6 +89,39 @@
     <div th:if="${clientCount == 0}" class="card text-center">
         <p class="text-muted" th:if="${query != null}">No clients matching your search.</p>
         <p class="text-muted" th:if="${query == null}">No clients yet.</p>
+    </div>
+
+    <div th:if="${!invitations.isEmpty()}" class="card mt-3">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <h3 class="card-title" style="margin-bottom: 0;">Pending Invitations</h3>
+            <span class="badge badge-info" th:text="${pendingInvitationCount} + ' pending'"></span>
+        </div>
+
+        <table class="mt-2">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Sent Date</th>
+                <th>Expires</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="invitation : ${invitations}">
+                <td th:text="${invitation.fullName}"></td>
+                <td th:text="${invitation.email}"></td>
+                <td th:text="${#temporals.format(invitation.createdAt, 'dd MMM yyyy')}"></td>
+                <td th:text="${#temporals.format(invitation.expiresAt, 'dd MMM yyyy')}"></td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${invitation.status.name() == 'PENDING'} ? 'badge-info' :
+                                         (${invitation.status.name() == 'ACCEPTED'} ? 'badge-active' : 'badge-neutral')"
+                          th:text="${invitation.status.name()}"></span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 </body>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Add a Client</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/clients}">&larr; Back to Clients</a>
+    </div>
+    <div class="page-header">
+        <h1>Add a Client</h1>
+    </div>
+
+    <div class="card mb-3">
+        <h3 class="card-title">Invite Client</h3>
+        <p class="text-muted mb-3">Send an invitation link. Your client will create their own password and complete their profile.</p>
+
+        <form th:action="@{/pt/clients/invite}" th:object="${inviteClientForm}" method="post">
+            <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
+                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                <div class="form-group">
+                    <label for="inviteFullName">Full Name</label>
+                    <input type="text" id="inviteFullName" th:field="*{fullName}">
+                    <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="inviteEmail">Email</label>
+                    <input type="email" id="inviteEmail" th:field="*{email}">
+                    <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Send Invitation</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3 class="card-title">Create Client Directly</h3>
+        <p class="text-muted mb-3">Create the client's account now. Share the login credentials with them.</p>
+
+        <form th:action="@{/pt/clients/create-direct}" th:object="${directCreateClientForm}" method="post">
+            <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
+                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                <div class="form-group">
+                    <label for="directFullName">Full Name</label>
+                    <input type="text" id="directFullName" th:field="*{fullName}">
+                    <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="directEmail">Email</label>
+                    <input type="email" id="directEmail" th:field="*{email}">
+                    <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="temporaryPassword">Temporary Password</label>
+                    <input type="text" id="temporaryPassword" th:field="*{temporaryPassword}">
+                    <div class="form-error" th:if="${#fields.hasErrors('temporaryPassword')}" th:errors="*{temporaryPassword}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="monthlyPackagePrice">Monthly Package Price (optional)</label>
+                    <input type="number" id="monthlyPackagePrice" th:field="*{monthlyPackagePrice}" min="0" step="0.01">
+                    <div class="form-error" th:if="${#fields.hasErrors('monthlyPackagePrice')}" th:errors="*{monthlyPackagePrice}"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Account</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Messages</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1>Messages</h1>
+    </div>
+
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+    <div th:if="${conversations.isEmpty()}" class="card">
+        <p class="text-muted">No conversations yet. Start a conversation from a client's detail page.</p>
+    </div>
+
+    <div th:if="${!conversations.isEmpty()}" class="message-list">
+        <a th:each="conversation : ${conversations}"
+           th:href="@{/pt/messages/{id}(id=${conversation.conversationId})}"
+           class="message-list-row">
+            <div>
+                <p th:style="${conversation.unreadCount > 0} ? 'font-weight: 700;' : 'font-weight: 600;'"
+                   th:text="${conversation.otherPersonName}"></p>
+                <p class="text-muted" th:text="${conversation.lastMessagePreview}"></p>
+            </div>
+            <div style="text-align: right;">
+                <p class="text-muted" th:text="${conversation.relativeTime}"></p>
+                <span th:if="${conversation.unreadCount > 0}" class="nav-count" th:text="${conversation.unreadCount}"></span>
+            </div>
+        </a>
+    </div>
+</div>
+</body>
+</html>

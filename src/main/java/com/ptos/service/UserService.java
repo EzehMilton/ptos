@@ -2,6 +2,7 @@ package com.ptos.service;
 
 import com.ptos.domain.Role;
 import com.ptos.domain.User;
+import com.ptos.dto.PTSignupForm;
 import com.ptos.dto.SignupForm;
 import com.ptos.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,17 @@ public class UserService {
                 .email(form.getEmail())
                 .password(passwordEncoder.encode(form.getPassword()))
                 .role(Role.CLIENT)
+                .enabled(true)
+                .build();
+        return userRepository.save(user);
+    }
+
+    public User registerPT(PTSignupForm form) {
+        User user = User.builder()
+                .fullName(form.getFullName())
+                .email(form.getEmail())
+                .password(passwordEncoder.encode(form.getPassword()))
+                .role(Role.PT)
                 .enabled(true)
                 .build();
         return userRepository.save(user);

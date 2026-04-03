@@ -6,6 +6,7 @@ import com.ptos.dto.DashboardView;
 import com.ptos.security.SecurityHelper;
 import com.ptos.service.BusinessService;
 import com.ptos.service.DashboardService;
+import com.ptos.service.InsightService;
 import com.ptos.service.MilestoneService;
 import com.ptos.service.SuggestedActionsService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class PtDashboardController {
     private final BusinessService businessService;
     private final MilestoneService milestoneService;
     private final SuggestedActionsService suggestedActionsService;
+    private final InsightService insightService;
     private final SecurityHelper securityHelper;
 
     @GetMapping("/pt/dashboard")
@@ -30,6 +32,7 @@ public class PtDashboardController {
         model.addAttribute("d", data);
         model.addAttribute("suggestedActions", suggestedActionsService.getActions(ptUser));
         model.addAttribute("recentMilestoneFeed", milestoneService.getRecentMilestoneFeed(ptUser));
+        model.addAttribute("weeklySummaries", insightService.getRecentWeeklySummaries(ptUser, 5));
         model.addAttribute("ptName", ptUser.getFullName());
         return "pt/dashboard";
     }

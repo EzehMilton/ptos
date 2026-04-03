@@ -42,6 +42,9 @@ public class ClientProfile {
     @Column(length = 1000)
     private String notes;
 
+    @Builder.Default
+    private boolean onboardingComplete = false;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }

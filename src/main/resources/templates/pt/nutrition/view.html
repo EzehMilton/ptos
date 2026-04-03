@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${'Meal Plan - ' + detail.clientName}">Meal Plan</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/clients/{id}(id=${detail.clientRecordId})}">&larr; Back to Client</a>
+    </div>
+
+    <div class="page-header">
+        <h1 th:text="${'Meal Plan - ' + detail.clientName}"></h1>
+        <a th:if="${mealPlan != null}"
+           th:href="@{/pt/clients/{id}/nutrition/edit(id=${detail.clientRecordId})}"
+           class="btn btn-secondary btn-sm">Edit Plan</a>
+    </div>
+
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+    <div th:if="${mealPlan == null}" class="card">
+        <p class="text-muted"
+           th:text="${'No meal plan assigned. Create one to help ' + detail.clientName + ' with nutrition.'}"></p>
+        <p class="mt-2">
+            <a th:href="@{/pt/clients/{id}/nutrition/new(id=${detail.clientRecordId})}" class="btn btn-primary btn-sm">
+                Create Meal Plan
+            </a>
+        </p>
+    </div>
+
+    <div th:if="${mealPlan != null}">
+        <div class="card mb-3">
+            <h3 class="card-title" th:text="${mealPlan.title}"></h3>
+            <p th:if="${mealPlan.overview != null and !mealPlan.overview.isBlank()}"
+               class="text-muted mb-2"
+               th:text="${mealPlan.overview}"></p>
+            <div style="white-space: pre-line;" th:text="${mealPlan.dailyGuidance}"></div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Compliance</h3>
+            <p class="mb-2">
+                <strong th:text="${#numbers.formatDecimal(complianceRate, 1, 1)} + '%'"></strong>
+                followed in last 14 days
+            </p>
+
+            <div th:if="${complianceLogs.isEmpty()}">
+                <p class="text-muted">No compliance logs yet.</p>
+            </div>
+
+            <table th:if="${!complianceLogs.isEmpty()}">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Compliance</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="log : ${complianceLogs}">
+                    <td th:text="${#temporals.format(log.date, 'dd MMM yyyy')}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${log.compliance.name() == 'FOLLOWED'} ? 'badge-active' :
+                                             (${log.compliance.name() == 'PARTIALLY_FOLLOWED'} ? 'badge-warning' : 'badge-neutral')"
+                              th:text="${log.compliance.name().replace('_', ' ')}"></span>
+                    </td>
+                    <td th:text="${log.notes != null and !log.notes.isBlank() ? log.notes : '—'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
+</html>

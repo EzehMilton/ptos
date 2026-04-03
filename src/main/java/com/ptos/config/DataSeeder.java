@@ -5,6 +5,9 @@ import com.ptos.repository.CheckInFeedbackRepository;
 import com.ptos.repository.CheckInRepository;
 import com.ptos.repository.ClientProfileRepository;
 import com.ptos.repository.ClientRecordRepository;
+import com.ptos.repository.ConversationRepository;
+import com.ptos.repository.MessageRepository;
+import com.ptos.repository.PTProfileRepository;
 import com.ptos.repository.UserRepository;
 import com.ptos.repository.WorkoutAssignmentRepository;
 import com.ptos.repository.WorkoutRepository;
@@ -29,11 +32,14 @@ public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final ClientProfileRepository clientProfileRepository;
+    private final PTProfileRepository ptProfileRepository;
     private final ClientRecordRepository clientRecordRepository;
     private final WorkoutRepository workoutRepository;
     private final WorkoutAssignmentRepository workoutAssignmentRepository;
     private final CheckInRepository checkInRepository;
     private final CheckInFeedbackRepository checkInFeedbackRepository;
+    private final ConversationRepository conversationRepository;
+    private final MessageRepository messageRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -50,6 +56,14 @@ public class DataSeeder implements CommandLineRunner {
                 .fullName("Michael Uchenna Ezeh")
                 .role(Role.PT)
                 .enabled(true)
+                .build());
+        ptProfileRepository.save(PTProfile.builder()
+                .user(pt)
+                .businessName("Big Mike Fitness")
+                .specialisation("Weight Loss, Nutrition")
+                .location("London, UK")
+                .bio("Helping clients transform their health and fitness for over 5 years.")
+                .onboardingComplete(true)
                 .build());
         log.info("Seeded PT user: pt@ptos.local");
 
@@ -185,6 +199,7 @@ public class DataSeeder implements CommandLineRunner {
                 ClientStatus.AT_RISK, new BigDecimal("100.00"), today.minusDays(80)));
 
         seedHistoricalActivity(pt, records, today);
+        seedConversations(pt, records, today);
         log.info("Seeded {} clients with profiles, workouts, assignments, and check-ins", records.size());
     }
 
@@ -199,7 +214,10 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .build());
 
-        clientProfileRepository.save(profileBuilder.user(user).build());
+        clientProfileRepository.save(profileBuilder
+                .user(user)
+                .onboardingComplete(true)
+                .build());
 
         return clientRecordRepository.save(ClientRecord.builder()
                 .ptUser(pt)
@@ -370,6 +388,79 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
+    private void seedConversations(User pt, List<ClientRecord> records, LocalDate today) {
+        seedConversation(pt, records.get(0),
+                new MessageSeed(Role.PT, "Great check-in this week! Your consistency is really showing.", today.minusDays(4).atTime(9, 0), true),
+                new MessageSeed(Role.CLIENT, "Thanks! I'm feeling much stronger on the bench press.", today.minusDays(4).atTime(9, 18), true),
+                new MessageSeed(Role.PT, "Let's push the weight up next week. I'll update your programme.", today.minusDays(4).atTime(9, 34), true),
+                new MessageSeed(Role.CLIENT, "Perfect. I can train Monday and Thursday.", today.minusDays(3).atTime(18, 12), true),
+                new MessageSeed(Role.PT, "Great. Keep your protein high over the weekend too.", today.minusDays(3).atTime(18, 30), true)
+        );
+
+        seedConversation(pt, records.get(1),
+                new MessageSeed(Role.PT, "Your form videos looked cleaner this week. Nice work.", today.minusDays(6).atTime(8, 10), true),
+                new MessageSeed(Role.CLIENT, "Appreciate it. The cues helped a lot.", today.minusDays(6).atTime(8, 26), true),
+                new MessageSeed(Role.PT, "Let's keep the calories slightly higher to support the muscle gain goal.", today.minusDays(5).atTime(19, 2), true),
+                new MessageSeed(Role.CLIENT, "Makes sense. I'll stay on top of the extra snack.", today.minusDays(5).atTime(19, 20), true),
+                new MessageSeed(Role.CLIENT, "Also, can we swap one leg movement next week? My hips were tight.", today.minusDays(1).atTime(20, 5), false)
+        );
+
+        seedConversation(pt, records.get(3),
+                new MessageSeed(Role.PT, "Sleep improvements are showing up in your sessions.", today.minusDays(7).atTime(7, 30), true),
+                new MessageSeed(Role.CLIENT, "Definitely. I feel much less drained in the mornings.", today.minusDays(7).atTime(7, 48), true),
+                new MessageSeed(Role.PT, "Excellent. I'm increasing your volume slightly next week.", today.minusDays(2).atTime(10, 0), true),
+                new MessageSeed(Role.CLIENT, "Love that. I'm ready for it.", today.minusDays(2).atTime(10, 19), true),
+                new MessageSeed(Role.CLIENT, "Can you also send me a quick reminder on warm-up pacing?", today.minusDays(1).atTime(21, 4), false)
+        );
+
+        seedConversation(pt, records.get(7),
+                new MessageSeed(Role.PT, "Huge improvement from last week. Well done resetting your routine.", today.minusDays(8).atTime(17, 12), true),
+                new MessageSeed(Role.CLIENT, "Thank you. The shorter sessions made it easier to stay consistent.", today.minusDays(8).atTime(17, 29), true),
+                new MessageSeed(Role.PT, "That's exactly the goal. Consistency first, then progression.", today.minusDays(5).atTime(16, 10), true),
+                new MessageSeed(Role.CLIENT, "Understood. I'm also finding meal prep easier now.", today.minusDays(5).atTime(16, 22), true),
+                new MessageSeed(Role.PT, "Brilliant. Let's keep that momentum going into next week.", today.minusDays(5).atTime(16, 38), true)
+        );
+    }
+
+    private void seedConversation(User pt, ClientRecord record, MessageSeed... seeds) {
+        Conversation conversation = conversationRepository.save(Conversation.builder()
+                .ptUser(pt)
+                .clientUser(record.getClientUser())
+                .build());
+
+        int unreadCountPt = 0;
+        int unreadCountClient = 0;
+        LocalDateTime lastMessageAt = null;
+
+        for (MessageSeed seed : seeds) {
+            User sender = seed.senderRole() == Role.PT ? pt : record.getClientUser();
+            Message message = Message.builder()
+                    .conversation(conversation)
+                    .senderUser(sender)
+                    .senderRole(seed.senderRole())
+                    .content(seed.content())
+                    .readAt(seed.read() ? seed.createdAt().plusMinutes(10) : null)
+                    .build();
+            message = messageRepository.save(message);
+            message.setCreatedAt(seed.createdAt());
+            messageRepository.save(message);
+
+            lastMessageAt = seed.createdAt();
+            if (!seed.read()) {
+                if (seed.senderRole() == Role.CLIENT) {
+                    unreadCountPt++;
+                } else {
+                    unreadCountClient++;
+                }
+            }
+        }
+
+        conversation.setLastMessageAt(lastMessageAt);
+        conversation.setUnreadCountPt(unreadCountPt);
+        conversation.setUnreadCountClient(unreadCountClient);
+        conversationRepository.save(conversation);
+    }
+
     private record AssignmentSeed(Workout workout,
                                   LocalDate assignedDate,
                                   AssignmentStatus status,
@@ -386,5 +477,11 @@ public class DataSeeder implements CommandLineRunner {
                                String notes,
                                boolean reviewed,
                                String feedbackText) {
+    }
+
+    private record MessageSeed(Role senderRole,
+                               String content,
+                               LocalDateTime createdAt,
+                               boolean read) {
     }
 }

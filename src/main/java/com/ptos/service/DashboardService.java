@@ -1,8 +1,11 @@
 package com.ptos.service;
 
-import com.ptos.domain.ClientStatus;
 import com.ptos.domain.CheckIn;
 import com.ptos.domain.AssignmentStatus;
+import com.ptos.domain.ClientStatus;
+import com.ptos.domain.RiskLevel;
+import com.ptos.domain.ClientRecord;
+import com.ptos.dto.ClientHealthScoreResult;
 import com.ptos.domain.User;
 import com.ptos.dto.ClientListView;
 import com.ptos.dto.DashboardView;
@@ -24,17 +27,29 @@ public class DashboardService {
     private final ClientRecordService clientRecordService;
     private final CheckInService checkInService;
     private final WorkoutAssignmentRepository workoutAssignmentRepository;
+    private final HealthScoreService healthScoreService;
 
     public DashboardView getDashboardData(User ptUser) {
         Map<ClientStatus, Long> counts = clientRecordService.getStatusCounts(ptUser);
 
         long active = counts.getOrDefault(ClientStatus.ACTIVE, 0L);
-        long atRisk = counts.getOrDefault(ClientStatus.AT_RISK, 0L);
         long inactive = counts.getOrDefault(ClientStatus.INACTIVE, 0L);
         long archived = counts.getOrDefault(ClientStatus.ARCHIVED, 0L);
-        long total = active + atRisk + inactive + archived;
+        long atRiskStatus = counts.getOrDefault(ClientStatus.AT_RISK, 0L);
+        long total = active + atRiskStatus + inactive + archived;
 
         List<ClientListView> allClients = clientRecordService.getClientListForPT(ptUser);
+        List<ClientRecord> activeRecords = clientRecordService.getClientsForPT(ptUser).stream()
+                .filter(record -> record.getStatus() == ClientStatus.ACTIVE)
+                .toList();
+        List<ClientHealthScoreResult> healthScores = activeRecords.stream()
+                .map(healthScoreService::calculateHealthScore)
+                .toList();
+        long healthyClients = healthScores.stream().filter(score -> score.getRiskLevel() == RiskLevel.HEALTHY).count();
+        long watchClients = healthScores.stream().filter(score -> score.getRiskLevel() == RiskLevel.WATCH).count();
+        long atRiskClients = healthScores.stream().filter(score -> score.getRiskLevel() == RiskLevel.AT_RISK).count();
+        long churningClients = healthScores.stream().filter(score -> score.getRiskLevel() == RiskLevel.CHURNING).count();
+        long churnRiskCount = atRiskClients + churningClients;
 
         List<ClientListView> recentlyUpdated = allClients.stream()
                 .filter(c -> c.getProfileLastUpdated() != null)
@@ -62,8 +77,12 @@ public class DashboardService {
         return DashboardView.builder()
                 .totalClients(total)
                 .activeClients(active)
-                .atRiskClients(atRisk)
+                .churnRiskCount(churnRiskCount)
                 .inactiveOrArchived(inactive + archived)
+                .healthyClients(healthyClients)
+                .watchClients(watchClients)
+                .atRiskClients(atRiskClients)
+                .churningClients(churningClients)
                 .recentlyUpdatedClients(recentlyUpdated)
                 .estimatedMonthlyRevenue(revenue)
                 .clientsWithoutPackagePrice(noPrice)

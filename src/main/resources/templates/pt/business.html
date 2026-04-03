@@ -29,21 +29,20 @@
         </div>
         <div class="card stat-card">
             <div class="stat-value"
-                 th:style="${b.clientsNeedingAttention > 0} ? 'color: #d97706;' : ''"
-                 th:text="${b.clientsNeedingAttention}"></div>
-            <div class="stat-label">Needs Attention</div>
+                 th:style="${b.churnRiskCount > 0} ? 'color: #d97706;' : 'color: #16a34a;'"
+                 th:text="${b.churnRiskCount}"></div>
+            <div class="stat-label">Churn Risk Count</div>
         </div>
         <div class="card stat-card">
             <div class="stat-value"
-                 th:style="${b.checkInComplianceRate < 60} ? 'color: #d97706;' : 'color: #16a34a;'"
-                 th:text="${b.checkInComplianceRate} + '%'"></div>
-            <div class="stat-label">Check-in Rate</div>
+                 th:style="${b.averageHealthScore < 50} ? 'color: #b91c1c;' : (${b.averageHealthScore < 70} ? 'color: #d97706;' : 'color: #16a34a;')"
+                 th:text="${#numbers.formatDecimal(b.averageHealthScore, 1, 1)}"></div>
+            <div class="stat-label">Average Health Score</div>
         </div>
         <div class="card stat-card">
             <div class="stat-value"
-                 th:style="${b.workoutCompletionRate < 50} ? 'color: #d97706;' : 'color: #16a34a;'"
-                 th:text="${b.workoutCompletionRate} + '%'"></div>
-            <div class="stat-label">Workout Completion Rate</div>
+                 th:text="'£' + ${#numbers.formatDecimal(b.estimatedClientLifetimeValue, 1, 2)}"></div>
+            <div class="stat-label">Est. Client Lifetime Value</div>
         </div>
     </div>
 
@@ -59,12 +58,14 @@
                     <th>Name</th>
                     <th>Status</th>
                     <th>Package</th>
+                    <th>Profile</th>
                     <th>Last Check-in</th>
                     <th>Workouts</th>
-                    <th>Health</th>
+                    <th>Health Score</th>
+                    <th>Risk</th>
                 </tr>
-            </thead>
-            <tbody>
+                </thead>
+                <tbody>
                 <tr th:each="c : ${b.clientBreakdown}">
                     <td>
                         <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.name}"></a>
@@ -81,6 +82,11 @@
                         <span th:if="${c.packagePrice == null}" class="text-muted">&mdash;</span>
                     </td>
                     <td>
+                        <span class="badge"
+                              th:classappend="${c.profileCompletion >= 4} ? 'badge-active' : 'badge-warning'"
+                              th:text="${c.profileCompletion} + '/6'"></span>
+                    </td>
+                    <td>
                         <span th:if="${c.lastCheckInDate != null}"
                               th:text="${#temporals.format(c.lastCheckInDate, 'dd MMM yyyy')}"></span>
                         <span th:if="${c.lastCheckInDate == null}" class="text-muted">&mdash;</span>
@@ -89,58 +95,57 @@
                         <span th:text="${c.workoutsCompleted + '/' + c.workoutsAssigned}"></span>
                     </td>
                     <td>
-                        <span th:if="${c.healthLabel == 'Good'}" style="color: #16a34a; font-weight: 500;">Good</span>
-                        <span th:if="${c.healthLabel == 'Needs Attention'}" style="color: #d97706; font-weight: 500;">Needs Attention</span>
-                        <span th:if="${c.healthLabel == 'Inactive'}" class="text-muted">Inactive</span>
+                        <div class="health-score-cell">
+                            <span style="font-weight: 700;" th:text="${c.healthScore}"></span>
+                            <div class="health-score-track">
+                                <div class="health-score-fill"
+                                     th:classappend="${c.healthScore >= 70} ? 'health-score-fill-healthy' :
+                                                    (${c.healthScore >= 50} ? 'health-score-fill-watch' :
+                                                    (${c.healthScore >= 30} ? 'health-score-fill-risk' : 'health-score-fill-churning'))"
+                                     th:style="'width:' + ${c.healthScore} + '%'"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${c.riskLevel.name() == 'HEALTHY'} ? 'badge-active' :
+                                             (${c.riskLevel.name() == 'WATCH'} ? 'badge-warning' :
+                                             (${c.riskLevel.name() == 'AT_RISK'} ? 'badge-danger' : 'badge-neutral'))"
+                              th:text="${c.riskLevel.name().replace('_', ' ')}"></span>
                     </td>
                 </tr>
-            </tbody>
+                </tbody>
         </table>
     </div>
 
-    <!-- Row 3: Profile Completion Summary -->
-    <div class="card">
-        <h3 class="card-title">Profile Completion</h3>
-        <p>
-            <strong th:text="${b.completeProfileCount}"></strong> of
-            <strong th:text="${b.totalClientCount}"></strong>
-            clients have a mostly complete profile (4+ fields).
-            <span th:if="${b.totalClientCount > 0}">
-                (<span th:text="${b.profileCompletionRate}"></span>%)
-            </span>
-        </p>
-        <div th:if="${!b.incompleteProfileClients.isEmpty()}" class="mt-2">
-            <p style="color: #d97706; font-weight: 500;"
-               th:text="${b.incompleteProfileClients.size()} + ' client(s) with incomplete profiles:'"></p>
-            <ul style="margin-top: 8px; padding-left: 20px;">
-                <li th:each="c : ${b.incompleteProfileClients}">
-                    <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.name}"></a>
-                    <span class="text-muted" th:text="'(' + ${c.profileCompletion} + '/6)'"></span>
-                </li>
-            </ul>
+    <!-- Row 3: Re-engagement Opportunities -->
+    <div class="card mb-3">
+        <h3 class="card-title">Re-engagement Opportunities</h3>
+        <div th:if="${b.reEngagementCandidates.isEmpty()}">
+            <p class="text-muted">All clients are actively engaged.</p>
         </div>
-        <p th:if="${b.incompleteProfileClients.isEmpty()}" class="mt-1" style="color: #16a34a;">
-            All clients have complete profiles.
-        </p>
+        <div th:if="${!b.reEngagementCandidates.isEmpty()}">
+            <div th:each="candidate : ${b.reEngagementCandidates}" class="suggested-action-row suggested-action-high">
+                <div class="suggested-action-copy">
+                    <span class="suggested-action-icon">⚠️</span>
+                    <span th:text="${candidate.clientName + ' • Score ' + candidate.overallScore + ' • Last activity ' + (candidate.daysSinceLastActivity != null ? candidate.daysSinceLastActivity + ' days ago' : 'unknown')}"></span>
+                </div>
+                <a class="btn btn-secondary btn-sm"
+                   th:href="@{/pt/messages/new/{id}(id=${candidate.clientRecordId})}">Send Message</a>
+            </div>
+        </div>
     </div>
 
-    <div class="mt-3">
-        <div class="card" th:if="${suggestedActions.isEmpty()}" style="border-left: 4px solid #22c55e;">
-            <h3 class="card-title">Suggested Actions</h3>
-            <p style="color: #166534;">All caught up! No actions needed right now.</p>
-        </div>
-
-        <div class="card" th:if="${!suggestedActions.isEmpty()}">
-            <h3 class="card-title">Suggested Actions</h3>
-            <div th:each="action : ${suggestedActions}" class="suggested-action-row"
-                 th:classappend="${action.priority.name() == 'HIGH'} ? 'suggested-action-high' :
-                                (${action.priority.name() == 'MEDIUM'} ? 'suggested-action-medium' : 'suggested-action-low')">
-                <div class="suggested-action-copy">
-                    <span class="suggested-action-icon" th:text="${action.icon}"></span>
-                    <span th:text="${action.message}"></span>
-                </div>
-                <a class="btn btn-secondary btn-sm" th:href="${action.actionUrl}" th:text="${action.actionLabel}"></a>
-            </div>
+    <!-- Row 4: Improving vs Slipping -->
+    <div class="card">
+        <h3 class="card-title">Improving vs Slipping</h3>
+        <div class="health-summary-grid">
+            <div class="health-summary-pill health-summary-healthy"
+                 th:text="${b.clientsImproving + ' clients improving'}"></div>
+            <div class="health-summary-pill health-summary-watch"
+                 th:text="${b.clientsStable + ' clients stable'}"></div>
+            <div class="health-summary-pill health-summary-risk"
+                 th:text="${b.clientsSlipping + ' clients slipping'}"></div>
         </div>
     </div>
 </div>

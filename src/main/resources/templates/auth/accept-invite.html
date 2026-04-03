@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title th:text="${pageTitle}">Join PTOS</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card" style="max-width: 520px; margin: 60px auto;">
+        <h2 class="card-title text-center" th:text="${pageTitle}">Join PTOS</h2>
+
+        <div th:if="${invitation != null}">
+            <p th:text="'Hi ' + ${invitation.fullName} + ', ' + ${ptName} + ' has invited you to join their training platform.'"></p>
+        </div>
+
+        <div th:if="${inviteMessage != null}" class="flash flash-error"
+             th:text="${inviteMessage}"></div>
+
+        <form th:if="${invitation != null and invitation.status.name() == 'PENDING'}"
+              th:action="@{/invite/{token}(token=${invitation.token})}"
+              th:object="${inviteAcceptForm}"
+              method="post">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" th:field="*{password}">
+                <div class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" th:field="*{confirmPassword}">
+                <div class="form-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Create My Account</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

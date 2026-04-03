@@ -11,15 +11,9 @@
         <h1 th:text="'Welcome, ' + ${fullName}"></h1>
     </div>
 
-    <!-- No profile yet -->
-    <div th:if="${!hasProfile}" class="card mb-3" style="text-align: center; padding: 40px;">
-        <h3>Complete your profile to get started</h3>
-        <p class="text-muted mb-2">Your trainer needs your details to build your program.</p>
-        <a th:href="@{/client/profile}" class="btn btn-primary">Set Up Profile</a>
-    </div>
+    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
 
-    <!-- Has profile -->
-    <div th:if="${hasProfile}" class="card mb-3">
+    <div class="card mb-3">
         <h3 class="card-title">Your Profile</h3>
         <span class="badge" th:classappend="${completion == 6} ? 'badge-active' : 'badge-warning'"
               th:text="'Profile: ' + ${completion} + '/6 complete'"></span>
@@ -46,7 +40,7 @@
         </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
         <div class="card">
             <h3 class="card-title">My Workouts</h3>
             <p class="text-muted">See your assigned, in-progress, and completed workouts.</p>
@@ -64,6 +58,26 @@
                 <p style="font-weight: 600; color: #1d4ed8;">Weekly check-in due</p>
                 <p class="text-muted">Submit an update so your PT can review your progress.</p>
                 <p class="mt-1"><a th:href="@{/client/checkins/new}" class="btn btn-primary btn-sm">Submit Now</a></p>
+            </div>
+        </div>
+        <div class="card">
+            <h3 class="card-title">Meal Plan</h3>
+            <div th:if="${activeMealPlan != null}">
+                <p style="font-weight: 600;" th:text="${activeMealPlan.title}"></p>
+                <div th:if="${todayMealLog != null}" class="mt-1">
+                    <span class="badge"
+                          th:classappend="${todayMealLog.compliance.name() == 'FOLLOWED'} ? 'badge-active' :
+                                         (${todayMealLog.compliance.name() == 'PARTIALLY_FOLLOWED'} ? 'badge-warning' : 'badge-neutral')"
+                          th:text="${todayMealLog.compliance.name().replace('_', ' ')}"></span>
+                    <p class="text-muted mt-1">Today's compliance is logged.</p>
+                </div>
+                <div th:if="${todayMealLog == null}" class="mt-1">
+                    <p class="text-muted">Log today’s nutrition progress.</p>
+                </div>
+                <p class="mt-1"><a th:href="@{/client/nutrition}">Open meal plan</a></p>
+            </div>
+            <div th:if="${activeMealPlan == null}">
+                <p class="text-muted">No meal plan assigned yet.</p>
             </div>
         </div>
     </div>
