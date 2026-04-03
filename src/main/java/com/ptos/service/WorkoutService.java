@@ -73,17 +73,28 @@ public class WorkoutService {
 
     @Transactional
     public void assignWorkout(Long workoutId, Long clientRecordId, LocalDate date, User ptUser) {
+        assignWorkout(workoutId, List.of(clientRecordId), date, ptUser);
+    }
+
+    @Transactional
+    public void assignWorkout(Long workoutId, List<Long> clientRecordIds, LocalDate date, User ptUser) {
         Workout workout = workoutRepository.findByIdAndPtUser(workoutId, ptUser)
                 .orElseThrow(() -> new IllegalArgumentException("Workout not found"));
-        ClientRecord clientRecord = clientRecordRepository.findByIdAndPtUser(clientRecordId, ptUser)
-                .orElseThrow(() -> new IllegalArgumentException("Client record not found"));
+        if (clientRecordIds == null || clientRecordIds.isEmpty()) {
+            throw new IllegalArgumentException("Select at least one client to assign this workout.");
+        }
 
-        WorkoutAssignment assignment = WorkoutAssignment.builder()
-                .workout(workout)
-                .clientRecord(clientRecord)
-                .assignedDate(date)
-                .build();
-        workoutAssignmentRepository.save(assignment);
+        for (Long clientRecordId : clientRecordIds) {
+            ClientRecord clientRecord = clientRecordRepository.findByIdAndPtUser(clientRecordId, ptUser)
+                    .orElseThrow(() -> new IllegalArgumentException("Client record not found"));
+
+            WorkoutAssignment assignment = WorkoutAssignment.builder()
+                    .workout(workout)
+                    .clientRecord(clientRecord)
+                    .assignedDate(date)
+                    .build();
+            workoutAssignmentRepository.save(assignment);
+        }
     }
 
     @Transactional

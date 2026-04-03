@@ -91,18 +91,26 @@ public class PtWorkoutController {
                         .filter(cr -> cr.getStatus() == ClientStatus.ACTIVE)
                         .toList());
         model.addAttribute("today", LocalDate.now());
+        model.addAttribute("totalSets", workoutOpt.get().getExercises().stream()
+                .mapToInt(exercise -> exercise.getSetsCount() != null ? exercise.getSetsCount() : 0)
+                .sum());
         return "pt/workouts/detail";
     }
 
     @PostMapping("/{id}/assign")
     public String assignWorkout(@PathVariable Long id,
-                                @RequestParam Long clientRecordId,
+                                @RequestParam(name = "clientRecordIds", required = false) List<Long> clientRecordIds,
                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate assignedDate,
                                 RedirectAttributes redirectAttributes) {
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
-        workoutService.assignWorkout(id, clientRecordId, assignedDate, ptUser);
-        redirectAttributes.addFlashAttribute("success", "Workout assigned");
-        return "redirect:/pt/clients/" + clientRecordId;
+        try {
+            workoutService.assignWorkout(id, clientRecordIds, assignedDate, ptUser);
+            redirectAttributes.addFlashAttribute("success",
+                    clientRecordIds.size() == 1 ? "Workout assigned" : "Workout assigned to " + clientRecordIds.size() + " clients");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/pt/workouts/" + id;
     }
 
     @PostMapping("/{id}/delete")

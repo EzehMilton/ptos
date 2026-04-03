@@ -8,12 +8,27 @@
     <title layout:title-pattern="$CONTENT_TITLE - PTOS">SETLY</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
+<body th:classappend="${currentPath == '/'} ? 'landing-body'">
 
-<nav class="navbar">
+<nav class="navbar" th:classappend="${currentPath == '/'} ? ' navbar-public'">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">SETLY</a>
-        <div class="navbar-menu">
+        <div class="navbar-menu navbar-menu-public"
+             sec:authorize="!isAuthenticated()"
+             th:if="${currentPath == '/'}">
+            <ul class="navbar-nav navbar-nav-public">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How it works</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+            </ul>
+
+            <ul class="navbar-nav navbar-nav-actions navbar-nav-public-actions">
+                <li><a th:href="@{/login}" class="btn btn-ghost btn-sm">Log in</a></li>
+                <li><a th:href="@{/pt/signup}" class="btn btn-primary btn-sm">Sign Up</a></li>
+            </ul>
+        </div>
+
+        <div class="navbar-menu" th:if="${currentPath != '/' or #authorization.expression('isAuthenticated()')}">
         <ul class="navbar-nav">
             <!-- PT navigation -->
             <li sec:authorize="hasRole('PT')">
@@ -76,12 +91,15 @@
     </div>
 </nav>
 
-<div class="container main-content" layout:fragment="content">
+<div class="container main-content"
+     th:classappend="${currentPath == '/'} ? ' landing-main-content'"
+     layout:fragment="content">
 </div>
 
-<footer class="footer">
+<footer class="footer" th:classappend="${currentPath == '/'} ? ' footer-public'">
     <div class="container">
-        SETLY MVP
+        <span th:if="${currentPath == '/'}">© 2026 SETLY. Built for personal trainers.</span>
+        <span th:unless="${currentPath == '/'}">SETLY MVP</span>
     </div>
 </footer>
 

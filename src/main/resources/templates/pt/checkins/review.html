@@ -7,180 +7,155 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="mb-2">
-        <a th:href="@{/pt/checkins}">&larr; Client Check-ins</a>
-    </div>
-
-    <div class="page-header">
-        <h1 th:text="${'Review Check-in - ' + clientDetail.clientName}"></h1>
-    </div>
-
-    <div class="card mb-3">
-        <h3 class="card-title">Current Check-in</h3>
-        <table>
-            <tbody>
-                <tr>
-                    <td style="width: 180px; font-weight: 500;">Submitted</td>
-                    <td th:text="${#temporals.format(checkIn.submittedAt, 'dd MMM yyyy HH:mm')}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Weight</td>
-                    <td th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Mood</td>
-                    <td th:text="${checkIn.moodScore != null ? checkIn.moodScore + '/5' : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Energy</td>
-                    <td th:text="${checkIn.energyScore != null ? checkIn.energyScore + '/5' : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Sleep</td>
-                    <td th:text="${checkIn.sleepScore != null ? checkIn.sleepScore + '/5' : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Notes</td>
-                    <td th:text="${checkIn.notes != null and !checkIn.notes.isBlank() ? checkIn.notes : '—'}"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="card mb-3" th:if="${previousCheckIn != null}">
-        <h3 class="card-title">Comparison</h3>
-        <table>
-            <tbody>
-                <tr>
-                    <td style="width: 180px; font-weight: 500;">Weight</td>
-                    <td>
-                        <span th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'"></span>
-                        <span class="text-muted">vs</span>
-                        <span th:text="${#numbers.formatDecimal(previousCheckIn.currentWeightKg, 1, 1)} + ' kg'"></span>
-                        <span th:if="${weightComparison != null}" th:class="${weightComparison.cssClass}" th:text="${weightComparison.text}"></span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Mood</td>
-                    <td th:text="${(checkIn.moodScore != null ? checkIn.moodScore + '/5' : '—') + ' vs ' + (previousCheckIn.moodScore != null ? previousCheckIn.moodScore + '/5' : '—')}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Energy</td>
-                    <td th:text="${(checkIn.energyScore != null ? checkIn.energyScore + '/5' : '—') + ' vs ' + (previousCheckIn.energyScore != null ? previousCheckIn.energyScore + '/5' : '—')}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Sleep</td>
-                    <td th:text="${(checkIn.sleepScore != null ? checkIn.sleepScore + '/5' : '—') + ' vs ' + (previousCheckIn.sleepScore != null ? previousCheckIn.sleepScore + '/5' : '—')}"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="card mb-3">
-        <h3 class="card-title">Progress Photos</h3>
-        <div th:if="${currentPhotoUrls.isEmpty()}">
-            <p class="text-muted">No photos submitted with this check-in.</p>
+    <div class="checkin-review-shell">
+        <div class="mb-2">
+            <a th:href="@{/pt/checkins}" class="checkin-review-back">&larr; Client check-ins</a>
         </div>
-        <div th:if="${!currentPhotoUrls.isEmpty()}">
-            <p style="font-weight: 600; margin-bottom: 12px;"
-               th:text="${'Current (' + #temporals.format(checkIn.submittedAt, 'dd MMM yyyy') + ')'}"></p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-                <div th:each="photoType : ${photoTypes}">
-                    <p style="font-weight: 600; margin-bottom: 8px;" th:text="${photoType.name()}"></p>
-                    <div th:if="${currentPhotoUrls.containsKey(photoType)}">
-                        <a th:href="${currentPhotoUrls.get(photoType)}" target="_blank" rel="noopener noreferrer">
-                            <img th:src="${currentPhotoUrls.get(photoType)}" th:alt="${photoType.name() + ' current photo'}"
-                                 style="max-width: 300px; width: 100%; border-radius: 8px;">
-                        </a>
-                    </div>
-                    <p th:if="${!currentPhotoUrls.containsKey(photoType)}" class="text-muted">No photo</p>
+
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+        <div class="checkin-review-header">
+            <div class="checkin-review-person">
+                <div class="checkin-review-avatar"
+                     th:text="${#strings.substring(clientDetail.clientName, 0, 1)}">J</div>
+                <div>
+                    <h1 th:text="${clientDetail.clientName + ' - Check-in review'}">Jamie Chen - Check-in review</h1>
+                    <p class="checkin-review-subtitle">
+                        <span th:text="${'Submitted ' + #temporals.format(checkIn.submittedAt, 'd MMM yyyy')}">Submitted 2 Apr 2026</span>
+                        <span>&bull;</span>
+                        <span th:text="${goalLabel}">Muscle gain</span>
+                        <span th:if="${clientDetail.targetWeightKg != null}">
+                            <span>&bull;</span>
+                            <span th:text="${'Target: ' + #numbers.formatDecimal(clientDetail.targetWeightKg, 1, 1) + ' kg'}">Target: 78.0 kg</span>
+                        </span>
+                    </p>
                 </div>
             </div>
 
-            <div th:if="${previousCheckIn != null and !previousPhotoUrls.isEmpty()}">
-                <p style="font-weight: 600; margin-bottom: 12px;"
-                   th:text="${'Previous (' + #temporals.format(previousCheckIn.submittedAt, 'dd MMM yyyy') + ')'}"></p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                    <div th:each="photoType : ${photoTypes}">
-                        <p style="font-weight: 600; margin-bottom: 8px;" th:text="${photoType.name()}"></p>
+            <div class="checkin-review-status-badge"
+                 th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting review' : 'Reviewed'}">Awaiting review</div>
+        </div>
+
+        <div class="checkin-review-stat-grid">
+            <div class="checkin-review-stat-card">
+                <p class="checkin-review-stat-label">Weight</p>
+                <p class="checkin-review-stat-value"
+                   th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1) + ' kg'}">71.0 kg</p>
+                <p class="checkin-review-stat-note"
+                   th:classappend="${weightComparison != null ? ' ' + weightComparison.cssClass : ' checkin-review-stat-note-neutral'}"
+                   th:text="${weightDeltaText}">+1.2 kg vs last</p>
+            </div>
+
+            <div class="checkin-review-stat-card">
+                <p class="checkin-review-stat-label">Mood</p>
+                <p class="checkin-review-stat-value" th:text="${checkIn.moodScore != null ? checkIn.moodScore + '/5' : '—'}">5/5</p>
+                <p class="checkin-review-stat-note checkin-review-stat-note-good" th:text="${moodDeltaText}">+1 vs last</p>
+            </div>
+
+            <div class="checkin-review-stat-card">
+                <p class="checkin-review-stat-label">Energy</p>
+                <p class="checkin-review-stat-value" th:text="${checkIn.energyScore != null ? checkIn.energyScore + '/5' : '—'}">4/5</p>
+                <p class="checkin-review-stat-note checkin-review-stat-note-good" th:text="${energyDeltaText}">+1 vs last</p>
+            </div>
+
+            <div class="checkin-review-stat-card">
+                <p class="checkin-review-stat-label">Sleep</p>
+                <p class="checkin-review-stat-value" th:text="${checkIn.sleepScore != null ? checkIn.sleepScore + '/5' : '—'}">4/5</p>
+                <p class="checkin-review-stat-note checkin-review-stat-note-neutral" th:text="${sleepDeltaText}">Same as last</p>
+            </div>
+
+            <div class="checkin-review-stat-card">
+                <p class="checkin-review-stat-label">Workouts</p>
+                <p class="checkin-review-stat-value"
+                   th:text="${workoutSummary.completedCount + '/' + workoutSummary.assignedCount}">0/1</p>
+                <p class="checkin-review-stat-note"
+                   th:classappend="${' ' + workoutSummary.cssClass}"
+                   th:text="${workoutSummary.detailText}">Missed</p>
+            </div>
+        </div>
+
+        <div class="checkin-review-card mb-3">
+            <h3 class="checkin-review-section-title">Client notes</h3>
+            <p class="checkin-review-client-note"
+               th:text="${checkIn.notes != null and !checkIn.notes.isBlank() ? checkIn.notes : 'No notes submitted with this check-in.'}">
+                Feeling stronger and recovering better. Hips were a bit tight during squats though.
+            </p>
+        </div>
+
+        <div class="checkin-review-photo-layout mb-3">
+            <div class="checkin-review-photo-column">
+                <p class="checkin-review-photo-heading"
+                   th:text="${previousCheckIn != null ? 'Previous (' + #temporals.format(previousCheckIn.submittedAt, 'd MMM') + ')' : 'Previous'}">Previous (26 Mar)</p>
+                <div class="checkin-review-photo-grid">
+                    <div th:each="photoType : ${photoTypes}" class="checkin-review-photo-card">
                         <div th:if="${previousPhotoUrls.containsKey(photoType)}">
                             <a th:href="${previousPhotoUrls.get(photoType)}" target="_blank" rel="noopener noreferrer">
-                                <img th:src="${previousPhotoUrls.get(photoType)}" th:alt="${photoType.name() + ' previous photo'}"
-                                     style="max-width: 300px; width: 100%; border-radius: 8px;">
+                                <img th:src="${previousPhotoUrls.get(photoType)}"
+                                     th:alt="${photoType.name() + ' previous photo'}"
+                                     class="checkin-review-photo-image">
                             </a>
                         </div>
-                        <p th:if="${!previousPhotoUrls.containsKey(photoType)}" class="text-muted">No photo</p>
+                        <div th:if="${!previousPhotoUrls.containsKey(photoType)}" class="checkin-review-photo-placeholder">
+                            <span th:text="${#strings.capitalize(#strings.toLowerCase(photoType.name()))}">Front</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkin-review-photo-divider">↔</div>
+
+            <div class="checkin-review-photo-column">
+                <p class="checkin-review-photo-heading checkin-review-photo-heading-current"
+                   th:text="${'Current (' + #temporals.format(checkIn.submittedAt, 'd MMM') + ')'}">Current (2 Apr)</p>
+                <div class="checkin-review-photo-grid">
+                    <div th:each="photoType : ${photoTypes}" class="checkin-review-photo-card">
+                        <div th:if="${currentPhotoUrls.containsKey(photoType)}">
+                            <a th:href="${currentPhotoUrls.get(photoType)}" target="_blank" rel="noopener noreferrer">
+                                <img th:src="${currentPhotoUrls.get(photoType)}"
+                                     th:alt="${photoType.name() + ' current photo'}"
+                                     class="checkin-review-photo-image">
+                            </a>
+                        </div>
+                        <div th:if="${!currentPhotoUrls.containsKey(photoType)}" class="checkin-review-photo-placeholder checkin-review-photo-placeholder-current">
+                            <span th:text="${#strings.capitalize(#strings.toLowerCase(photoType.name()))}">Front</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="card generated-insight-card mb-3">
-        <h3 class="card-title">Analysis</h3>
-        <p th:text="${checkInInsight}"></p>
-        <p class="generated-insight-note">This analysis is generated automatically from client data.</p>
-    </div>
-
-    <div class="card mb-3">
-        <h3 class="card-title">Client Info</h3>
-        <table>
-            <tbody>
-                <tr>
-                    <td style="width: 180px; font-weight: 500;">Goal Type</td>
-                    <td>
-                        <span th:if="${clientDetail.goalType != null}" th:switch="${clientDetail.goalType.name()}">
-                            <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
-                            <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
-                            <span th:case="'STRENGTH'">Strength</span>
-                            <span th:case="'ENDURANCE'">Endurance</span>
-                            <span th:case="'GENERAL_FITNESS'">General Fitness</span>
-                        </span>
-                        <span th:if="${clientDetail.goalType == null}">&mdash;</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Target Weight</td>
-                    <td th:text="${clientDetail.targetWeightKg != null ? clientDetail.targetWeightKg + ' kg' : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">Training Experience</td>
-                    <td>
-                        <span th:if="${clientDetail.trainingExperience != null}" th:switch="${clientDetail.trainingExperience.name()}">
-                            <span th:case="'BEGINNER'">Beginner</span>
-                            <span th:case="'INTERMEDIATE'">Intermediate</span>
-                            <span th:case="'ADVANCED'">Advanced</span>
-                        </span>
-                        <span th:if="${clientDetail.trainingExperience == null}">&mdash;</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight: 500;">PT Notes</td>
-                    <td th:text="${clientDetail.ptNotes != null and !clientDetail.ptNotes.isBlank() ? clientDetail.ptNotes : '—'}"></td>
-                </tr>
-            </tbody>
-        </table>
-        <p class="mt-2"><a th:href="@{/pt/clients/{id}(id=${clientDetail.clientRecordId})}">View full profile &rarr;</a></p>
-    </div>
-
-    <div class="card" th:if="${checkIn.status.name() == 'PENDING_REVIEW'}">
-        <h3 class="card-title">Feedback</h3>
-        <form th:action="@{/pt/checkins/{id}/feedback(id=${checkIn.id})}" th:object="${feedbackForm}" method="post">
-            <div class="form-group">
-                <label for="feedbackText">Feedback</label>
-                <textarea id="feedbackText" th:field="*{feedbackText}" rows="5"
-                          placeholder="Great progress this week! Here's what I'd suggest..."></textarea>
-                <div class="form-error" th:if="${#fields.hasErrors('feedbackText')}" th:errors="*{feedbackText}"></div>
+        <div class="checkin-review-analysis-card mb-3">
+            <div class="checkin-review-analysis-top">
+                <h3>AI analysis</h3>
+                <span class="checkin-review-analysis-badge">Auto-generated</span>
             </div>
-            <button type="submit" class="btn btn-primary">Send Feedback</button>
-        </form>
-    </div>
+            <p th:text="${checkInInsight}">
+                Weight increased by 1.2 kg this week, moving toward the 78.0 kg target. Mood and energy both improved.
+            </p>
+        </div>
 
-    <div class="feedback-card" th:if="${checkIn.status.name() == 'REVIEWED' and checkIn.feedback != null}">
-        <h3 class="card-title">Feedback</h3>
-        <p class="mb-2" th:text="${checkIn.feedback.feedbackText}"></p>
-        <p class="text-muted"
-           th:text="${'Sent ' + #temporals.format(checkIn.feedback.sentAt, 'dd MMM yyyy')}"></p>
+        <div class="checkin-review-feedback-card" th:if="${checkIn.status.name() == 'PENDING_REVIEW'}">
+            <h3 class="checkin-review-feedback-title" th:text="${'Your feedback to ' + clientDetail.clientName}">Your feedback to Jamie</h3>
+            <form th:action="@{/pt/checkins/{id}/feedback(id=${checkIn.id})}" th:object="${feedbackForm}" method="post">
+                <div class="form-group">
+                    <textarea id="feedbackText" th:field="*{feedbackText}" rows="5"
+                              placeholder="Write your personalised feedback here..."></textarea>
+                    <div class="form-error" th:if="${#fields.hasErrors('feedbackText')}" th:errors="*{feedbackText}"></div>
+                </div>
+                <div class="checkin-review-feedback-actions">
+                    <button type="button" class="btn btn-secondary">Use AI draft</button>
+                    <button type="submit" class="btn btn-primary">Send feedback</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="checkin-review-feedback-card" th:if="${checkIn.status.name() == 'REVIEWED' and checkIn.feedback != null}">
+            <h3 class="checkin-review-feedback-title">Feedback sent</h3>
+            <p class="checkin-review-client-note" th:text="${checkIn.feedback.feedbackText}"></p>
+            <p class="checkin-review-reviewed-at"
+               th:text="${'Sent ' + #temporals.format(checkIn.feedback.sentAt, 'dd MMM yyyy')}">Sent 03 Apr 2026</p>
+        </div>
     </div>
 </div>
 </body>

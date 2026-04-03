@@ -7,31 +7,61 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="page-header">
-        <h1>Messages</h1>
-    </div>
-
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
-
-    <div th:if="${conversations.isEmpty()}" class="card">
-        <p class="text-muted">No conversations yet. Start a conversation from a client's detail page.</p>
-    </div>
-
-    <div th:if="${!conversations.isEmpty()}" class="message-list">
-        <a th:each="conversation : ${conversations}"
-           th:href="@{/pt/messages/{id}(id=${conversation.conversationId})}"
-           class="message-list-row">
+    <div class="messages-shell">
+        <div class="messages-header">
             <div>
-                <p th:style="${conversation.unreadCount > 0} ? 'font-weight: 700;' : 'font-weight: 600;'"
-                   th:text="${conversation.otherPersonName}"></p>
-                <p class="text-muted" th:text="${conversation.lastMessagePreview}"></p>
+                <h1 class="messages-title">Messages</h1>
+                <p class="messages-subtitle"
+                   th:text="${conversations.isEmpty() ? 'No active conversations yet' : conversations.size() + ' active conversation' + (conversations.size() == 1 ? '' : 's')}">
+                    4 active conversations
+                </p>
             </div>
-            <div style="text-align: right;">
-                <p class="text-muted" th:text="${conversation.relativeTime}"></p>
-                <span th:if="${conversation.unreadCount > 0}" class="nav-count" th:text="${conversation.unreadCount}"></span>
-            </div>
-        </a>
+        </div>
+
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+        <div class="messages-layout">
+            <aside class="messages-sidebar">
+                <div class="messages-panel">
+                    <div class="messages-panel-header">
+                        <h3>Inbox</h3>
+                    </div>
+
+                    <div th:if="${conversations.isEmpty()}" class="messages-empty-state">
+                        <p>No conversations yet. Start a conversation from a client's detail page.</p>
+                    </div>
+
+                    <div th:if="${!conversations.isEmpty()}" class="messages-list">
+                        <a th:each="conversation : ${conversations}"
+                           th:href="@{/pt/messages/{id}(id=${conversation.conversationId})}"
+                           class="messages-list-row">
+                            <div class="messages-list-avatar"
+                                 th:text="${#strings.substring(conversation.otherPersonName, 0, 1)}">A</div>
+                            <div class="messages-list-copy">
+                                <div class="messages-list-topline">
+                                    <p class="messages-list-name"
+                                       th:classappend="${conversation.unreadCount > 0 ? ' messages-list-name-unread' : ''}"
+                                       th:text="${conversation.otherPersonName}">Alex Morgan</p>
+                                    <p class="messages-list-time" th:text="${conversation.relativeTime}">2 hours ago</p>
+                                </div>
+                                <p class="messages-list-preview" th:text="${conversation.lastMessagePreview}">Last message preview</p>
+                            </div>
+                            <span th:if="${conversation.unreadCount > 0}" class="messages-list-badge" th:text="${conversation.unreadCount}">2</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="messages-main">
+                <div class="messages-panel messages-placeholder-panel">
+                    <div class="messages-placeholder-copy">
+                        <h2>Select a conversation</h2>
+                        <p>Choose a client from the inbox to open the thread and reply.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 </div>
 </body>

@@ -7,42 +7,93 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="mb-2">
-        <a th:href="@{/pt/messages}">&larr; Messages</a>
-    </div>
-
-    <div class="page-header">
-        <h1 th:text="${'Conversation with ' + otherPersonName}"></h1>
-    </div>
-
-    <p class="mb-2" th:if="${clientRecordId != null}">
-        <a th:href="@{/pt/clients/{id}(id=${clientRecordId})}"
-           th:text="${'View ' + otherPersonName + ' profile →'}"></a>
-    </p>
-
-    <div class="conversation-thread mb-3">
-        <div th:if="${messages.isEmpty()}" class="text-muted">No messages yet. Start the conversation below.</div>
-        <div th:each="message : ${messages}"
-             class="message-row"
-             th:classappend="${message.senderRole.name() == 'PT'} ? 'message-row-outgoing' : 'message-row-incoming'">
-            <div class="message-bubble"
-                 th:classappend="${message.senderRole.name() == 'PT'} ? 'message-bubble-outgoing' : 'message-bubble-incoming'">
-                <p style="white-space: pre-line;" th:text="${message.content}"></p>
-                <p class="message-meta"
-                   th:text="${#temporals.format(message.createdAt, 'dd MMM yyyy HH:mm') + ' • ' + (message.readAt != null ? 'Read' : 'Unread')}"></p>
+    <div class="messages-shell">
+        <div class="messages-header">
+            <div>
+                <a th:href="@{/pt/messages}" class="messages-back-link">&larr; Messages</a>
+                <h1 class="messages-title" th:text="${otherPersonName}">Jamie Chen</h1>
+                <p class="messages-subtitle" th:if="${clientRecordId != null}">
+                    <a th:href="@{/pt/clients/{id}(id=${clientRecordId})}"
+                       th:text="${'View ' + otherPersonName + ' profile →'}">View Jamie Chen profile →</a>
+                </p>
             </div>
         </div>
-    </div>
 
-    <div class="card">
-        <form th:action="@{/pt/messages/{id}(id=${conversation.id})}" th:object="${messageForm}" method="post">
-            <div class="form-group">
-                <label for="content">Message</label>
-                <textarea id="content" th:field="*{content}" rows="4"></textarea>
-                <div class="form-error" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
-            </div>
-            <button type="submit" class="btn btn-primary">Send</button>
-        </form>
+        <div class="messages-layout">
+            <aside class="messages-sidebar">
+                <div class="messages-panel">
+                    <div class="messages-panel-header">
+                        <h3>Inbox</h3>
+                    </div>
+
+                    <div th:if="${conversations.isEmpty()}" class="messages-empty-state">
+                        <p>No conversations yet.</p>
+                    </div>
+
+                    <div th:if="${!conversations.isEmpty()}" class="messages-list">
+                        <a th:each="item : ${conversations}"
+                           th:href="@{/pt/messages/{id}(id=${item.conversationId})}"
+                           class="messages-list-row"
+                           th:classappend="${selectedConversationId != null and selectedConversationId == item.conversationId ? ' messages-list-row-active' : ''}">
+                            <div class="messages-list-avatar"
+                                 th:text="${#strings.substring(item.otherPersonName, 0, 1)}">J</div>
+                            <div class="messages-list-copy">
+                                <div class="messages-list-topline">
+                                    <p class="messages-list-name"
+                                       th:classappend="${item.unreadCount > 0 ? ' messages-list-name-unread' : ''}"
+                                       th:text="${item.otherPersonName}">Jamie Chen</p>
+                                    <p class="messages-list-time" th:text="${item.relativeTime}">Yesterday</p>
+                                </div>
+                                <p class="messages-list-preview" th:text="${item.lastMessagePreview}">Preview</p>
+                            </div>
+                            <span th:if="${item.unreadCount > 0}" class="messages-list-badge" th:text="${item.unreadCount}">1</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="messages-main">
+                <div class="messages-panel messages-thread-panel">
+                    <div class="messages-thread-header">
+                        <div class="messages-thread-person">
+                            <div class="messages-thread-avatar"
+                                 th:text="${#strings.substring(otherPersonName, 0, 1)}">J</div>
+                            <div>
+                                <h2 th:text="${otherPersonName}">Jamie Chen</h2>
+                                <p>Client conversation</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="messages-thread-body">
+                        <div th:if="${messages.isEmpty()}" class="messages-empty-state">No messages yet. Start the conversation below.</div>
+                        <div th:each="message : ${messages}"
+                             class="messages-thread-row"
+                             th:classappend="${message.senderRole.name() == 'PT' ? ' messages-thread-row-outgoing' : ' messages-thread-row-incoming'}">
+                            <div class="messages-thread-bubble"
+                                 th:classappend="${message.senderRole.name() == 'PT' ? ' messages-thread-bubble-outgoing' : ' messages-thread-bubble-incoming'}">
+                                <p class="messages-thread-text" th:text="${message.content}">Message body</p>
+                                <p class="messages-thread-meta"
+                                   th:text="${#temporals.format(message.createdAt, 'dd MMM yyyy HH:mm') + ' • ' + (message.readAt != null ? 'Read' : 'Unread')}">03 Apr 2026 09:15 • Read</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="messages-compose">
+                        <form th:action="@{/pt/messages/{id}(id=${conversation.id})}" th:object="${messageForm}" method="post">
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label for="content">Message</label>
+                                <textarea id="content" th:field="*{content}" rows="4" placeholder="Write your message..."></textarea>
+                                <div class="form-error" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></div>
+                            </div>
+                            <div class="messages-compose-actions">
+                                <button type="submit" class="btn btn-primary">Send</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 </div>
 </body>
