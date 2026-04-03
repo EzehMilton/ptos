@@ -2,7 +2,6 @@ package com.ptos.service;
 
 import com.ptos.domain.ClientProfile;
 import com.ptos.domain.User;
-import com.ptos.dto.OnboardingForm;
 import com.ptos.dto.ProfileForm;
 import com.ptos.repository.ClientProfileRepository;
 import com.ptos.repository.UserRepository;
@@ -34,23 +33,6 @@ public class ClientProfileService {
         profile.setDietaryPreferences(form.getDietaryPreferences());
         profile.setTrainingExperience(form.getTrainingExperience());
         profile.setNotes(form.getNotes());
-
-        return clientProfileRepository.save(profile);
-    }
-
-    public ClientProfile createOrUpdateOnboardingProfile(Long userId, OnboardingForm form) {
-        ClientProfile profile = getOrCreateProfile(userId);
-
-        profile.setAge(form.getAge());
-        profile.setHeightCm(form.getHeightCm());
-        profile.setCurrentWeightKg(form.getCurrentWeightKg());
-        profile.setGoalType(form.getGoalType());
-        profile.setTargetWeightKg(form.getTargetWeightKg());
-        profile.setTrainingExperience(form.getTrainingExperience());
-        profile.setInjuriesOrConditions(form.getInjuriesOrConditions());
-        profile.setDietaryPreferences(form.getDietaryPreferences());
-        profile.setNotes(form.getGoalNotes());
-        profile.setOnboardingComplete(true);
 
         return clientProfileRepository.save(profile);
     }

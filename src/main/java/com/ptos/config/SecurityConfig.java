@@ -1,9 +1,7 @@
 package com.ptos.config;
 
-import com.ptos.domain.ClientProfile;
 import com.ptos.domain.PTProfile;
 import com.ptos.security.PtosUserDetails;
-import com.ptos.service.ClientProfileService;
 import com.ptos.service.PTProfileService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,6 +12,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
@@ -28,12 +27,11 @@ public class SecurityConfig {
                                                    AuthenticationSuccessHandler roleBasedSuccessHandler) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/signup", "/pt/signup", "/invite/**", "/uploads/**", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login", "/pt/signup", "/invite/**", "/uploads/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/pt/onboarding", "/pt/onboarding/**").hasRole("PT")
                 .requestMatchers("/pt/**").hasRole("PT")
-                .requestMatchers("/client/**").hasRole("CLIENT")
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             )
             .formLogin(form -> form
                 .loginPage("/login")
@@ -57,8 +55,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationSuccessHandler roleBasedSuccessHandler(PTProfileService ptProfileService,
-                                                                ClientProfileService clientProfileService) {
+    public AuthenticationSuccessHandler roleBasedSuccessHandler(PTProfileService ptProfileService) {
         return new AuthenticationSuccessHandler() {
             @Override
             public void onAuthenticationSuccess(HttpServletRequest request,
@@ -70,10 +67,13 @@ public class SecurityConfig {
                             .filter(PTProfile::isOnboardingComplete)
                             .map(profile -> "/pt/dashboard")
                             .orElse("/pt/onboarding");
-                    case CLIENT -> clientProfileService.getProfileForUser(userDetails.getUserId())
-                            .filter(ClientProfile::isOnboardingComplete)
-                            .map(profile -> "/client/home")
-                            .orElse("/client/onboarding");
+                    case CLIENT -> {
+                        if (request.getSession(false) != null) {
+                            request.getSession(false).invalidate();
+                        }
+                        SecurityContextHolder.clearContext();
+                        yield "/login?clientAccess=true";
+                    }
                 };
                 response.sendRedirect(targetUrl);
             }

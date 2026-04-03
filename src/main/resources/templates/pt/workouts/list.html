@@ -28,6 +28,7 @@
                     <th>Exercises</th>
                     <th>Type</th>
                     <th>Created</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -43,6 +44,12 @@
                         <span th:if="${w.template}" class="badge badge-active">Template</span>
                     </td>
                     <td th:text="${#temporals.format(w.createdAt, 'dd MMM yyyy')}"></td>
+                    <td style="width: 120px; text-align: right;">
+                        <form th:action="@{/pt/workouts/{id}/delete(id=${w.id})}" method="post"
+                              onsubmit="return confirm('Delete this workout? This will also remove any assignments based on it.');">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
                 </tr>
             </tbody>
         </table>

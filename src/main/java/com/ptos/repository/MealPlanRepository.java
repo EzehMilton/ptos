@@ -12,6 +12,8 @@ public interface MealPlanRepository extends JpaRepository<MealPlan, Long> {
 
     Optional<MealPlan> findByClientRecordAndActiveTrue(ClientRecord clientRecord);
 
+    List<MealPlan> findByClientRecordOrderByCreatedAtDesc(ClientRecord clientRecord);
+
     List<MealPlan> findByPtUserOrderByCreatedAtDesc(User ptUser);
 
     Optional<MealPlan> findByIdAndPtUser(Long id, User ptUser);

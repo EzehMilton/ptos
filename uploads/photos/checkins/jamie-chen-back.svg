@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="720" viewBox="0 0 480 720">
+  <rect width="480" height="720" fill="#e2e8f0"/>
+  <rect x="86" y="48" width="308" height="624" rx="28" fill="#f8fafc" stroke="#cbd5e1" stroke-width="4"/>
+  <text x="240" y="118" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#1e293b">Jamie Chen</text>
+  <text x="240" y="154" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#475569">Back Progress Photo</text>
+  <circle cx="240" cy="236" r="56" fill="#cbd5e1"/>
+  <path d="M176 312 C188 292 214 282 240 282 C266 282 292 292 304 312 L326 520 L154 520 Z" fill="#94a3b8"/>
+  <path d="M198 344 L176 520" stroke="#64748b" stroke-width="10" stroke-linecap="round"/>
+  <path d="M282 344 L304 520" stroke="#64748b" stroke-width="10" stroke-linecap="round"/>
+  <text x="240" y="620" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#64748b">Seeded demo asset for check-in comparison</text>
+</svg>

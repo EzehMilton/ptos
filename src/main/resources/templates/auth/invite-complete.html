@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Invitation Accepted</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="card" style="max-width: 520px; margin: 60px auto;">
+        <h2 class="card-title">You're All Set</h2>
+        <p th:text="|${invitedName}, your invitation to ${ptDisplayName} has been accepted.|"></p>
+        <p class="text-muted mt-2">Your PT can now manage your coaching plan and follow up with the next steps.</p>
+    </div>
+</div>
+</body>
+</html>

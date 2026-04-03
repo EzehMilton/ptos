@@ -3,34 +3,44 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/default}">
 <head>
-    <title th:text="${pageTitle}">Join PTOS</title>
+    <title>Accept Invitation</title>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="card" style="max-width: 520px; margin: 60px auto;">
-        <h2 class="card-title text-center" th:text="${pageTitle}">Join PTOS</h2>
+        <h2 class="card-title"
+            th:text="${ptDisplayName != null} ? |Join ${ptDisplayName} on SETLY| : 'Join SETLY'"></h2>
 
-        <div th:if="${invitation != null}">
-            <p th:text="'Hi ' + ${invitation.fullName} + ', ' + ${ptName} + ' has invited you to join their training platform.'"></p>
+        <div th:if="${inviteError}" class="flash flash-error" th:text="${inviteError}"></div>
+
+        <div th:if="${invitation != null and invitation.status.name() == 'EXPIRED'}" class="flash flash-error">
+            This invitation has expired. Please ask your PT for a new one.
         </div>
 
-        <div th:if="${inviteMessage != null}" class="flash flash-error"
-             th:text="${inviteMessage}"></div>
+        <div th:if="${invitation != null and invitation.status.name() == 'ACCEPTED'}" class="flash flash-error">
+            This invitation has already been used.
+        </div>
+
+        <div th:if="${invitation != null}">
+            <p class="mb-3" th:text="|Hi ${invitedName}, ${ptName} has invited you to join their training platform.|"></p>
+        </div>
 
         <form th:if="${invitation != null and invitation.status.name() == 'PENDING'}"
               th:action="@{/invite/{token}(token=${invitation.token})}"
               th:object="${inviteAcceptForm}"
               method="post">
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" th:field="*{password}">
+                <label for="password">Create Password</label>
+                <input type="password" id="password" th:field="*{password}" autocomplete="new-password">
                 <div class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
             </div>
+
             <div class="form-group">
                 <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" th:field="*{confirmPassword}">
+                <input type="password" id="confirmPassword" th:field="*{confirmPassword}" autocomplete="new-password">
                 <div class="form-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
             </div>
+
             <button type="submit" class="btn btn-primary" style="width: 100%;">Create My Account</button>
         </form>
     </div>

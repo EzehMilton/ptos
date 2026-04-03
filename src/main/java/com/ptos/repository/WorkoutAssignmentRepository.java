@@ -3,6 +3,7 @@ package com.ptos.repository;
 import com.ptos.domain.AssignmentStatus;
 import com.ptos.domain.ClientRecord;
 import com.ptos.domain.User;
+import com.ptos.domain.Workout;
 import com.ptos.domain.WorkoutAssignment;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,6 +22,11 @@ public interface WorkoutAssignmentRepository extends JpaRepository<WorkoutAssign
 
     @EntityGraph(attributePaths = {"workout", "workout.exercises"})
     Optional<WorkoutAssignment> findByIdAndClientRecord_ClientUser(Long id, User clientUser);
+
+    @EntityGraph(attributePaths = {"workout", "workout.exercises", "clientRecord", "clientRecord.clientUser"})
+    Optional<WorkoutAssignment> findByIdAndClientRecord_PtUser(Long id, User ptUser);
+
+    List<WorkoutAssignment> findByWorkout(Workout workout);
 
     long countByClientRecord_PtUser(User ptUser);
 

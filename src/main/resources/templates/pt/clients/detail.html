@@ -18,8 +18,10 @@
               th:text="${detail.status.name()}"></span>
     </div>
 
-    <div class="mb-2">
-        <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="btn btn-secondary btn-sm">Send Message</a>
+    <div class="mb-2" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="btn btn-secondary btn-sm"
+           th:text="${existingConversation != null} ? 'Open Conversation' : 'Start Conversation'"></a>
+        <a th:href="@{/pt/clients/{id}/delete(id=${detail.clientRecordId})}" class="btn btn-danger btn-sm">Delete Client</a>
     </div>
 
     <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
@@ -106,6 +108,17 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div>
+                <p style="font-weight: 600; margin-bottom: 4px;">Messaging</p>
+                <p class="text-muted"
+                   th:text="${existingConversation != null}
+                   ? 'A conversation already exists. Open it here to send a new message.'
+                   : 'No conversation yet. Start one here to message this client directly.'"></p>
+            </div>
+            <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="btn btn-primary"
+               th:text="${existingConversation != null} ? 'Open Conversation' : 'Start Conversation'"></a>
         </div>
     </div>
 
@@ -287,11 +300,35 @@
             </div>
             <div class="form-group">
                 <label for="ptNotes">PT Notes</label>
+                <p class="text-muted mb-1">Add a new note. Saved notes appear below with their date.</p>
                 <textarea id="ptNotes" th:field="*{ptNotes}" rows="4"></textarea>
                 <div class="form-error" th:if="${#fields.hasErrors('ptNotes')}" th:errors="*{ptNotes}"></div>
             </div>
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
+    </div>
+
+    <div class="card mb-3">
+        <h3 class="card-title">PT Note History</h3>
+        <div th:if="${clientRecordNotes.isEmpty()}">
+            <p class="text-muted">No PT notes added yet.</p>
+        </div>
+        <table th:if="${!clientRecordNotes.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="note : ${clientRecordNotes}">
+                    <td style="width: 180px;">
+                        <span th:text="${#temporals.format(note.createdAt, 'dd MMM yyyy')}"></span>
+                    </td>
+                    <td style="white-space: pre-line;" th:text="${note.noteText}"></td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <!-- Section 6: Activity -->
@@ -315,6 +352,7 @@
                         <th>Assigned Date</th>
                         <th>Status</th>
                         <th>Completed Date</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -334,6 +372,12 @@
                             <span th:if="${assignment.completedAt != null}"
                                   th:text="${#temporals.format(assignment.completedAt, 'dd MMM yyyy')}"></span>
                             <span th:if="${assignment.completedAt == null}" class="text-muted">&mdash;</span>
+                        </td>
+                        <td style="width: 120px; text-align: right;">
+                            <form th:action="@{/pt/workouts/assignments/{id}/delete(id=${assignment.id})}" method="post"
+                                  onsubmit="return confirm('Unassign this workout from the client?');">
+                                <button type="submit" class="btn btn-secondary btn-sm">Unassign</button>
+                            </form>
                         </td>
                     </tr>
                 </tbody>
@@ -362,7 +406,11 @@
                                   th:classappend="${checkIn.status.name() == 'PENDING_REVIEW'} ? 'badge-info' : 'badge-active'"
                                   th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting Review' : 'Reviewed'}"></span>
                         </td>
-                        <td><a th:href="@{/pt/checkins/{id}(id=${checkIn.id})}">Review</a></td>
+                        <td>
+                            <a th:if="${checkIn.status.name() == 'PENDING_REVIEW'}"
+                               th:href="@{/pt/checkins/{id}(id=${checkIn.id})}">Review</a>
+                            <span th:if="${checkIn.status.name() != 'PENDING_REVIEW'}" class="text-muted">Reviewed</span>
+                        </td>
                     </tr>
                 </tbody>
             </table>

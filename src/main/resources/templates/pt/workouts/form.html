@@ -59,18 +59,30 @@
                     <div>
                         <input type="text" th:field="*{exercises[__${iter.index}__].exerciseName}"
                                placeholder="Exercise name">
+                        <div class="form-error"
+                             th:if="${#fields.hasErrors('exercises[' + iter.index + '].exerciseName')}"
+                             th:errors="*{exercises[__${iter.index}__].exerciseName}"></div>
                     </div>
                     <div>
                         <input type="number" th:field="*{exercises[__${iter.index}__].setsCount}"
                                placeholder="Sets" min="1" max="20">
+                        <div class="form-error"
+                             th:if="${#fields.hasErrors('exercises[' + iter.index + '].setsCount')}"
+                             th:errors="*{exercises[__${iter.index}__].setsCount}"></div>
                     </div>
                     <div>
                         <input type="text" th:field="*{exercises[__${iter.index}__].repsText}"
                                placeholder="Reps (e.g. 8-12)">
+                        <div class="form-error"
+                             th:if="${#fields.hasErrors('exercises[' + iter.index + '].repsText')}"
+                             th:errors="*{exercises[__${iter.index}__].repsText}"></div>
                     </div>
                     <div>
                         <input type="text" th:field="*{exercises[__${iter.index}__].notes}"
                                placeholder="Notes (optional)">
+                        <div class="form-error"
+                             th:if="${#fields.hasErrors('exercises[' + iter.index + '].notes')}"
+                             th:errors="*{exercises[__${iter.index}__].notes}"></div>
                     </div>
                     <div>
                         <button type="button" class="btn btn-secondary btn-sm remove-exercise"
@@ -83,45 +95,49 @@
 
         <button type="submit" class="btn btn-primary">Save Workout</button>
     </form>
-</div>
 
-<script th:inline="javascript">
-    function addExercise() {
-        var list = document.getElementById('exercise-list');
-        var rows = list.querySelectorAll('.exercise-row');
-        var idx = rows.length;
+    <script th:inline="javascript">
+        window.addExercise = function () {
+            var list = document.getElementById('exercise-list');
+            var rows = list.querySelectorAll('.exercise-row');
+            var idx = rows.length;
 
-        var div = document.createElement('div');
-        div.className = 'exercise-row';
-        div.style.cssText = 'display: grid; grid-template-columns: 2fr 80px 100px 1.5fr auto; gap: 10px; align-items: start; margin-bottom: 12px;';
-        div.innerHTML =
-            '<div><input type="text" name="exercises[' + idx + '].exerciseName" placeholder="Exercise name"></div>' +
-            '<div><input type="number" name="exercises[' + idx + '].setsCount" placeholder="Sets" min="1" max="20"></div>' +
-            '<div><input type="text" name="exercises[' + idx + '].repsText" placeholder="Reps (e.g. 8-12)"></div>' +
-            '<div><input type="text" name="exercises[' + idx + '].notes" placeholder="Notes (optional)"></div>' +
-            '<div><button type="button" class="btn btn-secondary btn-sm remove-exercise" onclick="removeExercise(this)">&times;</button></div>';
-        list.appendChild(div);
-    }
+            var div = document.createElement('div');
+            div.className = 'exercise-row';
+            div.style.cssText = 'display: grid; grid-template-columns: 2fr 80px 100px 1.5fr auto; gap: 10px; align-items: start; margin-bottom: 12px;';
+            div.innerHTML =
+                '<div><input type="text" name="exercises[' + idx + '].exerciseName" placeholder="Exercise name"></div>' +
+                '<div><input type="number" name="exercises[' + idx + '].setsCount" placeholder="Sets" min="1" max="20"></div>' +
+                '<div><input type="text" name="exercises[' + idx + '].repsText" placeholder="Reps (e.g. 8-12)"></div>' +
+                '<div><input type="text" name="exercises[' + idx + '].notes" placeholder="Notes (optional)"></div>' +
+                '<div><button type="button" class="btn btn-secondary btn-sm remove-exercise" onclick="removeExercise(this)">&times;</button></div>';
+            list.appendChild(div);
+        };
 
-    function removeExercise(btn) {
-        var list = document.getElementById('exercise-list');
-        if (list.querySelectorAll('.exercise-row').length <= 1) return;
-        btn.closest('.exercise-row').remove();
-        // Re-index remaining rows
-        var rows = list.querySelectorAll('.exercise-row');
-        rows.forEach(function(row, i) {
-            row.querySelectorAll('input').forEach(function(input) {
-                var name = input.getAttribute('name');
-                if (name) {
-                    input.setAttribute('name', name.replace(/exercises\[\d+\]/, 'exercises[' + i + ']'));
-                }
-                var id = input.getAttribute('id');
-                if (id) {
-                    input.setAttribute('id', id.replace(/exercises\d+/, 'exercises' + i));
-                }
+        window.removeExercise = function (btn) {
+            var list = document.getElementById('exercise-list');
+            if (list.querySelectorAll('.exercise-row').length <= 1) {
+                return;
+            }
+
+            btn.closest('.exercise-row').remove();
+
+            var rows = list.querySelectorAll('.exercise-row');
+            rows.forEach(function (row, i) {
+                row.querySelectorAll('input').forEach(function (input) {
+                    var name = input.getAttribute('name');
+                    if (name) {
+                        input.setAttribute('name', name.replace(/exercises\[\d+\]/, 'exercises[' + i + ']'));
+                    }
+
+                    var id = input.getAttribute('id');
+                    if (id) {
+                        input.setAttribute('id', id.replace(/exercises\d+/, 'exercises' + i));
+                    }
+                });
             });
-        });
-    }
-</script>
+        };
+    </script>
+</div>
 </body>
 </html>

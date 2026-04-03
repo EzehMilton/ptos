@@ -65,6 +65,15 @@ public class NutritionService {
     }
 
     @Transactional
+    public void deleteMealPlan(User ptUser, Long mealPlanId) {
+        MealPlan mealPlan = mealPlanRepository.findByIdAndPtUser(mealPlanId, ptUser)
+                .orElseThrow(() -> new IllegalArgumentException("Meal plan not found"));
+
+        mealComplianceLogRepository.deleteAll(mealComplianceLogRepository.findByMealPlan(mealPlan));
+        mealPlanRepository.delete(mealPlan);
+    }
+
+    @Transactional
     public void logCompliance(User clientUser, LocalDate date, ComplianceLevel level, String notes) {
         ClientRecord clientRecord = clientRecordRepository.findByClientUser(clientUser)
                 .orElseThrow(() -> new IllegalArgumentException("Client record not found"));

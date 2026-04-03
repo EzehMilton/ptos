@@ -91,37 +91,51 @@
         <p class="text-muted" th:if="${query == null}">No clients yet.</p>
     </div>
 
-    <div th:if="${!invitations.isEmpty()}" class="card mt-3">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-            <h3 class="card-title" style="margin-bottom: 0;">Pending Invitations</h3>
-            <span class="badge badge-info" th:text="${pendingInvitationCount} + ' pending'"></span>
+    <div class="card mt-3">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div>
+                <h3 class="card-title" style="margin-bottom: 4px;">Client Invitations</h3>
+                <p class="text-muted">Track invitation status, expiry, and recipient details.</p>
+            </div>
+            <a th:href="@{/pt/clients/new}" class="btn btn-secondary btn-sm">Invite Client</a>
         </div>
 
-        <table class="mt-2">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Sent Date</th>
-                <th>Expires</th>
-                <th>Status</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="invitation : ${invitations}">
-                <td th:text="${invitation.fullName}"></td>
-                <td th:text="${invitation.email}"></td>
-                <td th:text="${#temporals.format(invitation.createdAt, 'dd MMM yyyy')}"></td>
-                <td th:text="${#temporals.format(invitation.expiresAt, 'dd MMM yyyy')}"></td>
-                <td>
-                    <span class="badge"
-                          th:classappend="${invitation.status.name() == 'PENDING'} ? 'badge-info' :
-                                         (${invitation.status.name() == 'ACCEPTED'} ? 'badge-active' : 'badge-neutral')"
-                          th:text="${invitation.status.name()}"></span>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div th:if="${#lists.isEmpty(invitations)}" class="mt-2">
+            <p class="text-muted">No invitations yet.</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(invitations)}" class="mt-2">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Recipient</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Sent</th>
+                        <th>Expires</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="invitation : ${invitations}">
+                        <td th:text="${invitation.fullName}"></td>
+                        <td th:text="${invitation.email}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${invitation.status.name() == 'PENDING'} ? 'badge-info' :
+                                                 (${invitation.status.name() == 'ACCEPTED'} ? 'badge-active' :
+                                                 'badge-neutral')"
+                                  th:text="${invitation.status.name()}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${invitation.createdAt != null}"
+                                  th:text="${#temporals.format(invitation.createdAt, 'dd MMM yyyy')}"></span>
+                            <span th:if="${invitation.createdAt == null}" class="text-muted">&mdash;</span>
+                        </td>
+                        <td th:text="${#temporals.format(invitation.expiresAt, 'dd MMM yyyy')}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 </body>

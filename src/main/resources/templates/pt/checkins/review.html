@@ -87,13 +87,13 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
                 <div th:each="photoType : ${photoTypes}">
                     <p style="font-weight: 600; margin-bottom: 8px;" th:text="${photoType.name()}"></p>
-                    <div th:if="${currentPhotoUrls[photoType] != null}">
-                        <a th:href="${currentPhotoUrls[photoType]}" target="_blank" rel="noopener noreferrer">
-                            <img th:src="${currentPhotoUrls[photoType]}" th:alt="${photoType.name() + ' current photo'}"
+                    <div th:if="${currentPhotoUrls.containsKey(photoType)}">
+                        <a th:href="${currentPhotoUrls.get(photoType)}" target="_blank" rel="noopener noreferrer">
+                            <img th:src="${currentPhotoUrls.get(photoType)}" th:alt="${photoType.name() + ' current photo'}"
                                  style="max-width: 300px; width: 100%; border-radius: 8px;">
                         </a>
                     </div>
-                    <p th:if="${currentPhotoUrls[photoType] == null}" class="text-muted">No photo</p>
+                    <p th:if="${!currentPhotoUrls.containsKey(photoType)}" class="text-muted">No photo</p>
                 </div>
             </div>
 
@@ -103,13 +103,13 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                     <div th:each="photoType : ${photoTypes}">
                         <p style="font-weight: 600; margin-bottom: 8px;" th:text="${photoType.name()}"></p>
-                        <div th:if="${previousPhotoUrls[photoType] != null}">
-                            <a th:href="${previousPhotoUrls[photoType]}" target="_blank" rel="noopener noreferrer">
-                                <img th:src="${previousPhotoUrls[photoType]}" th:alt="${photoType.name() + ' previous photo'}"
+                        <div th:if="${previousPhotoUrls.containsKey(photoType)}">
+                            <a th:href="${previousPhotoUrls.get(photoType)}" target="_blank" rel="noopener noreferrer">
+                                <img th:src="${previousPhotoUrls.get(photoType)}" th:alt="${photoType.name() + ' previous photo'}"
                                      style="max-width: 300px; width: 100%; border-radius: 8px;">
                             </a>
                         </div>
-                        <p th:if="${previousPhotoUrls[photoType] == null}" class="text-muted">No photo</p>
+                        <p th:if="${!previousPhotoUrls.containsKey(photoType)}" class="text-muted">No photo</p>
                     </div>
                 </div>
             </div>

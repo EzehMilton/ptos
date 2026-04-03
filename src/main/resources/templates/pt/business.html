@@ -137,7 +137,7 @@
     </div>
 
     <!-- Row 4: Improving vs Slipping -->
-    <div class="card">
+    <div class="card mb-3">
         <h3 class="card-title">Improving vs Slipping</h3>
         <div class="health-summary-grid">
             <div class="health-summary-pill health-summary-healthy"
@@ -147,6 +147,44 @@
             <div class="health-summary-pill health-summary-risk"
                  th:text="${b.clientsSlipping + ' clients slipping'}"></div>
         </div>
+    </div>
+
+    <!-- Row 5: Incomplete Profiles -->
+    <div class="card">
+        <h3 class="card-title">Incomplete Profiles</h3>
+        <div th:if="${b.incompleteProfileClients.isEmpty()}">
+            <p class="text-muted">All client profiles have at least 4 of 6 key fields completed.</p>
+        </div>
+        <table th:if="${!b.incompleteProfileClients.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Profile Completion</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="client : ${b.incompleteProfileClients}">
+                    <td>
+                        <a th:href="@{/pt/clients/{id}(id=${client.clientRecordId})}" th:text="${client.name}"></a>
+                    </td>
+                    <td>
+                        <span class="badge badge-warning" th:text="${client.profileCompletion} + '/6 complete'"></span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${client.status.name() == 'ACTIVE'} ? 'badge-active' :
+                                             (${client.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
+                              th:text="${client.status.name()}"></span>
+                    </td>
+                    <td style="text-align: right;">
+                        <a class="btn btn-secondary btn-sm"
+                           th:href="@{/pt/clients/{id}(id=${client.clientRecordId})}">View Client</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 </body>

@@ -13,6 +13,7 @@
 <nav class="navbar">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">SETLY</a>
+        <div class="navbar-menu">
         <ul class="navbar-nav">
             <!-- PT navigation -->
             <li sec:authorize="hasRole('PT')">
@@ -45,36 +46,21 @@
                 <a th:href="@{/pt/business}"
                    th:classappend="${currentPath == '/pt/business'} ? 'nav-active'">Business</a>
             </li>
+        </ul>
 
-            <!-- Client navigation -->
-            <li sec:authorize="hasRole('CLIENT')">
-                <a th:href="@{/client/home}"
-                   th:classappend="${currentPath == '/client/home'} ? 'nav-active'">Home</a>
-            </li>
-            <li sec:authorize="hasRole('CLIENT')">
-                <a th:href="@{/client/workouts}"
-                   th:classappend="${currentPath.startsWith('/client/workouts')} ? 'nav-active'">My Workouts</a>
-            </li>
-            <li sec:authorize="hasRole('CLIENT')">
-                <a th:href="@{/client/checkins}"
-                   th:classappend="${currentPath.startsWith('/client/checkins')} ? 'nav-active'">My Check-ins</a>
-            </li>
-            <li sec:authorize="hasRole('CLIENT')">
-                <a th:href="@{/client/nutrition}"
-                   th:classappend="${currentPath.startsWith('/client/nutrition')} ? 'nav-active'">Nutrition</a>
-            </li>
-            <li sec:authorize="hasRole('CLIENT')">
-                <a th:href="@{/client/messages}"
-                   th:classappend="${currentPath.startsWith('/client/messages')} ? 'nav-active'">
-                    Messages
-                    <span th:if="${unreadMessageCount > 0}" class="nav-count" th:text="${unreadMessageCount}"></span>
+        <ul class="navbar-nav navbar-nav-actions">
+            <li sec:authorize="hasRole('PT')">
+                <a th:href="@{/pt/profile}"
+                   th:classappend="${currentPath == '/pt/profile'} ? 'nav-active'"
+                   class="nav-profile-link"
+                   title="Edit profile"
+                   aria-label="Edit profile">
+                    <span class="profile-icon" aria-hidden="true">
+                        <span class="profile-icon-head"></span>
+                        <span class="profile-icon-body"></span>
+                    </span>
                 </a>
             </li>
-            <li sec:authorize="hasRole('CLIENT')">
-                <a th:href="@{/client/profile}"
-                   th:classappend="${currentPath == '/client/profile'} ? 'nav-active'">My Profile</a>
-            </li>
-
             <!-- Authenticated: logout -->
             <li sec:authorize="isAuthenticated()">
                 <form th:action="@{/logout}" method="post" style="display:inline;">
@@ -84,8 +70,9 @@
 
             <!-- Not authenticated: login/signup -->
             <li sec:authorize="!isAuthenticated()"><a th:href="@{/login}">Login</a></li>
-            <li sec:authorize="!isAuthenticated()"><a th:href="@{/signup}">Sign Up</a></li>
+            <li sec:authorize="!isAuthenticated()"><a th:href="@{/pt/signup}">PT Sign Up</a></li>
         </ul>
+        </div>
     </div>
 </nav>
 

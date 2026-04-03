@@ -14,67 +14,109 @@
         <h1>Add a Client</h1>
     </div>
 
-    <div class="card mb-3">
-        <h3 class="card-title">Invite Client</h3>
-        <p class="text-muted mb-3">Send an invitation link. Your client will create their own password and complete their profile.</p>
-
-        <form th:action="@{/pt/clients/invite}" th:object="${inviteClientForm}" method="post">
-            <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
-                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
-                <div class="form-group">
-                    <label for="inviteFullName">Full Name</label>
-                    <input type="text" id="inviteFullName" th:field="*{fullName}">
-                    <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
-                </div>
-                <div class="form-group">
-                    <label for="inviteEmail">Email</label>
-                    <input type="email" id="inviteEmail" th:field="*{email}">
-                    <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Send Invitation</button>
-        </form>
+    <div class="card" style="margin-bottom: 16px;">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" id="inviteModeButton">Invite Client</button>
+            <button type="button" class="btn btn-secondary" id="directModeButton">Create Client Directly</button>
+        </div>
+        <p class="text-muted mt-2">Invite Client is the default choice. Share the generated link manually with the client so they can finish setup from their phone.</p>
     </div>
 
-    <div class="card">
-        <h3 class="card-title">Create Client Directly</h3>
-        <p class="text-muted mb-3">Create the client's account now. Share the login credentials with them.</p>
-
-        <form th:action="@{/pt/clients/create-direct}" th:object="${directCreateClientForm}" method="post">
-            <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
-                <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+    <div id="clientCreationModes" th:attr="data-default-mode=${clientCreationMode}">
+        <div class="card" id="inviteSection" style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                <h3 class="card-title" style="margin-bottom: 0;">Invite Client</h3>
+                <span class="badge badge-active">Default</span>
             </div>
+            <p class="text-muted mb-3">Enter the prospective client's name and email. SETLY will generate a unique link that stays valid for 7 days.</p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
-                <div class="form-group">
-                    <label for="directFullName">Full Name</label>
-                    <input type="text" id="directFullName" th:field="*{fullName}">
-                    <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+            <form th:action="@{/pt/clients/invite}" th:object="${inviteClientForm}" method="post">
+                <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
+                    <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
                 </div>
-                <div class="form-group">
-                    <label for="directEmail">Email</label>
-                    <input type="email" id="directEmail" th:field="*{email}">
-                    <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
-                </div>
-                <div class="form-group">
-                    <label for="temporaryPassword">Temporary Password</label>
-                    <input type="text" id="temporaryPassword" th:field="*{temporaryPassword}">
-                    <div class="form-error" th:if="${#fields.hasErrors('temporaryPassword')}" th:errors="*{temporaryPassword}"></div>
-                </div>
-                <div class="form-group">
-                    <label for="monthlyPackagePrice">Monthly Package Price (optional)</label>
-                    <input type="number" id="monthlyPackagePrice" th:field="*{monthlyPackagePrice}" min="0" step="0.01">
-                    <div class="form-error" th:if="${#fields.hasErrors('monthlyPackagePrice')}" th:errors="*{monthlyPackagePrice}"></div>
-                </div>
-            </div>
 
-            <button type="submit" class="btn btn-primary">Create Account</button>
-        </form>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                    <div class="form-group">
+                        <label for="inviteFullName">Full Name</label>
+                        <input type="text" id="inviteFullName" th:field="*{fullName}">
+                        <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inviteEmail">Email</label>
+                        <input type="email" id="inviteEmail" th:field="*{email}">
+                        <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Generate Invitation Link</button>
+            </form>
+        </div>
+
+        <div class="card" id="directSection">
+            <h3 class="card-title">Create Client Directly</h3>
+            <p class="text-muted mb-3">Create the client's account immediately by setting their name, email, and a temporary password.</p>
+
+            <form th:action="@{/pt/clients/create-direct}" th:object="${directCreateClientForm}" method="post">
+                <div th:if="${#fields.hasGlobalErrors()}" class="flash flash-error">
+                    <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                    <div class="form-group">
+                        <label for="directFullName">Full Name</label>
+                        <input type="text" id="directFullName" th:field="*{fullName}">
+                        <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="directEmail">Email</label>
+                        <input type="email" id="directEmail" th:field="*{email}">
+                        <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="temporaryPassword">Temporary Password</label>
+                        <input type="text" id="temporaryPassword" th:field="*{temporaryPassword}">
+                        <div class="form-error" th:if="${#fields.hasErrors('temporaryPassword')}" th:errors="*{temporaryPassword}"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="monthlyPackagePrice">Monthly Package Price (optional)</label>
+                        <input type="number" id="monthlyPackagePrice" th:field="*{monthlyPackagePrice}" min="0" step="0.01">
+                        <div class="form-error" th:if="${#fields.hasErrors('monthlyPackagePrice')}" th:errors="*{monthlyPackagePrice}"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+        </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const wrapper = document.getElementById("clientCreationModes");
+            const inviteSection = document.getElementById("inviteSection");
+            const directSection = document.getElementById("directSection");
+            const inviteButton = document.getElementById("inviteModeButton");
+            const directButton = document.getElementById("directModeButton");
+            const defaultMode = wrapper ? wrapper.dataset.defaultMode : "invite";
+
+            function setMode(mode) {
+                const inviteActive = mode !== "direct";
+                inviteSection.style.display = inviteActive ? "block" : "none";
+                directSection.style.display = inviteActive ? "none" : "block";
+                inviteButton.className = inviteActive ? "btn btn-primary" : "btn btn-secondary";
+                directButton.className = inviteActive ? "btn btn-secondary" : "btn btn-primary";
+            }
+
+            inviteButton.addEventListener("click", function () {
+                setMode("invite");
+            });
+
+            directButton.addEventListener("click", function () {
+                setMode("direct");
+            });
+
+            setMode(defaultMode);
+        });
+    </script>
 </div>
 </body>
 </html>

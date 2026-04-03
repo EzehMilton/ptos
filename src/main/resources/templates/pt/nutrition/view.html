@@ -13,9 +13,14 @@
 
     <div class="page-header">
         <h1 th:text="${'Meal Plan - ' + detail.clientName}"></h1>
-        <a th:if="${mealPlan != null}"
-           th:href="@{/pt/clients/{id}/nutrition/edit(id=${detail.clientRecordId})}"
-           class="btn btn-secondary btn-sm">Edit Plan</a>
+        <div th:if="${mealPlan != null}" style="display: flex; gap: 8px;">
+            <a th:href="@{/pt/clients/{id}/nutrition/edit(id=${detail.clientRecordId})}"
+               class="btn btn-secondary btn-sm">Edit Plan</a>
+            <form th:action="@{/pt/clients/{id}/nutrition/delete(id=${detail.clientRecordId})}" method="post"
+                  onsubmit="return confirm('Delete this meal plan? This will also remove its compliance history.');">
+                <button type="submit" class="btn btn-danger btn-sm">Delete Plan</button>
+            </form>
+        </div>
     </div>
 
     <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>

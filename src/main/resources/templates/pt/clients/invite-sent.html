@@ -7,34 +7,50 @@
 </head>
 <body>
 <div layout:fragment="content">
+    <div class="mb-2">
+        <a th:href="@{/pt/clients/new}">&larr; Invite another client</a>
+    </div>
+
     <div class="page-header">
         <h1>Invitation Created</h1>
     </div>
 
-    <div class="card">
-        <p th:text="'Invitation sent to ' + ${invitation.fullName} + ' (' + ${invitation.email} + ')'"></p>
+    <div class="card" style="max-width: 760px;">
+        <p style="font-weight: 600;" th:text="|Invitation created for ${invitation.fullName} (${invitation.email})|"></p>
+        <p class="text-muted mb-3">Email delivery is not set up yet. Copy this link and share it with your client manually. It stays valid for 7 days.</p>
 
         <div class="form-group">
             <label for="inviteLink">Invite Link</label>
             <input type="text" id="inviteLink" th:value="${inviteLink}" readonly>
         </div>
 
-        <p class="text-muted mb-3">Email delivery is not set up yet. Please share this link with your client manually.</p>
-
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button type="button" class="btn btn-primary" onclick="copyInviteLink()">Copy Link</button>
+            <button type="button" class="btn btn-primary" id="copyInviteLink">Copy Link</button>
             <a th:href="@{/pt/clients/new}" class="btn btn-secondary">Invite Another Client</a>
             <a th:href="@{/pt/clients}" class="btn btn-secondary">Back to Clients</a>
         </div>
     </div>
 
     <script>
-        function copyInviteLink() {
-            const input = document.getElementById('inviteLink');
-            input.select();
-            input.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(input.value);
-        }
+        document.addEventListener("DOMContentLoaded", function () {
+            const button = document.getElementById("copyInviteLink");
+            const input = document.getElementById("inviteLink");
+
+            if (!button || !input) {
+                return;
+            }
+
+            button.addEventListener("click", async function () {
+                try {
+                    await navigator.clipboard.writeText(input.value);
+                    button.textContent = "Copied";
+                } catch (error) {
+                    input.select();
+                    document.execCommand("copy");
+                    button.textContent = "Copied";
+                }
+            });
+        });
     </script>
 </div>
 </body>

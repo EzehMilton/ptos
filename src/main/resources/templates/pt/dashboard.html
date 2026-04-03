@@ -8,7 +8,8 @@
 <body>
 <div layout:fragment="content">
     <div class="page-header">
-        <h1 th:text="'Welcome back, ' + ${ptName}"></h1>
+        <h1 th:if="${firstTimeWelcome}" th:text="|Welcome, ${ptName}|"></h1>
+        <h1 th:unless="${firstTimeWelcome}" th:text="|Welcome back, ${ptName}|"></h1>
     </div>
 
     <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
@@ -175,7 +176,12 @@
                 </tbody>
             </table>
         </div>
-        <p class="mt-2"><a th:href="@{/pt/clients}">View all clients &rarr;</a></p>
+        <p class="mt-2" th:if="${d.totalClients == 0}">
+            <a th:href="@{/pt/clients/new}">Add a new Client &rarr;</a>
+        </p>
+        <p class="mt-2" th:if="${d.totalClients > 0}">
+            <a th:href="@{/pt/clients}">View all clients &rarr;</a>
+        </p>
     </div>
 
     <!-- Row 4: Quick Actions -->

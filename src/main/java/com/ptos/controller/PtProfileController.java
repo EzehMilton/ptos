@@ -18,20 +18,17 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/pt/onboarding")
+@RequestMapping("/pt/profile")
 @RequiredArgsConstructor
-public class PTOnboardingController {
+public class PtProfileController {
 
     private final PTProfileService ptProfileService;
     private final SecurityHelper securityHelper;
 
     @GetMapping
-    public String showOnboarding(Model model) {
+    public String showProfile(Model model) {
         Long userId = securityHelper.getCurrentUserId();
         Optional<PTProfile> profileOpt = ptProfileService.getProfileForUser(userId);
-        if (profileOpt.map(PTProfile::isOnboardingComplete).orElse(false)) {
-            return "redirect:/pt/dashboard";
-        }
 
         PTProfileForm form = new PTProfileForm();
         profileOpt.ifPresent(profile -> {
@@ -43,28 +40,19 @@ public class PTOnboardingController {
         });
 
         model.addAttribute("ptProfileForm", form);
-        return "pt/onboarding";
+        return "pt/profile";
     }
 
     @PostMapping
-    public String saveOnboarding(@Valid @ModelAttribute("ptProfileForm") PTProfileForm form,
-                                 BindingResult result,
-                                 RedirectAttributes redirectAttributes) {
+    public String updateProfile(@Valid @ModelAttribute("ptProfileForm") PTProfileForm form,
+                                BindingResult result,
+                                RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
-            return "pt/onboarding";
+            return "pt/profile";
         }
 
         ptProfileService.createOrUpdateProfile(securityHelper.getCurrentUserId(), form);
-        redirectAttributes.addFlashAttribute("firstTimeWelcome", true);
-        redirectAttributes.addFlashAttribute("success", "Your profile is set up.");
-        return "redirect:/pt/dashboard";
-    }
-
-    @GetMapping("/skip")
-    public String skipOnboarding(RedirectAttributes redirectAttributes) {
-        ptProfileService.markOnboardingComplete(securityHelper.getCurrentUserId());
-        redirectAttributes.addFlashAttribute("firstTimeWelcome", true);
-        redirectAttributes.addFlashAttribute("success", "Your can set up your profile later.");
-        return "redirect:/pt/dashboard";
+        redirectAttributes.addFlashAttribute("success", "Profile updated.");
+        return "redirect:/pt/profile";
     }
 }

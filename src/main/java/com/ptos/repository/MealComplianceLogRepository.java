@@ -3,6 +3,7 @@ package com.ptos.repository;
 import com.ptos.domain.ClientRecord;
 import com.ptos.domain.ComplianceLevel;
 import com.ptos.domain.MealComplianceLog;
+import com.ptos.domain.MealPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
@@ -14,6 +15,8 @@ public interface MealComplianceLogRepository extends JpaRepository<MealComplianc
     List<MealComplianceLog> findByClientRecordOrderByDateDesc(ClientRecord clientRecord);
 
     List<MealComplianceLog> findByClientRecordAndDateBetween(ClientRecord clientRecord, LocalDate from, LocalDate to);
+
+    List<MealComplianceLog> findByMealPlan(MealPlan mealPlan);
 
     Optional<MealComplianceLog> findByClientRecordAndDate(ClientRecord clientRecord, LocalDate date);
 

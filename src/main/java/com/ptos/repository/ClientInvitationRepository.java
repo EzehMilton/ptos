@@ -16,5 +16,7 @@ public interface ClientInvitationRepository extends JpaRepository<ClientInvitati
 
     List<ClientInvitation> findByPtUserOrderByCreatedAtDesc(User ptUser);
 
+    List<ClientInvitation> findByPtUserAndEmailOrderByCreatedAtDesc(User ptUser, String email);
+
     boolean existsByPtUserAndEmailAndStatus(User ptUser, String email, InvitationStatus status);
 }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>Edit Profile</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="page-header">
+        <h1>Edit Profile</h1>
+        <p class="text-muted">Update the details your clients see about your coaching business.</p>
+    </div>
+
+    <div class="card" style="max-width: 760px;">
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+        <form th:action="@{/pt/profile}" th:object="${ptProfileForm}" method="post">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                <div class="form-group">
+                    <label for="businessName">Business Name</label>
+                    <input type="text" id="businessName" th:field="*{businessName}">
+                    <div class="form-error" th:if="${#fields.hasErrors('businessName')}" th:errors="*{businessName}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="specialisation">Specialisation</label>
+                    <input type="text" id="specialisation" th:field="*{specialisation}">
+                    <div class="form-error" th:if="${#fields.hasErrors('specialisation')}" th:errors="*{specialisation}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" th:field="*{location}">
+                    <div class="form-error" th:if="${#fields.hasErrors('location')}" th:errors="*{location}"></div>
+                </div>
+                <div class="form-group">
+                    <label for="logoUrl">Logo URL</label>
+                    <input type="url" id="logoUrl" th:field="*{logoUrl}">
+                    <div class="form-error" th:if="${#fields.hasErrors('logoUrl')}" th:errors="*{logoUrl}"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="bio">Bio</label>
+                <textarea id="bio" th:field="*{bio}" rows="5"></textarea>
+                <div class="form-error" th:if="${#fields.hasErrors('bio')}" th:errors="*{bio}"></div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a th:href="@{/pt/dashboard}">Back to Dashboard</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
