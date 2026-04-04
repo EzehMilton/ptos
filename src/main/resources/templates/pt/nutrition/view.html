@@ -7,76 +7,141 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="mb-2">
-        <a th:href="@{/pt/clients/{id}(id=${detail.clientRecordId})}">&larr; Back to Client</a>
-    </div>
-
-    <div class="page-header">
-        <h1 th:text="${'Meal Plan - ' + detail.clientName}"></h1>
-        <div th:if="${mealPlan != null}" style="display: flex; gap: 8px;">
-            <a th:href="@{/pt/clients/{id}/nutrition/edit(id=${detail.clientRecordId})}"
-               class="btn btn-secondary btn-sm">Edit Plan</a>
-            <form th:action="@{/pt/clients/{id}/nutrition/delete(id=${detail.clientRecordId})}" method="post"
-                  onsubmit="return confirm('Delete this meal plan? This will also remove its compliance history.');">
-                <button type="submit" class="btn btn-danger btn-sm">Delete Plan</button>
-            </form>
-        </div>
-    </div>
-
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
-
-    <div th:if="${mealPlan == null}" class="card">
-        <p class="text-muted"
-           th:text="${'No meal plan assigned. Create one to help ' + detail.clientName + ' with nutrition.'}"></p>
-        <p class="mt-2">
-            <a th:href="@{/pt/clients/{id}/nutrition/new(id=${detail.clientRecordId})}" class="btn btn-primary btn-sm">
-                Create Meal Plan
-            </a>
-        </p>
-    </div>
-
-    <div th:if="${mealPlan != null}">
-        <div class="card mb-3">
-            <h3 class="card-title" th:text="${mealPlan.title}"></h3>
-            <p th:if="${mealPlan.overview != null and !mealPlan.overview.isBlank()}"
-               class="text-muted mb-2"
-               th:text="${mealPlan.overview}"></p>
-            <div style="white-space: pre-line;" th:text="${mealPlan.dailyGuidance}"></div>
+    <div class="meal-plan-shell">
+        <div class="meal-plan-back-row">
+            <a th:href="@{/pt/clients/{id}(id=${detail.clientRecordId})}" class="meal-plan-back-link">&larr; <span
+                    th:text="${detail.clientName}">Client</span></a>
         </div>
 
-        <div class="card">
-            <h3 class="card-title">Compliance</h3>
-            <p class="mb-2">
-                <strong th:text="${#numbers.formatDecimal(complianceRate, 1, 1)} + '%'"></strong>
-                followed in last 14 days
-            </p>
-
-            <div th:if="${complianceLogs.isEmpty()}">
-                <p class="text-muted">No compliance logs yet.</p>
+        <div class="meal-plan-header">
+            <div class="meal-plan-header-copy">
+                <h1 class="meal-plan-title" th:text="${mealPlan != null ? 'Meal plan - ' + mealPlan.title : 'Meal plan'}">Meal plan</h1>
+                <p class="meal-plan-subtitle"
+                   th:text="${mealPlan != null and mealPlan.overview != null and !mealPlan.overview.isBlank() ? mealPlan.overview : 'Simple nutrition structure to support this client''s progress.'}">
+                    Meal plan overview
+                </p>
+                <p class="meal-plan-header-meta" th:if="${nutritionSummary.updatedLabel != null}"
+                   th:text="${nutritionSummary.updatedLabel}">Updated 4 Apr 2026</p>
             </div>
 
-            <table th:if="${!complianceLogs.isEmpty()}">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Compliance</th>
-                    <th>Notes</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="log : ${complianceLogs}">
-                    <td th:text="${#temporals.format(log.date, 'dd MMM yyyy')}"></td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${log.compliance.name() == 'FOLLOWED'} ? 'badge-active' :
-                                             (${log.compliance.name() == 'PARTIALLY_FOLLOWED'} ? 'badge-warning' : 'badge-neutral')"
-                              th:text="${log.compliance.name().replace('_', ' ')}"></span>
-                    </td>
-                    <td th:text="${log.notes != null and !log.notes.isBlank() ? log.notes : '—'}"></td>
-                </tr>
-                </tbody>
-            </table>
+            <div class="meal-plan-header-actions" th:if="${mealPlan != null}">
+                <a th:href="@{/pt/clients/{id}/nutrition/edit(id=${detail.clientRecordId})}"
+                   class="meal-plan-pill-button">Edit plan</a>
+                <form th:action="@{/pt/clients/{id}/nutrition/delete(id=${detail.clientRecordId})}" method="post"
+                      onsubmit="return confirm('Delete this meal plan? This will also remove its compliance history.');">
+                    <button type="submit" class="meal-plan-icon-button" aria-label="Delete meal plan">Delete</button>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+        <div th:if="${mealPlan == null}" class="meal-plan-empty-card">
+            <h2>No meal plan assigned.</h2>
+            <p th:text="${'Create one to help ' + detail.clientName + ' with nutrition.'}">Create one to help this client with nutrition.</p>
+            <a th:href="@{/pt/clients/{id}/nutrition/new(id=${detail.clientRecordId})}" class="btn btn-primary">Create Meal Plan</a>
+        </div>
+
+        <div th:if="${mealPlan != null}" class="meal-plan-grid">
+            <div class="meal-plan-main-column">
+                <section class="meal-plan-card meal-plan-structure-card">
+                    <div class="meal-plan-card-header">
+                        <h2>Daily meals</h2>
+                    </div>
+
+                    <div class="meal-plan-structure-list">
+                        <article class="meal-plan-meal-block" th:each="block : ${mealBlocks}">
+                            <div class="meal-plan-meal-label" th:text="${block.label}">BREAKFAST</div>
+                            <div class="meal-plan-meal-headline" th:text="${block.headline}">Protein smoothie and toast</div>
+                            <p class="meal-plan-meal-supporting" th:if="${block.supportingCopy != null and !block.supportingCopy.isBlank()}"
+                               th:text="${block.supportingCopy}">Supporting guidance</p>
+                        </article>
+                    </div>
+
+                    <div class="meal-plan-summary-grid">
+                        <div class="meal-plan-summary-stat">
+                            <div class="meal-plan-summary-value" th:text="${nutritionSummary.totalLogs}">0</div>
+                            <div class="meal-plan-summary-label">Logs</div>
+                        </div>
+                        <div class="meal-plan-summary-stat meal-plan-summary-stat-followed">
+                            <div class="meal-plan-summary-value" th:text="${nutritionSummary.followedCount}">0</div>
+                            <div class="meal-plan-summary-label">Followed</div>
+                        </div>
+                        <div class="meal-plan-summary-stat">
+                            <div class="meal-plan-summary-value" th:text="${nutritionSummary.partialCount}">0</div>
+                            <div class="meal-plan-summary-label">Partial</div>
+                        </div>
+                        <div class="meal-plan-summary-stat">
+                            <div class="meal-plan-summary-value" th:text="${nutritionSummary.notFollowedCount}">0</div>
+                            <div class="meal-plan-summary-label">Not followed</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="meal-plan-card meal-plan-notes-card">
+                    <div class="meal-plan-card-header">
+                        <h2>Notes from PT</h2>
+                    </div>
+                    <p class="meal-plan-notes-copy"
+                       th:text="${mealPlan.overview != null and !mealPlan.overview.isBlank() ? mealPlan.overview : 'No overview added yet. Use the edit plan flow to add higher-level guidance for the client.'}">
+                        Notes from PT
+                    </p>
+                </section>
+            </div>
+
+            <div class="meal-plan-side-column">
+                <section class="meal-plan-card meal-plan-compliance-card">
+                    <div class="meal-plan-compliance-header">
+                        <h2>Compliance</h2>
+                        <div class="meal-plan-compliance-ring" th:style="${'--ring-deg:' + (complianceRate * 3.6) + ';'}">
+                            <div class="meal-plan-compliance-ring-inner">
+                                <strong th:text="${#numbers.formatDecimal(complianceRate, 1, 0)} + '%'">50%</strong>
+                            </div>
+                        </div>
+                        <span class="meal-plan-compliance-range">Last 14 days</span>
+                    </div>
+
+                    <div class="meal-plan-compliance-list" th:if="${!complianceLogs.isEmpty()}">
+                        <article class="meal-plan-compliance-item" th:each="log : ${complianceLogs}">
+                            <div class="meal-plan-compliance-date" th:text="${#temporals.format(log.date, 'd MMM')}">3 Apr</div>
+                            <div class="meal-plan-compliance-status"
+                                 th:classappend="${log.compliance.name() == 'FOLLOWED' ? 'meal-plan-status-followed' : (log.compliance.name() == 'PARTIALLY_FOLLOWED' ? 'meal-plan-status-partial' : 'meal-plan-status-not-followed')}">
+                                <span class="meal-plan-compliance-mark"
+                                      th:text="${log.compliance.name() == 'FOLLOWED' ? '✓' : (log.compliance.name() == 'PARTIALLY_FOLLOWED' ? '-' : '×')}">✓</span>
+                                <span th:text="${log.compliance.name() == 'FOLLOWED' ? 'Followed' : (log.compliance.name() == 'PARTIALLY_FOLLOWED' ? 'Partial' : 'Not followed')}">Followed</span>
+                            </div>
+                            <p class="meal-plan-compliance-note"
+                               th:text="${log.notes != null and !log.notes.isBlank() ? log.notes : 'No notes added.'}">Prepared meals ahead.</p>
+                        </article>
+                    </div>
+
+                    <p class="meal-plan-empty-copy" th:if="${complianceLogs.isEmpty()}">No compliance logs yet.</p>
+
+                    <div class="meal-plan-progress-bar">
+                        <span class="meal-plan-progress-segment meal-plan-progress-followed"
+                              th:style="${'width:' + (nutritionSummary.totalLogs > 0 ? (nutritionSummary.followedCount * 100 / nutritionSummary.totalLogs) : 0) + '%'}"></span>
+                        <span class="meal-plan-progress-segment meal-plan-progress-partial"
+                              th:style="${'width:' + (nutritionSummary.totalLogs > 0 ? (nutritionSummary.partialCount * 100 / nutritionSummary.totalLogs) : 0) + '%'}"></span>
+                        <span class="meal-plan-progress-segment meal-plan-progress-not-followed"
+                              th:style="${'width:' + (nutritionSummary.totalLogs > 0 ? (nutritionSummary.notFollowedCount * 100 / nutritionSummary.totalLogs) : 0) + '%'}"></span>
+                    </div>
+                    <div class="meal-plan-progress-axis">
+                        <span th:text="${complianceLogs.isEmpty() ? 'Start' : #temporals.format(complianceLogs.get(complianceLogs.size() - 1).date, 'd MMM')}">26 Mar</span>
+                        <span th:text="${complianceLogs.isEmpty() ? 'Today' : #temporals.format(complianceLogs.get(0).date, 'd MMM')}">3 Apr</span>
+                    </div>
+                </section>
+
+                <section class="meal-plan-card meal-plan-trend-card">
+                    <div class="meal-plan-card-header">
+                        <h2>Trend</h2>
+                    </div>
+                    <p class="meal-plan-trend-copy" th:text="${nutritionSummary.trendCopy}">Compliance improved from not followed to fully followed.</p>
+                    <p class="meal-plan-trend-label"
+                       th:classappend="${nutritionSummary.trendLabel == 'Needs attention' ? 'meal-plan-trend-label-warning' : 'meal-plan-trend-label-positive'}"
+                       th:text="${nutritionSummary.trendLabel}">Trending upward</p>
+                </section>
+            </div>
         </div>
     </div>
 </div>

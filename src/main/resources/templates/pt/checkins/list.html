@@ -7,71 +7,85 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="page-header">
-        <h1>Client Check-ins</h1>
-    </div>
+    <div class="checkins-directory-shell">
+        <div class="checkins-directory-header">
+            <div>
+                <h1 class="checkins-directory-title">Client Check-ins</h1>
+                <p class="checkins-directory-subtitle">Review weekly updates, spot slipping engagement, and respond quickly.</p>
+            </div>
+        </div>
 
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
 
-    <div class="filter-tabs mb-3">
-        <a th:href="@{/pt/checkins(filter='pending')}"
-           class="filter-tab"
-           th:classappend="${selectedFilter == 'pending'} ? 'filter-tab-active'">
-            Pending
-            <span class="tab-count" th:text="${pendingCount}"></span>
-        </a>
-        <a th:href="@{/pt/checkins(filter='reviewed')}"
-           class="filter-tab"
-           th:classappend="${selectedFilter == 'reviewed'} ? 'filter-tab-active'">
-            Reviewed
-        </a>
-        <a th:href="@{/pt/checkins(filter='all')}"
-           class="filter-tab"
-           th:classappend="${selectedFilter == 'all'} ? 'filter-tab-active'">
-            All
-        </a>
-    </div>
+        <div class="checkins-directory-tabs">
+            <a th:href="@{/pt/checkins(filter='pending')}"
+               class="checkins-directory-tab"
+               th:classappend="${selectedFilter == 'pending'} ? 'checkins-directory-tab-active'">
+                Pending
+                <span class="checkins-directory-tab-count" th:text="${pendingCount}"></span>
+            </a>
+            <a th:href="@{/pt/checkins(filter='reviewed')}"
+               class="checkins-directory-tab"
+               th:classappend="${selectedFilter == 'reviewed'} ? 'checkins-directory-tab-active'">
+                Reviewed
+            </a>
+            <a th:href="@{/pt/checkins(filter='all')}"
+               class="checkins-directory-tab"
+               th:classappend="${selectedFilter == 'all'} ? 'checkins-directory-tab-active'">
+                All
+            </a>
+        </div>
 
-    <div th:if="${checkIns.isEmpty()}" class="card text-center">
-        <p class="text-muted"
-           th:text="${selectedFilter == 'reviewed' ? 'No reviewed check-ins' : (selectedFilter == 'all' ? 'No check-ins yet' : 'No pending check-ins')}"></p>
-    </div>
+        <div th:if="${checkIns.isEmpty()}" class="checkins-directory-empty">
+            <h2>No check-ins to show</h2>
+            <p th:text="${selectedFilter == 'reviewed' ? 'No reviewed check-ins yet.' : (selectedFilter == 'all' ? 'No client check-ins have been submitted yet.' : 'No pending check-ins right now.')}">No check-ins yet.</p>
+        </div>
 
-    <div th:if="${!checkIns.isEmpty()}" class="card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Date</th>
-                    <th>Weight</th>
-                    <th>Mood</th>
-                    <th>Energy</th>
-                    <th>Sleep</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="checkIn : ${checkIns}">
-                    <td>
-                        <a th:href="@{/pt/clients/{id}(id=${checkIn.clientRecord.id})}"
-                           th:text="${checkIn.clientRecord.clientUser.fullName}"></a>
-                    </td>
-                    <td th:text="${#temporals.format(checkIn.submittedAt, 'dd MMM yyyy')}"></td>
-                    <td th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'"></td>
-                    <td th:text="${checkIn.moodScore != null ? checkIn.moodScore + '/5' : '—'}"></td>
-                    <td th:text="${checkIn.energyScore != null ? checkIn.energyScore + '/5' : '—'}"></td>
-                    <td th:text="${checkIn.sleepScore != null ? checkIn.sleepScore + '/5' : '—'}"></td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${checkIn.status.name() == 'PENDING_REVIEW'} ? 'badge-info' : 'badge-active'"
-                              th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting Review' : 'Reviewed'}"></span>
-                    </td>
-                    <td><a th:href="@{/pt/checkins/{id}(id=${checkIn.id})}">Review</a></td>
-                </tr>
-            </tbody>
-        </table>
+        <div th:if="${!checkIns.isEmpty()}" class="checkins-directory-list">
+            <article class="checkin-directory-card" th:each="checkIn : ${checkIns}">
+                <div class="checkin-directory-identity">
+                    <div class="checkin-directory-avatar"
+                         th:text="${#strings.substring(checkIn.clientRecord.clientUser.fullName, 0, 1).toUpperCase()}">J</div>
+                    <div class="checkin-directory-copy">
+                        <div class="checkin-directory-name-row">
+                            <a th:href="@{/pt/clients/{id}(id=${checkIn.clientRecord.id})}"
+                               class="checkin-directory-name"
+                               th:text="${checkIn.clientRecord.clientUser.fullName}">Jamie Chen</a>
+                            <span class="badge"
+                                  th:classappend="${checkIn.status.name() == 'PENDING_REVIEW' ? 'badge-info' : 'badge-active'}"
+                                  th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting review' : 'Reviewed'}">Awaiting review</span>
+                        </div>
+                        <p class="checkin-directory-meta"
+                           th:text="${'Submitted ' + #temporals.format(checkIn.submittedAt, 'dd MMM yyyy')}">Submitted 04 Apr 2026</p>
+
+                        <div class="checkin-directory-stat-row">
+                            <span class="checkin-directory-stat-chip">
+                                <span class="checkin-directory-stat-label">Weight</span>
+                                <strong th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'">78.4 kg</strong>
+                            </span>
+                            <span class="checkin-directory-stat-chip">
+                                <span class="checkin-directory-stat-label">Mood</span>
+                                <strong th:text="${checkIn.moodScore != null ? checkIn.moodScore + '/5' : '—'}">4/5</strong>
+                            </span>
+                            <span class="checkin-directory-stat-chip">
+                                <span class="checkin-directory-stat-label">Energy</span>
+                                <strong th:text="${checkIn.energyScore != null ? checkIn.energyScore + '/5' : '—'}">4/5</strong>
+                            </span>
+                            <span class="checkin-directory-stat-chip">
+                                <span class="checkin-directory-stat-label">Sleep</span>
+                                <strong th:text="${checkIn.sleepScore != null ? checkIn.sleepScore + '/5' : '—'}">3/5</strong>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkin-directory-actions">
+                    <a th:href="@{/pt/checkins/{id}(id=${checkIn.id})}" class="checkins-pill-button"
+                       th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Review' : 'View'}">Review</a>
+                </div>
+            </article>
+        </div>
     </div>
 </div>
 </body>

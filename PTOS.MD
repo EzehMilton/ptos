@@ -440,17 +440,21 @@ Dashboard metrics:
 Business metrics:
 - estimated monthly revenue
 - average revenue per client
+- retention rate (active + at-risk as % of total)
 - estimated client lifetime value
+- 6-month revenue trend (computed from client start dates and package prices)
 - active client count
 - churn risk count
 - average health score
-- clients improving / stable / slipping (trend comparison)
+- health distribution counts (healthy, watch, at-risk, churning)
+- clients improving / stable / slipping (with individual score deltas)
+- top 5 revenue clients by package price
 - profile completion rate
 - check-in compliance rate
 - workout completion rate
 - meal plan coverage (% of active clients with a meal plan)
-- client breakdown table (with health score and risk level per client)
-- re-engagement candidates (at-risk/churning clients with 14–60 days of inactivity)
+- client breakdown (with health score and risk level per client)
+- re-engagement candidates (at-risk/churning clients sorted by score)
 - incomplete profile clients
 
 ## Seeded Demo Data
@@ -875,6 +879,8 @@ All endpoints below are server-rendered MVC routes unless noted otherwise.
 ### BusinessService
 
 - assembles PT business metrics, client health analytics, and re-engagement candidates
+- computes 6-month revenue trend from client start dates and current package prices
+- computes retention rate, health distribution counts, individual improving/slipping clients with score deltas, and top revenue clients
 
 ### SuggestedActionsService
 
@@ -906,17 +912,15 @@ The PT dashboard currently includes:
 
 ## Current Business View Content
 
-The business page currently includes:
+The business page uses a dark-themed dashboard layout with a two-column card grid. It currently includes:
 
-- estimated monthly revenue
-- average revenue per active client
-- estimated client lifetime value
-- active client count
-- churn risk count
-- average health score
-- client overview table (with health score bar, risk level badge per client)
-- re-engagement opportunities (at-risk/churning clients with 14–60 day inactivity)
-- improving vs stable vs slipping breakdown
+- KPI row: monthly revenue, revenue per client, retention rate, estimated client lifetime value
+- Revenue trend (6 months): bar chart computed from client start dates and current package prices, with the current month highlighted
+- Improving vs slipping: pill summary (N improving / N stable / N slipping) plus individual client rows showing name, current health score, and score delta with trend arrows
+- Client health distribution: CSS donut chart showing healthy, watch, and at-risk/churning counts with center total
+- Revenue by client: top 5 active clients sorted by package price descending
+- Re-engagement opportunities: at-risk/churning clients with avatar initials, score, last activity, and "Send message" action
+- Incomplete profiles: clients with fewer than 4 of 6 profile fields completed
 
 ## Navigation Structure
 
@@ -955,6 +959,10 @@ As of now, PTOS does not yet provide:
 - multi-PT business management
 - API endpoints for mobile or SPA clients
 - AI-powered insights (currently uses rule-based stub; gateway interface ready for AI integration)
+
+## Visual Theme
+
+All authenticated PT pages (dashboard, clients, workouts, check-ins, messages, business) use a dark theme (`dashboard-page-body` CSS class) with dark card backgrounds, light text, and styled form elements. The landing page and PT signup page have their own distinct themes. A `<meta name="color-scheme" content="light">` tag is set on the shared layout to prevent browser-level dark mode from interfering with the app's own styling.
 
 ## Design Notes
 

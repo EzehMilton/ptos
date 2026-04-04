@@ -381,9 +381,9 @@ class PtOnlyWebIntegrationTest {
 
         mockMvc.perform(get("/pt/clients/{id}", clientRecordId).session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("PT Note History")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("PT notes")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Travel week handled well.")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Meal Plan")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Meal plan")));
 
         mockMvc.perform(post("/pt/clients/{id}/nutrition", clientRecordId)
                         .session(session)
@@ -398,7 +398,8 @@ class PtOnlyWebIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Lean Cut Plan")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("High protein, moderate carbs.")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("followed in last 14 days")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Compliance")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Last 14 days")));
     }
 
     @Test
@@ -420,7 +421,7 @@ class PtOnlyWebIntegrationTest {
 
         mockMvc.perform(get("/pt/clients/{id}", clientRecordId).session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Start Conversation")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Message")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("/pt/messages/new/" + clientRecordId)));
     }
 
