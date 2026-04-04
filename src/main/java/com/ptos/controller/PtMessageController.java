@@ -35,6 +35,7 @@ public class PtMessageController {
     public String inbox(Model model) {
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         model.addAttribute("conversations", messagingService.getConversationsForPT(ptUser));
+        model.addAttribute("selectedConversationId", null);
         return "pt/messages/inbox";
     }
 
@@ -49,7 +50,7 @@ public class PtMessageController {
 
         Conversation conversation = conversationOpt.get();
         messagingService.markAsRead(conversationId, ptUser);
-        populateConversationModel(model, conversation, messagingService.getMessages(conversationId, ptUser));
+        populateConversationModel(model, ptUser, conversation, messagingService.getMessages(conversationId, ptUser));
         if (!model.containsAttribute("messageForm")) {
             model.addAttribute("messageForm", new MessageForm());
         }
@@ -71,7 +72,7 @@ public class PtMessageController {
 
         Conversation conversation = conversationOpt.get();
         if (result.hasErrors()) {
-            populateConversationModel(model, conversation, messagingService.getMessages(conversationId, ptUser));
+            populateConversationModel(model, ptUser, conversation, messagingService.getMessages(conversationId, ptUser));
             return "pt/messages/conversation";
         }
 
@@ -79,7 +80,7 @@ public class PtMessageController {
             messagingService.sendMessage(conversationId, ptUser, form.getContent());
         } catch (IllegalArgumentException ex) {
             result.rejectValue("content", "message.error", ex.getMessage());
-            populateConversationModel(model, conversation, messagingService.getMessages(conversationId, ptUser));
+            populateConversationModel(model, ptUser, conversation, messagingService.getMessages(conversationId, ptUser));
             return "pt/messages/conversation";
         }
         return "redirect:/pt/messages/" + conversationId;
@@ -99,7 +100,9 @@ public class PtMessageController {
                 });
     }
 
-    private void populateConversationModel(Model model, Conversation conversation, List<Message> messages) {
+    private void populateConversationModel(Model model, User ptUser, Conversation conversation, List<Message> messages) {
+        model.addAttribute("conversations", messagingService.getConversationsForPT(ptUser));
+        model.addAttribute("selectedConversationId", conversation.getId());
         model.addAttribute("conversation", conversation);
         model.addAttribute("messages", messages);
         model.addAttribute("otherPersonName", conversation.getClientUser().getFullName());

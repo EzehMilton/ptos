@@ -2,11 +2,15 @@ package com.ptos.controller;
 
 import com.ptos.domain.AssignmentStatus;
 import com.ptos.domain.CheckIn;
+import com.ptos.domain.CheckInStatus;
 import com.ptos.domain.ClientInvitation;
 import com.ptos.domain.ClientRecord;
+import com.ptos.domain.ClientStatus;
+import com.ptos.domain.GoalType;
 import com.ptos.domain.User;
 import com.ptos.dto.ClientDetailView;
-import com.ptos.dto.ClientListView;
+import com.ptos.dto.ClientDirectoryItem;
+import com.ptos.dto.ClientHealthScoreResult;
 import com.ptos.dto.ClientRecordUpdateForm;
 import com.ptos.dto.DeleteClientForm;
 import com.ptos.dto.DirectCreateClientForm;
@@ -32,8 +36,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.math.RoundingMode;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/pt/clients")
@@ -52,20 +61,42 @@ public class PtClientsController {
     private final SecurityHelper securityHelper;
 
     @GetMapping
-    public String listClients(@RequestParam(name = "q", required = false) String query, Model model) {
+    public String listClients(@RequestParam(name = "q", required = false) String query,
+                              @RequestParam(name = "tab", defaultValue = "all") String tab,
+                              @RequestParam(name = "sort", defaultValue = "health") String sort,
+                              Model model) {
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
+        String normalizedQuery = query != null && !query.isBlank() ? query.trim() : null;
+        String activeTab = normalizeTab(tab);
+        String activeSort = normalizeSort(sort);
 
-        List<ClientListView> clients;
-        if (query != null && !query.isBlank()) {
-            clients = clientRecordService.searchClients(ptUser, query.trim());
-            model.addAttribute("query", query.trim());
-        } else {
-            clients = clientRecordService.getClientListForPT(ptUser);
-        }
+        List<ClientRecord> allClientRecords = clientRecordService.getClientsForPT(ptUser);
+        List<ClientInvitation> allInvitations = clientInvitationService.getAllInvitations(ptUser);
+        Map<ClientStatus, Long> statusCounts = clientRecordService.getStatusCounts(ptUser);
 
-        model.addAttribute("invitations", clientInvitationService.getAllInvitations(ptUser));
+        List<ClientDirectoryItem> clients = allClientRecords.stream()
+                .map(this::toDirectoryItem)
+                .filter(item -> matchesQuery(item, normalizedQuery))
+                .filter(item -> matchesTab(item, activeTab))
+                .sorted(comparatorFor(activeSort))
+                .toList();
+
+        List<ClientInvitation> invitations = allInvitations.stream()
+                .filter(invitation -> matchesInvitationQuery(invitation, normalizedQuery))
+                .toList();
+
+        model.addAttribute("query", normalizedQuery);
+        model.addAttribute("activeTab", activeTab);
+        model.addAttribute("activeSort", activeSort);
         model.addAttribute("clients", clients);
         model.addAttribute("clientCount", clients.size());
+        model.addAttribute("invitations", invitations);
+        model.addAttribute("invitationCount", invitations.size());
+        model.addAttribute("allCount", statusCounts.values().stream().mapToLong(Long::longValue).sum());
+        model.addAttribute("activeCount", statusCounts.getOrDefault(ClientStatus.ACTIVE, 0L));
+        model.addAttribute("atRiskCount", statusCounts.getOrDefault(ClientStatus.AT_RISK, 0L));
+        model.addAttribute("inactiveCount", statusCounts.getOrDefault(ClientStatus.INACTIVE, 0L));
+        model.addAttribute("invitationTotalCount", allInvitations.size());
         return "pt/clients/list";
     }
 
@@ -259,5 +290,157 @@ public class PtClientsController {
             model.addAttribute("directCreateClientForm", new DirectCreateClientForm());
         }
         model.addAttribute("clientCreationMode", activeMode);
+    }
+
+    private ClientDirectoryItem toDirectoryItem(ClientRecord record) {
+        ClientDetailView detail = clientRecordService.getClientDetail(record);
+        ClientHealthScoreResult healthScore = healthScoreService.calculateHealthScore(record);
+        Optional<CheckIn> latestCheckIn = checkInService.getCheckInsForClientRecord(record).stream().findFirst();
+
+        return ClientDirectoryItem.builder()
+                .clientRecordId(detail.getClientRecordId())
+                .clientName(detail.getClientName())
+                .clientEmail(detail.getClientEmail())
+                .initials(initialsOf(detail.getClientName()))
+                .goalLabel(goalLabel(detail.getGoalType()))
+                .weightSummary(weightSummary(detail))
+                .packageSummary(detail.getMonthlyPackagePrice() != null
+                        ? "£" + detail.getMonthlyPackagePrice().setScale(0, RoundingMode.HALF_UP) + "/mo"
+                        : "No package set")
+                .activitySummary(activitySummary(detail, healthScore, latestCheckIn.orElse(null)))
+                .status(detail.getStatus())
+                .healthScore(healthScore.getOverallScore())
+                .healthScoreClass(healthScoreClass(healthScore.getOverallScore()))
+                .primaryActionLabel("Message")
+                .primaryActionUrl("/pt/messages/new/" + detail.getClientRecordId())
+                .secondaryActionLabel(secondaryActionLabel(detail.getStatus()))
+                .secondaryActionUrl("/pt/clients/" + detail.getClientRecordId())
+                .build();
+    }
+
+    private boolean matchesQuery(ClientDirectoryItem item, String query) {
+        if (query == null) {
+            return true;
+        }
+        String lower = query.toLowerCase();
+        return item.getClientName().toLowerCase().contains(lower)
+                || item.getClientEmail().toLowerCase().contains(lower);
+    }
+
+    private boolean matchesInvitationQuery(ClientInvitation invitation, String query) {
+        if (query == null) {
+            return true;
+        }
+        String lower = query.toLowerCase();
+        return invitation.getFullName().toLowerCase().contains(lower)
+                || invitation.getEmail().toLowerCase().contains(lower);
+    }
+
+    private boolean matchesTab(ClientDirectoryItem item, String tab) {
+        return switch (tab) {
+            case "active" -> item.getStatus() == ClientStatus.ACTIVE;
+            case "at-risk" -> item.getStatus() == ClientStatus.AT_RISK;
+            case "inactive" -> item.getStatus() == ClientStatus.INACTIVE;
+            default -> true;
+        };
+    }
+
+    private Comparator<ClientDirectoryItem> comparatorFor(String sort) {
+        return switch (sort) {
+            case "name" -> Comparator.comparing(ClientDirectoryItem::getClientName, String.CASE_INSENSITIVE_ORDER);
+            case "status" -> Comparator.comparing(item -> item.getStatus().name());
+            default -> Comparator.comparingInt(ClientDirectoryItem::getHealthScore).reversed()
+                    .thenComparing(ClientDirectoryItem::getClientName, String.CASE_INSENSITIVE_ORDER);
+        };
+    }
+
+    private String normalizeTab(String tab) {
+        return switch (tab) {
+            case "active", "at-risk", "inactive", "invitations" -> tab;
+            default -> "all";
+        };
+    }
+
+    private String normalizeSort(String sort) {
+        return switch (sort) {
+            case "name", "status" -> sort;
+            default -> "health";
+        };
+    }
+
+    private String initialsOf(String name) {
+        return java.util.Arrays.stream(name.trim().split("\\s+"))
+                .filter(part -> !part.isBlank())
+                .limit(2)
+                .map(part -> part.substring(0, 1).toUpperCase())
+                .collect(Collectors.joining());
+    }
+
+    private String goalLabel(GoalType goalType) {
+        if (goalType == null) {
+            return "No goal set";
+        }
+        return switch (goalType) {
+            case WEIGHT_LOSS -> "Weight loss";
+            case MUSCLE_GAIN -> "Muscle gain";
+            case STRENGTH -> "Strength";
+            case ENDURANCE -> "Endurance";
+            case GENERAL_FITNESS -> "General fitness";
+        };
+    }
+
+    private String weightSummary(ClientDetailView detail) {
+        if (detail.getCurrentWeightKg() == null && detail.getTargetWeightKg() == null) {
+            return "No weight data";
+        }
+        if (detail.getCurrentWeightKg() != null && detail.getTargetWeightKg() != null) {
+            return String.format("%.1f -> %.1f kg", detail.getCurrentWeightKg(), detail.getTargetWeightKg());
+        }
+        if (detail.getCurrentWeightKg() != null) {
+            return String.format("%.1f kg", detail.getCurrentWeightKg());
+        }
+        return String.format("Target %.1f kg", detail.getTargetWeightKg());
+    }
+
+    private String activitySummary(ClientDetailView detail, ClientHealthScoreResult healthScore, CheckIn latestCheckIn) {
+        if (latestCheckIn != null && latestCheckIn.getStatus() == CheckInStatus.PENDING_REVIEW) {
+            return "Check-in pending";
+        }
+        if (healthScore.getDaysSinceLastActivity() != null) {
+            int days = healthScore.getDaysSinceLastActivity();
+            if (days == 0) {
+                return "Active today";
+            }
+            if (days == 1) {
+                return "Last activity 1 day ago";
+            }
+            return "No activity for " + days + " days";
+        }
+        if (latestCheckIn != null) {
+            return "Last check-in " + latestCheckIn.getSubmittedAt().format(DateTimeFormatter.ofPattern("dd MMM"));
+        }
+        return detail.getStatus() == ClientStatus.INACTIVE ? "Inactive client" : "No recent activity";
+    }
+
+    private String healthScoreClass(int score) {
+        if (score >= 70) {
+            return "clients-score-fill-healthy";
+        }
+        if (score >= 50) {
+            return "clients-score-fill-watch";
+        }
+        if (score >= 30) {
+            return "clients-score-fill-risk";
+        }
+        return "clients-score-fill-churning";
+    }
+
+    private String secondaryActionLabel(ClientStatus status) {
+        return switch (status) {
+            case ACTIVE -> "View";
+            case AT_RISK -> "Re-engage";
+            case INACTIVE -> "Reactivate";
+            case ARCHIVED -> "View";
+        };
     }
 }

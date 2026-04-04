@@ -3,138 +3,157 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/default}">
 <head>
-    <title>My Clients</title>
+    <title>Clients</title>
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
-        <h1>My Clients</h1>
-        <a th:href="@{/pt/clients/new}" class="btn btn-primary">Add Client</a>
-    </div>
-
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
-
-    <!-- Search -->
-    <div class="card mb-3">
-        <form th:action="@{/pt/clients}" method="get" style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" name="q" th:value="${query}" placeholder="Search by name or email..."
-                   style="flex: 1; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
-            <button type="submit" class="btn btn-primary btn-sm">Search</button>
-            <a th:href="@{/pt/clients}" class="btn btn-secondary btn-sm">Clear</a>
-        </form>
-    </div>
-
-    <p class="text-muted mb-2" th:text="'Showing ' + ${clientCount} + ' client' + (${clientCount} != 1 ? 's' : '')"></p>
-
-    <!-- Client table -->
-    <div th:if="${clientCount > 0}" class="card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Goal</th>
-                    <th>Weight</th>
-                    <th>Status</th>
-                    <th>Package</th>
-                    <th>Start Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="c : ${clients}">
-                    <td>
-                        <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.clientName}"></a>
-                    </td>
-                    <td th:text="${c.clientEmail}"></td>
-                    <td>
-                        <span th:if="${c.goalType != null}" th:switch="${c.goalType.name()}">
-                            <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
-                            <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
-                            <span th:case="'STRENGTH'">Strength</span>
-                            <span th:case="'ENDURANCE'">Endurance</span>
-                            <span th:case="'GENERAL_FITNESS'">General Fitness</span>
-                        </span>
-                        <span th:if="${c.goalType == null}" class="text-muted">&mdash;</span>
-                    </td>
-                    <td>
-                        <span th:if="${c.currentWeightKg != null}">
-                            <span th:text="${c.currentWeightKg}"></span>
-                            <span th:if="${c.targetWeightKg != null}">
-                                &rarr; <span th:text="${c.targetWeightKg}"></span>
-                            </span>
-                            kg
-                        </span>
-                        <span th:if="${c.currentWeightKg == null}" class="text-muted">&mdash;</span>
-                    </td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${c.status.name() == 'ACTIVE'} ? 'badge-active' :
-                                             (${c.status.name() == 'AT_RISK'} ? 'badge-warning' :
-                                             'badge-neutral')"
-                              th:text="${c.status.name()}"></span>
-                    </td>
-                    <td>
-                        <span th:if="${c.monthlyPackagePrice != null}"
-                              th:text="'£' + ${#numbers.formatDecimal(c.monthlyPackagePrice, 1, 2)} + '/mo'"></span>
-                        <span th:if="${c.monthlyPackagePrice == null}" class="text-muted">&mdash;</span>
-                    </td>
-                    <td th:text="${#temporals.format(c.startDate, 'dd MMM yyyy')}"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Empty state -->
-    <div th:if="${clientCount == 0}" class="card text-center">
-        <p class="text-muted" th:if="${query != null}">No clients matching your search.</p>
-        <p class="text-muted" th:if="${query == null}">No clients yet.</p>
-    </div>
-
-    <div class="card mt-3">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <div class="clients-shell">
+        <div class="clients-header">
             <div>
-                <h3 class="card-title" style="margin-bottom: 4px;">Client Invitations</h3>
-                <p class="text-muted">Track invitation status, expiry, and recipient details.</p>
+                <h1 class="clients-title">Clients</h1>
+                <p class="clients-subtitle"
+                   th:text="${activeCount + ' active, ' + inactiveCount + ' inactive, ' + atRiskCount + ' at risk'}">12 active, 1 inactive, 3 at risk</p>
             </div>
-            <a th:href="@{/pt/clients/new}" class="btn btn-secondary btn-sm">Invite Client</a>
+            <a th:href="@{/pt/clients/new}" class="btn btn-primary">+ Add client</a>
         </div>
 
-        <div th:if="${#lists.isEmpty(invitations)}" class="mt-2">
-            <p class="text-muted">No invitations yet.</p>
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+
+        <div class="clients-tabs">
+            <a th:href="@{/pt/clients(tab='all', sort=${activeSort}, q=${query})}"
+               class="clients-tab"
+               th:classappend="${activeTab == 'all' ? ' clients-tab-active' : ''}"
+               th:text="${'All (' + allCount + ')'}">All (16)</a>
+            <a th:href="@{/pt/clients(tab='active', sort=${activeSort}, q=${query})}"
+               class="clients-tab"
+               th:classappend="${activeTab == 'active' ? ' clients-tab-active' : ''}"
+               th:text="${'Active (' + activeCount + ')'}">Active (12)</a>
+            <a th:href="@{/pt/clients(tab='at-risk', sort=${activeSort}, q=${query})}"
+               class="clients-tab"
+               th:classappend="${activeTab == 'at-risk' ? ' clients-tab-active clients-tab-risk' : ' clients-tab-risk'}"
+               th:text="${'At risk (' + atRiskCount + ')'}">At risk (3)</a>
+            <a th:href="@{/pt/clients(tab='inactive', sort=${activeSort}, q=${query})}"
+               class="clients-tab"
+               th:classappend="${activeTab == 'inactive' ? ' clients-tab-active' : ''}"
+               th:text="${'Inactive (' + inactiveCount + ')'}">Inactive (1)</a>
+            <a th:href="@{/pt/clients(tab='invitations', sort=${activeSort}, q=${query})}"
+               class="clients-tab"
+               th:classappend="${activeTab == 'invitations' ? ' clients-tab-active' : ''}"
+               th:text="${'Invitations (' + invitationTotalCount + ')'}">Invitations (5)</a>
         </div>
 
-        <div th:if="${!#lists.isEmpty(invitations)}" class="mt-2">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Recipient</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Sent</th>
-                        <th>Expires</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="invitation : ${invitations}">
-                        <td th:text="${invitation.fullName}"></td>
-                        <td th:text="${invitation.email}"></td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${invitation.status.name() == 'PENDING'} ? 'badge-info' :
-                                                 (${invitation.status.name() == 'ACCEPTED'} ? 'badge-active' :
-                                                 'badge-neutral')"
-                                  th:text="${invitation.status.name()}"></span>
-                        </td>
-                        <td>
-                            <span th:if="${invitation.createdAt != null}"
-                                  th:text="${#temporals.format(invitation.createdAt, 'dd MMM yyyy')}"></span>
-                            <span th:if="${invitation.createdAt == null}" class="text-muted">&mdash;</span>
-                        </td>
-                        <td th:text="${#temporals.format(invitation.expiresAt, 'dd MMM yyyy')}"></td>
-                    </tr>
-                </tbody>
-            </table>
+        <form th:action="@{/pt/clients}" method="get" class="clients-toolbar">
+            <input type="hidden" name="tab" th:value="${activeTab}">
+            <div class="clients-search-box">
+                <span class="clients-search-icon">⌕</span>
+                <input type="text" name="q" th:value="${query}" placeholder="Search clients or invitations">
+            </div>
+            <div class="clients-sort-box">
+                <select name="sort" onchange="this.form.submit()">
+                    <option value="health" th:selected="${activeSort == 'health'}">Sort: Health score</option>
+                    <option value="name" th:selected="${activeSort == 'name'}">Sort: Name</option>
+                    <option value="status" th:selected="${activeSort == 'status'}">Sort: Status</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary btn-sm">Apply</button>
+        </form>
+
+        <div th:if="${activeTab != 'invitations'}">
+            <div th:if="${clientCount == 0}" class="clients-empty">
+                <p th:if="${query != null}">No clients match this filter.</p>
+                <p th:if="${query == null}">No clients found in this view.</p>
+            </div>
+
+            <div th:if="${clientCount > 0}" class="clients-list">
+                <div th:each="client : ${clients}" class="client-card"
+                     th:classappend="${client.status.name() == 'AT_RISK' ? ' client-card-at-risk' :
+                                     (client.status.name() == 'INACTIVE' ? ' client-card-inactive' : '')}">
+                    <div class="client-card-identity">
+                        <div class="client-avatar"
+                             th:classappend="${client.status.name() == 'AT_RISK' ? ' client-avatar-risk' :
+                                             (client.status.name() == 'INACTIVE' ? ' client-avatar-inactive' : '')}"
+                             th:text="${client.initials}">MJ</div>
+                        <div class="client-card-copy">
+                            <div class="client-card-name-row">
+                                <a th:href="@{/pt/clients/{id}(id=${client.clientRecordId})}" class="client-card-name"
+                                   th:text="${client.clientName}">Mia Johnson</a>
+                                <span class="badge"
+                                      th:classappend="${client.status.name() == 'ACTIVE' ? 'badge-active' :
+                                                     (client.status.name() == 'AT_RISK' ? 'badge-warning' :
+                                                     'badge-neutral')}"
+                                      th:text="${client.status.name().replace('_', ' ').toLowerCase()}"></span>
+                            </div>
+                            <p class="client-card-meta">
+                                <span th:text="${client.goalLabel}">Weight loss</span>
+                                <span>&bull;</span>
+                                <span th:text="${client.weightSummary}">89.9 -&gt; 70.0 kg</span>
+                                <span>&bull;</span>
+                                <span th:text="${client.packageSummary}">£130/mo</span>
+                                <span>&bull;</span>
+                                <span th:text="${client.activitySummary}">Check-in pending</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="client-card-health">
+                        <div class="clients-score-track">
+                            <div class="clients-score-fill"
+                                 th:classappend="${client.healthScoreClass}"
+                                 th:style="'width:' + ${client.healthScore} + '%'"></div>
+                        </div>
+                        <span class="clients-score-value" th:text="${client.healthScore}">90</span>
+                    </div>
+
+                    <div class="client-card-actions">
+                        <a th:href="${client.primaryActionUrl}" class="clients-pill-button">Message</a>
+                        <a th:href="${client.secondaryActionUrl}" class="clients-pill-button"
+                           th:text="${client.secondaryActionLabel}">View</a>
+                    </div>
+                </div>
+            </div>
+
+            <p class="clients-footer-copy"
+               th:text="${'Showing ' + clientCount + ' of ' + allCount + ' clients'}">Showing 5 of 16 clients</p>
+        </div>
+
+        <div th:if="${activeTab == 'invitations'}">
+            <div th:if="${#lists.isEmpty(invitations)}" class="clients-empty">
+                <p>No invitations match this filter.</p>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(invitations)}" class="clients-list">
+                <div th:each="invitation : ${invitations}" class="client-card">
+                    <div class="client-card-identity">
+                        <div class="client-avatar client-avatar-invitation"
+                             th:text="${#strings.substring(invitation.fullName, 0, 1)}">L</div>
+                        <div class="client-card-copy">
+                            <div class="client-card-name-row">
+                                <span class="client-card-name" th:text="${invitation.fullName}">Layla Green</span>
+                                <span class="badge"
+                                      th:classappend="${invitation.status.name() == 'PENDING' ? 'badge-info' :
+                                                     (invitation.status.name() == 'ACCEPTED' ? 'badge-active' : 'badge-neutral')}"
+                                      th:text="${invitation.status.name()}">PENDING</span>
+                            </div>
+                            <p class="client-card-meta">
+                                <span th:text="${invitation.email}">layla@example.com</span>
+                                <span>&bull;</span>
+                                <span th:text="${'Expires ' + #temporals.format(invitation.expiresAt, 'dd MMM yyyy')}">Expires 10 Apr 2026</span>
+                                <span>&bull;</span>
+                                <span th:if="${invitation.createdAt != null}"
+                                      th:text="${'Sent ' + #temporals.format(invitation.createdAt, 'dd MMM yyyy')}">Sent 03 Apr 2026</span>
+                                <span th:if="${invitation.createdAt == null}">Sent recently</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="client-card-actions">
+                        <a th:href="@{/pt/clients/new}" class="clients-pill-button">Invite another</a>
+                    </div>
+                </div>
+            </div>
+
+            <p class="clients-footer-copy"
+               th:text="${'Showing ' + invitationCount + ' invitation' + (invitationCount == 1 ? '' : 's')}">Showing 5 invitations</p>
         </div>
     </div>
 </div>

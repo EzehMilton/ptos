@@ -3,29 +3,208 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/default}">
 <head>
-    <title>SETLY | Personal Trainer Management System</title>
+    <title>SETLY | PT Business Platform</title>
 </head>
 <body>
 <div layout:fragment="content">
-    <section class="hero">
-        <div class="hero-badge">Built for personal trainers</div>
+    <section class="landing-hero-shell">
+        <div class="landing-hero">
+            <div class="landing-hero-copy">
+                <div class="landing-kicker">Built for personal trainers</div>
+                <h1>Run your PT business from <span class="accent">one focused platform.</span></h1>
+                <p>
+                    Manage clients, assign programmes, review check-ins, monitor business health, and coach from one place built specifically for PT businesses.
+                </p>
 
-        <h1>Run your PT business from one focused platform.</h1>
+                <div class="landing-hero-actions">
+                    <a th:href="@{/pt/signup}" class="btn btn-primary">Sign up free</a>
+                    <a th:href="@{/login}" class="btn btn-ghost">Log in</a>
+                </div>
 
-        <p class="hero-subtext">
-            SETLY helps personal trainers manage clients, assign programmes, review check-ins, monitor business health, and stay on top of coaching operations.
+                <div class="landing-hero-note">No credit card required. Built for PTs, not generic CRMs.</div>
+            </div>
+
+            <div class="landing-app-preview" aria-label="Setly platform preview">
+                <div class="landing-window">
+                    <div class="landing-window-top">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="landing-window-header">
+                        <div>
+                            <div class="landing-window-label">Clients</div>
+                            <div class="landing-window-title">Client overview</div>
+                        </div>
+                        + Add client
+                    </div>
+                    <div class="landing-window-tabs">
+                        <span class="is-active">Active</span>
+                        <span>Needs review</span>
+                        <span>New this week</span>
+                    </div>
+                    <div class="landing-window-list">
+                        <div class="landing-window-row">
+                            <div class="landing-window-person">
+                                <span class="landing-window-avatar">JM</span>
+                                <div>
+                                    <strong>Jamie Morris</strong>
+                                    <small>Strength plan updated</small>
+                                </div>
+                            </div>
+                            <div class="landing-window-metric">
+                                <span>Health score</span>
+                                <div class="landing-mini-bar"><i style="width:78%"></i></div>
+                            </div>
+                            <span class="landing-window-status status-good">Tracking</span>
+                        </div>
+                        <div class="landing-window-row">
+                            <div class="landing-window-person">
+                                <span class="landing-window-avatar">TC</span>
+                                <div>
+                                    <strong>Tessa Clarke</strong>
+                                    <small>Check-in due tomorrow</small>
+                                </div>
+                            </div>
+                            <div class="landing-window-metric">
+                                <span>Health score</span>
+                                <div class="landing-mini-bar"><i style="width:62%"></i></div>
+                            </div>
+                            <span class="landing-window-status status-watch">Watch</span>
+                        </div>
+                        <div class="landing-window-row">
+                            <div class="landing-window-person">
+                                <span class="landing-window-avatar">JR</span>
+                                <div>
+                                    <strong>Jordan Reed</strong>
+                                    <small>Needs re-engagement</small>
+                                </div>
+                            </div>
+                            <div class="landing-window-metric">
+                                <span>Health score</span>
+                                <div class="landing-mini-bar"><i style="width:34%"></i></div>
+                            </div>
+                            <span class="landing-window-status status-risk">At risk</span>
+                        </div>
+                    </div>
+                    <div class="landing-window-footer">
+                        <span>Focused operations</span>
+                        <span>Revenue clarity</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-stats">
+        <div class="landing-stat">
+            <strong>500+</strong>
+            <span>PT workflows simplified</span>
+        </div>
+        <div class="landing-stat">
+            <strong>12K+</strong>
+            <span>Client touchpoints tracked</span>
+        </div>
+        <div class="landing-stat">
+            <strong>£2.4M</strong>
+            <span>Revenue visibility modelled</span>
+        </div>
+        <div class="landing-stat">
+            <strong>4.9★</strong>
+            <span>Designed for busy coaches</span>
+        </div>
+    </section>
+
+    <section class="landing-section landing-section-intro" id="features">
+        <div class="landing-section-kicker">Everything you need</div>
+        <h2>Three pillars. One platform.</h2>
+        <p>
+            Stop juggling spreadsheets, messaging apps, and admin tools. SETLY gives PTs one system built around delivery, retention, and growth.
         </p>
+    </section>
 
-        <div class="hero-actions">
-            <a th:href="@{/login}" class="btn btn-primary">PT Login</a>
-            <a th:href="@{/pt/signup}" class="btn btn-secondary">PT Sign Up</a>
+    <section class="landing-pillars" id="how-it-works">
+        <article class="landing-pillar-card">
+            <div class="landing-pillar-tag">Client management</div>
+            <h3>Health scores and risk alerts, automatically.</h3>
+            <p>
+                Surface clients who need attention, track profile completion, and see who is slipping before they churn.
+            </p>
+        </article>
+
+        <article class="landing-pillar-card">
+            <div class="landing-pillar-tag">Coaching workflows</div>
+            <h3>AI-assisted check-ins and feedback in seconds.</h3>
+            <p>
+                Review weekly progress, compare photos, message clients, and keep programming decisions tied to real data.
+            </p>
+        </article>
+
+        <article class="landing-pillar-card">
+            <div class="landing-pillar-tag">Business intelligence</div>
+            <h3>Revenue, retention, and growth in one view.</h3>
+            <p>
+                Understand package value, meal-plan coverage, churn risk, and where to focus your next coaching move.
+            </p>
+        </article>
+    </section>
+
+    <section class="landing-ai-band">
+        <div class="landing-ai-copy">
+            <div class="landing-section-kicker">AI-powered coaching</div>
+            <h2>Your feedback. AI speed.</h2>
+            <p>
+                Review client data with automated summaries across weight trends, workout completion, mood, and recent engagement so you can focus on the coaching call, not the admin.
+            </p>
+            <ul class="landing-ai-points">
+                <li>Auto analysis of weekly submissions</li>
+                <li>Risk-based nudges for slipping clients</li>
+                <li>Progress snapshots tied to workouts and check-ins</li>
+                <li>Message prompts when re-engagement is needed</li>
+            </ul>
         </div>
-<p></p><p></p>
-        <div class="hero-points">
-            <span>Client management | </span>
-            <span>Business intelligence | </span>
-            <span>Coaching workflows</span>
+
+        <div class="landing-ai-panel">
+            <div class="landing-ai-panel-header">
+                <span>Jamie Chen</span>
+                <span>Week 14 check-in</span>
+            </div>
+            <div class="landing-ai-grid">
+                <div>
+                    <strong>71.8 kg</strong>
+                    <span>Current weight</span>
+                </div>
+                <div>
+                    <strong>5/5</strong>
+                    <span>Workouts done</span>
+                </div>
+                <div>
+                    <strong>4/5</strong>
+                    <span>Energy</span>
+                </div>
+                <div>
+                    <strong>4/5</strong>
+                    <span>Sleep</span>
+                </div>
+            </div>
+            <div class="landing-ai-summary">
+                Jamie’s weight is trending down toward target while training consistency remains strong. Energy and sleep are holding steady, so this is a good week to keep progression moving rather than making major adjustments.
+            </div>
+            <div class="landing-ai-panel-actions">
+                <span>Use AI draft</span>
+                <a th:href="@{/login}" class="btn btn-primary btn-sm">Send feedback</a>
+            </div>
         </div>
+    </section>
+
+    <section class="landing-cta" id="pricing">
+        <h2>Ready to run a tighter PT business?</h2>
+        <p>
+            Join personal trainers using SETLY to manage clients, deliver better coaching, and stay on top of business performance.
+        </p>
+        <div class="landing-cta-actions">
+            <a th:href="@{/pt/signup}" class="btn btn-primary">Sign Up</a>
+            <a th:href="@{/login}" class="btn btn-ghost">Log in to your account</a>
+        </div>
+        <div class="landing-cta-note">Simple setup. PT-first workflow. No generic admin bloat.</div>
     </section>
 </div>
 </body>

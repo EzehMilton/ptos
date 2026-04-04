@@ -7,92 +7,202 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="mb-2">
-        <a th:href="@{/pt/workouts}">&larr; All Workouts</a>
-    </div>
-    <div class="page-header">
-        <h1 th:text="${workout.name}"></h1>
-        <div>
-            <span class="badge badge-neutral" th:text="${workout.category.name()}"></span>
-            <span th:if="${workout.template}" class="badge badge-active" style="margin-left: 6px;">Template</span>
+    <div class="workout-builder-shell">
+        <div class="mb-2">
+            <a th:href="@{/pt/workouts}" class="workout-builder-back">&larr; All workouts</a>
         </div>
-    </div>
 
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
 
-    <!-- Workout Info -->
-    <div class="card mb-3">
-        <h3 class="card-title">Workout Details</h3>
-        <table>
-            <tbody>
-                <tr>
-                    <td style="width:160px; font-weight:500;">Description</td>
-                    <td th:text="${workout.description != null and !workout.description.isBlank()} ? ${workout.description} : '—'"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Category</td>
-                    <td th:text="${workout.category.name()}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Created</td>
-                    <td th:text="${#temporals.format(workout.createdAt, 'dd MMM yyyy')}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Exercises</td>
-                    <td th:text="${workout.exercises.size()}"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+        <div class="workout-builder-grid">
+            <div class="workout-builder-main">
+                <section class="workout-builder-card">
+                    <div class="workout-builder-top">
+                        <div class="workout-builder-field">
+                            <label>Workout name</label>
+                            <div class="workout-builder-value" th:text="${workout.name}">Upper body strength A</div>
+                        </div>
+                        <div class="workout-builder-field workout-builder-field-compact">
+                            <label>Category</label>
+                            <div class="workout-builder-select-like" th:text="${#strings.capitalize(#strings.toLowerCase(workout.category.name()))}">Strength</div>
+                        </div>
+                    </div>
 
-    <!-- Exercise Table -->
-    <div class="card mb-3">
-        <h3 class="card-title">Exercises</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 40px;">#</th>
-                    <th>Exercise</th>
-                    <th>Sets</th>
-                    <th>Reps</th>
-                    <th>Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="ex, iter : ${workout.exercises}">
-                    <td th:text="${iter.count}"></td>
-                    <td th:text="${ex.exerciseName}"></td>
-                    <td th:text="${ex.setsCount}"></td>
-                    <td th:text="${ex.repsText != null} ? ${ex.repsText} : '—'"></td>
-                    <td th:text="${ex.notes != null and !ex.notes.isBlank()} ? ${ex.notes} : '—'"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                    <div class="workout-builder-field">
+                        <label>Description</label>
+                        <p class="workout-builder-description"
+                           th:text="${workout.description != null and !workout.description.isBlank() ? workout.description : 'No description added yet.'}">
+                            Focus on compound pressing movements with rear delt accessory work.
+                        </p>
+                    </div>
 
-    <!-- Assign to Client -->
-    <div class="card">
-        <h3 class="card-title">Assign to Client</h3>
-        <div th:if="${activeClients.isEmpty()}">
-            <p class="text-muted">No active clients to assign to.</p>
+                    <div class="workout-builder-template-row">
+                        <label class="workout-builder-checkbox">
+                            <input type="checkbox" disabled th:checked="${workout.template}">
+                            <span>Save as reusable template</span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="workout-builder-card">
+                    <div th:if="${workout.exercises.isEmpty()}" class="text-muted">No exercises added yet.</div>
+
+                    <div th:if="${!workout.exercises.isEmpty()}" class="workout-sections">
+                        <div class="workout-section-block">
+                            <div class="workout-section-label">Exercises</div>
+
+                            <div th:each="exercise, iter : ${workout.exercises}"
+                                 class="workout-exercise-row"
+                                 th:classappend="${iter.index == 0} ? ' workout-exercise-row-featured'">
+                                <div class="workout-exercise-handle">≡</div>
+                                <div class="workout-exercise-content">
+                                    <div class="workout-exercise-header">
+                                        <div>
+                                            <h3 th:text="${exercise.exerciseName}">Barbell bench press</h3>
+                                            <p class="workout-exercise-meta">
+                                                <span th:text="${exercise.setsCount + ' sets'}">4 sets</span>
+                                                <span>&nbsp;&nbsp;</span>
+                                                <span th:text="${exercise.repsText != null and !exercise.repsText.isBlank() ? exercise.repsText : '—'}">8-10 reps</span>
+                                            </p>
+                                        </div>
+                                        <span th:if="${iter.index == 0}" class="workout-editing-badge">Featured</span>
+                                    </div>
+
+                                    <div class="workout-exercise-stats">
+                                        <div class="workout-stat-chip">
+                                            <span class="workout-stat-label">Sets</span>
+                                            <span class="workout-stat-value" th:text="${exercise.setsCount}">4</span>
+                                        </div>
+                                        <div class="workout-stat-chip">
+                                            <span class="workout-stat-label">Reps</span>
+                                            <span class="workout-stat-value"
+                                                  th:text="${exercise.repsText != null and !exercise.repsText.isBlank() ? exercise.repsText : '—'}">8-10</span>
+                                        </div>
+                                        <div class="workout-stat-chip">
+                                            <span class="workout-stat-label">Weight</span>
+                                            <span class="workout-stat-value">BW</span>
+                                        </div>
+                                        <div class="workout-stat-chip">
+                                            <span class="workout-stat-label">Tempo</span>
+                                            <span class="workout-stat-value">—</span>
+                                        </div>
+                                        <div class="workout-stat-chip">
+                                            <span class="workout-stat-label">Rest</span>
+                                            <span class="workout-stat-value">60s</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="workout-coaching-box"
+                                         th:text="${exercise.notes != null and !exercise.notes.isBlank() ? exercise.notes : 'No coaching cues added for this exercise.'}">
+                                        Retract scapula. Pause 1s at bottom. Drive through chest.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="workout-builder-side">
+                <section class="workout-builder-card">
+                    <h3 class="workout-side-title">Exercise library</h3>
+                    <div class="workout-library-search">⌕ Search exercises</div>
+                    <div class="workout-library-list">
+                        <div th:each="exercise, iter : ${workout.exercises}" class="workout-library-item">
+                            <span th:text="${exercise.exerciseName}">Barbell squat</span>
+                            <span class="workout-library-tag"
+                                  th:text="${iter.index % 3 == 0 ? 'Push' : (iter.index % 3 == 1 ? 'Pull' : 'Lower')}">Push</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="workout-builder-card">
+                    <h3 class="workout-side-title">Assign to</h3>
+                    <div th:if="${activeClients.isEmpty()}">
+                        <p class="text-muted">No active clients to assign to.</p>
+                    </div>
+
+                    <form th:if="${!activeClients.isEmpty()}"
+                          th:action="@{/pt/workouts/{id}/assign(id=${workout.id})}"
+                          method="post"
+                          id="workout-assign-form">
+                        <div id="selected-client-list" class="workout-selected-clients"></div>
+
+                        <div class="workout-client-picker">
+                            <select id="clientPicker">
+                                <option value="">+ Add client...</option>
+                                <option th:each="cr : ${activeClients}"
+                                        th:value="${cr.id}"
+                                        th:text="${cr.clientUser.fullName}"></option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="assignedDate">Schedule for</label>
+                            <input type="date" id="assignedDate" name="assignedDate" th:value="${today}">
+                        </div>
+
+                        <div class="workout-side-actions">
+                            <button type="submit" class="btn btn-primary">Assign workout</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="workout-builder-card">
+                    <h3 class="workout-side-title">Workout summary</h3>
+                    <div class="workout-summary-list">
+                        <p><strong>Exercises:</strong> <span th:text="${workout.exercises.size()}">6</span></p>
+                        <p><strong>Total sets:</strong>
+                            <span th:text="${totalSets}">17</span>
+                        </p>
+                        <p><strong>Category:</strong> <span th:text="${#strings.capitalize(#strings.toLowerCase(workout.category.name()))}">Strength</span></p>
+                        <p><strong>Template:</strong> <span th:text="${workout.template ? 'Reusable' : 'One-off'}">Reusable</span></p>
+                    </div>
+                </section>
+            </div>
         </div>
-        <form th:if="${!activeClients.isEmpty()}"
-              th:action="@{/pt/workouts/{id}/assign(id=${workout.id})}" method="post"
-              style="display: flex; gap: 12px; align-items: end;">
-            <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                <label for="clientRecordId">Client</label>
-                <select id="clientRecordId" name="clientRecordId">
-                    <option th:each="cr : ${activeClients}"
-                            th:value="${cr.id}"
-                            th:text="${cr.clientUser.fullName}"></option>
-                </select>
-            </div>
-            <div class="form-group" style="width: 180px; margin-bottom: 0;">
-                <label for="assignedDate">Date</label>
-                <input type="date" id="assignedDate" name="assignedDate" th:value="${today}">
-            </div>
-            <button type="submit" class="btn btn-primary" style="margin-bottom: 0;">Assign</button>
-        </form>
+
+        <script th:inline="javascript">
+            const clientPicker = document.getElementById('clientPicker');
+            const selectedClientList = document.getElementById('selected-client-list');
+            const assignForm = document.getElementById('workout-assign-form');
+
+            if (clientPicker && selectedClientList && assignForm) {
+                const selectedClients = new Map();
+
+                function renderSelectedClients() {
+                    selectedClientList.innerHTML = '';
+
+                    selectedClients.forEach((name, id) => {
+                        const item = document.createElement('div');
+                        item.className = 'workout-selected-client';
+                        item.innerHTML =
+                            '<span>' + name + '</span>' +
+                            '<button type="button" class="workout-selected-client-remove" data-id="' + id + '">&times;</button>' +
+                            '<input type="hidden" name="clientRecordIds" value="' + id + '">';
+                        selectedClientList.appendChild(item);
+                    });
+
+                    selectedClientList.querySelectorAll('.workout-selected-client-remove').forEach(button => {
+                        button.addEventListener('click', function () {
+                            selectedClients.delete(this.dataset.id);
+                            renderSelectedClients();
+                        });
+                    });
+                }
+
+                clientPicker.addEventListener('change', function () {
+                    const selectedOption = this.options[this.selectedIndex];
+                    if (!selectedOption.value) {
+                        return;
+                    }
+                    selectedClients.set(selectedOption.value, selectedOption.text);
+                    renderSelectedClients();
+                    this.value = '';
+                });
+            }
+        </script>
     </div>
 </div>
 </body>

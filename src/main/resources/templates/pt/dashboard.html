@@ -7,215 +7,209 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="page-header">
-        <h1 th:if="${firstTimeWelcome}" th:text="|Welcome, ${ptName}|"></h1>
-        <h1 th:unless="${firstTimeWelcome}" th:text="|Welcome back, ${ptName}|"></h1>
-    </div>
+    <div class="dashboard-shell">
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
 
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-
-    <!-- Row 1: Summary stats -->
-    <div class="stat-grid mb-3">
-        <div class="card stat-card">
-            <div class="stat-icon">&#128101;</div>
-            <div class="stat-value" th:text="${d.totalClients}"></div>
-            <div class="stat-label">Total Clients</div>
-        </div>
-        <div class="card stat-card">
-            <div class="stat-value" style="color: #16a34a;" th:text="${d.activeClients}"></div>
-            <div class="stat-label">Active</div>
-        </div>
-        <div class="card stat-card">
-            <div class="stat-value" th:style="${d.churnRiskCount > 0} ? 'color: #d97706;' : 'color: #16a34a;'"
-                 th:text="${d.churnRiskCount}"></div>
-            <div class="stat-label">Churn Risk</div>
-        </div>
-        <div class="card stat-card">
-            <div class="stat-value"
-                 th:style="${d.pendingCheckInCount > 0} ? 'color: #d97706;' : 'color: #16a34a;'"
-                 th:text="${d.pendingCheckInCount}"></div>
-            <div class="stat-label">Pending Check-ins</div>
-        </div>
-        <div class="card stat-card">
-            <div class="stat-value" style="color: #16a34a;" th:text="${d.workoutsCompletedThisWeek}"></div>
-            <div class="stat-label">Workouts Completed This Week</div>
-        </div>
-        <div class="card stat-card">
-            <div class="stat-value" th:text="${d.totalWorkoutsAssigned}"></div>
-            <div class="stat-label">Total Workouts Assigned</div>
-        </div>
-        <div class="card stat-card">
-            <div th:if="${d.estimatedMonthlyRevenue.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
-                <div class="stat-value"
-                     th:text="'£' + ${#numbers.formatDecimal(d.estimatedMonthlyRevenue, 1, 2)}"></div>
-                <div class="stat-label">Est. Monthly Revenue</div>
-                <div th:if="${d.clientsWithoutPackagePrice > 0}" class="stat-note text-muted"
-                     th:text="${d.clientsWithoutPackagePrice} + ' client(s) missing price'"></div>
-            </div>
-            <div th:if="${d.estimatedMonthlyRevenue.compareTo(T(java.math.BigDecimal).ZERO) == 0}">
-                <div class="stat-value text-muted">&mdash;</div>
-                <div class="stat-label">
-                    <a th:href="@{/pt/clients}">Set up package prices</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card mb-3">
-        <h3 class="card-title">Health Overview</h3>
-        <div class="health-summary-grid">
-            <div class="health-summary-pill health-summary-healthy" th:text="${d.healthyClients + ' healthy'}"></div>
-            <div class="health-summary-pill health-summary-watch" th:text="${d.watchClients + ' watch'}"></div>
-            <div class="health-summary-pill health-summary-risk" th:text="${d.atRiskClients + ' at risk'}"></div>
-            <div class="health-summary-pill health-summary-churning" th:text="${d.churningClients + ' churning'}"></div>
-        </div>
-    </div>
-
-    <!-- Row 2: Pending Check-ins -->
-    <div class="card mb-3">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-            <h3 class="card-title" style="margin-bottom: 0;">Pending Check-ins</h3>
-            <span class="badge"
-                  th:classappend="${d.pendingCheckInCount > 0} ? 'badge-warning' : 'badge-active'"
-                  th:text="${d.pendingCheckInCount}"></span>
-        </div>
-        <div th:if="${d.pendingCheckInCount == 0}" class="mt-1">
-            <p class="text-muted">No pending check-ins.</p>
-        </div>
-        <div th:if="${d.pendingCheckInCount > 0}" class="mt-2">
-            <div th:each="checkIn : ${d.recentPendingCheckIns}" class="home-workout-row">
-                <div>
-                    <p style="font-weight: 600;" th:text="${checkIn.clientRecord.clientUser.fullName}"></p>
-                    <p class="text-muted"
-                       th:text="${'Submitted ' + #temporals.format(checkIn.submittedAt, 'dd MMM yyyy')}"></p>
-                </div>
-                <a th:href="@{/pt/checkins/{id}(id=${checkIn.id})}" class="btn btn-secondary btn-sm">Review</a>
-            </div>
-            <p class="mt-2" th:if="${d.pendingCheckInCount > 3}">
-                <a th:href="@{/pt/checkins(filter='pending')}">View all pending &rarr;</a>
-            </p>
-        </div>
-    </div>
-
-    <div class="card mb-3" th:if="${!recentMilestoneFeed.isEmpty()}">
-        <h3 class="card-title">Recent Milestones</h3>
-        <div th:each="item : ${recentMilestoneFeed}" class="milestone-feed-row">
-            <p th:text="${item}"></p>
-        </div>
-    </div>
-
-    <div class="card mb-3">
-        <h3 class="card-title">Weekly Summaries</h3>
-        <div th:if="${weeklySummaries.isEmpty()}">
-            <p class="text-muted">No recent client activity yet.</p>
-        </div>
-        <div th:if="${!weeklySummaries.isEmpty()}">
-            <div th:each="item : ${weeklySummaries}" class="milestone-feed-row">
-                <p>
-                    <a th:href="@{/pt/clients/{id}(id=${item.clientRecordId})}" th:text="${item.clientName}"></a>
-                    <span th:text="${' — ' + item.summary}"></span>
+        <div class="dashboard-hero">
+            <div>
+                <h1 class="dashboard-hero-title" th:text="${dashboardGreeting}">Good morning, Michael</h1>
+                <p class="dashboard-hero-subtitle">
+                    <span th:text="${dashboardDateLabel}">Thursday 3 April 2026</span>
+                    <span>&mdash;</span>
+                    <span th:text="${dashboardSummary}">You have 2 check-ins to review and 3 sessions completed this week</span>
                 </p>
             </div>
         </div>
-    </div>
 
-    <!-- Row 3: Recently Updated Clients -->
-    <div class="card mb-3">
-        <h3 class="card-title">Recently Updated Clients</h3>
-        <div th:if="${d.recentlyUpdatedClients.isEmpty()}">
-            <p class="text-muted">No client updates yet.</p>
-        </div>
-        <div th:if="${!d.recentlyUpdatedClients.isEmpty()}">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Goal</th>
-                        <th>Weight</th>
-                        <th>Status</th>
-                        <th>Last Updated</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="c : ${d.recentlyUpdatedClients}">
-                        <td>
-                            <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.clientName}"></a>
-                        </td>
-                        <td>
-                            <span th:if="${c.goalType != null}" th:switch="${c.goalType.name()}">
-                                <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
-                                <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
-                                <span th:case="'STRENGTH'">Strength</span>
-                                <span th:case="'ENDURANCE'">Endurance</span>
-                                <span th:case="'GENERAL_FITNESS'">General Fitness</span>
-                            </span>
-                            <span th:if="${c.goalType == null}" class="text-muted">&mdash;</span>
-                        </td>
-                        <td>
-                            <span th:if="${c.currentWeightKg != null}">
-                                <span th:text="${c.currentWeightKg}"></span>
-                                <span th:if="${c.targetWeightKg != null}">
-                                    &rarr; <span th:text="${c.targetWeightKg}"></span>
-                                </span>
-                                kg
-                            </span>
-                            <span th:if="${c.currentWeightKg == null}" class="text-muted">&mdash;</span>
-                        </td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${c.status.name() == 'ACTIVE'} ? 'badge-active' :
-                                                 (${c.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
-                                  th:text="${c.status.name()}"></span>
-                        </td>
-                        <td>
-                            <span th:if="${c.profileLastUpdated != null}"
-                                  th:text="${#temporals.format(c.profileLastUpdated, 'dd MMM yyyy')}"></span>
-                            <span th:if="${c.profileLastUpdated == null}" class="text-muted">&mdash;</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <p class="mt-2" th:if="${d.totalClients == 0}">
-            <a th:href="@{/pt/clients/new}">Add a new Client &rarr;</a>
-        </p>
-        <p class="mt-2" th:if="${d.totalClients > 0}">
-            <a th:href="@{/pt/clients}">View all clients &rarr;</a>
-        </p>
-    </div>
+        <div class="dashboard-kpi-grid">
+            <div class="dashboard-kpi-card">
+                <p class="dashboard-kpi-label">Active clients</p>
+                <p class="dashboard-kpi-value" th:text="${d.activeClients}">12</p>
+                <p class="dashboard-kpi-note dashboard-kpi-note-success"
+                   th:text="${d.totalClients > 0 ? d.totalClients + ' total managed clients' : 'No clients yet'}">+2 this month</p>
+            </div>
 
-    <!-- Row 4: Quick Actions -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-        <a th:href="@{/pt/clients}" class="card quick-action-card" style="text-decoration: none; color: inherit;">
-            <h3 class="card-title">Manage Clients</h3>
-            <p class="text-muted">View and manage your client roster</p>
-        </a>
-        <a th:href="@{/pt/business}" class="card quick-action-card" style="text-decoration: none; color: inherit;">
-            <h3 class="card-title">Business Overview</h3>
-            <p class="text-muted">Revenue and business metrics</p>
-        </a>
-        <a th:href="@{/pt/checkins(filter='pending')}" class="card quick-action-card" style="text-decoration: none; color: inherit;">
-            <h3 class="card-title">Review Check-ins</h3>
-            <p class="text-muted">Catch up on recent client updates</p>
-        </a>
-    </div>
+            <div class="dashboard-kpi-card">
+                <p class="dashboard-kpi-label">Monthly revenue</p>
+                <p class="dashboard-kpi-value"
+                   th:text="${'£' + #numbers.formatDecimal(businessSnapshot.estimatedMonthlyRevenue, 1, 0)}">£1,415</p>
+                <p class="dashboard-kpi-note"
+                   th:text="${d.clientsWithoutPackagePrice > 0 ? d.clientsWithoutPackagePrice + ' client(s) missing price' : 'From active package pricing'}">Tracked from packages</p>
+            </div>
 
-    <div class="mt-3">
-        <div class="card" th:if="${suggestedActions.isEmpty()}" style="border-left: 4px solid #22c55e;">
-            <h3 class="card-title">Suggested Actions</h3>
-            <p style="color: #166534;">All caught up! No actions needed right now.</p>
+            <div class="dashboard-kpi-card">
+                <p class="dashboard-kpi-label">Check-in rate</p>
+                <p class="dashboard-kpi-value dashboard-kpi-value-success"
+                   th:text="${businessSnapshot.checkInComplianceRate + '%'}">75%</p>
+                <p class="dashboard-kpi-note dashboard-kpi-note-success">Active clients checked in this week</p>
+            </div>
+
+            <div class="dashboard-kpi-card">
+                <p class="dashboard-kpi-label">Avg health score</p>
+                <p class="dashboard-kpi-value"
+                   th:classappend="${businessSnapshot.averageHealthScore >= 70 ? ' dashboard-kpi-value-success' :
+                                   (businessSnapshot.averageHealthScore >= 50 ? ' dashboard-kpi-value-warning' : ' dashboard-kpi-value-danger')}"
+                   th:text="${#numbers.formatDecimal(businessSnapshot.averageHealthScore, 1, 0)}">42</p>
+                <p class="dashboard-kpi-note"
+                   th:text="${businessSnapshot.averageHealthScore >= 70 ? 'Strong engagement overall' :
+                             (businessSnapshot.averageHealthScore >= 50 ? 'Needs attention' : 'High risk across roster')}">Needs attention</p>
+            </div>
+
+            <div class="dashboard-kpi-card">
+                <p class="dashboard-kpi-label">Churn risk</p>
+                <p class="dashboard-kpi-value dashboard-kpi-value-danger" th:text="${d.churnRiskCount}">8</p>
+                <p class="dashboard-kpi-note dashboard-kpi-note-danger"
+                   th:text="${d.churnRiskCount == 1 ? '1 client at risk' : d.churnRiskCount + ' clients at risk'}">1 client at risk</p>
+            </div>
         </div>
 
-        <div class="card" th:if="${!suggestedActions.isEmpty()}">
-            <h3 class="card-title">Suggested Actions</h3>
-            <div th:each="action : ${suggestedActions}" class="suggested-action-row"
-                 th:classappend="${action.priority.name() == 'HIGH'} ? 'suggested-action-high' :
-                                (${action.priority.name() == 'MEDIUM'} ? 'suggested-action-medium' : 'suggested-action-low')">
-                <div class="suggested-action-copy">
-                    <span class="suggested-action-icon" th:text="${action.icon}"></span>
-                    <span th:text="${action.message}"></span>
-                </div>
-                <a class="btn btn-secondary btn-sm" th:href="${action.actionUrl}" th:text="${action.actionLabel}"></a>
+        <div class="dashboard-main-grid">
+            <div class="dashboard-main-column">
+                <section class="dashboard-panel dashboard-panel-critical">
+                    <div class="dashboard-panel-header">
+                        <h3>Action required</h3>
+                        <span class="dashboard-panel-badge dashboard-panel-badge-critical"
+                              th:text="${suggestedActions.size()}">5</span>
+                    </div>
+
+                    <div th:if="${suggestedActions.isEmpty()}" class="dashboard-empty-state">
+                        <p>All caught up. No urgent actions right now.</p>
+                    </div>
+
+                    <div th:if="${!suggestedActions.isEmpty()}">
+                        <div th:each="action : ${suggestedActions}" class="dashboard-action-row">
+                            <div class="dashboard-action-copy">
+                                <span class="dashboard-action-priority"
+                                      th:classappend="${action.priority.name() == 'HIGH' ? ' dashboard-action-priority-high' :
+                                                      (action.priority.name() == 'MEDIUM' ? ' dashboard-action-priority-medium' :
+                                                      ' dashboard-action-priority-low')}"></span>
+                                <div>
+                                    <p class="dashboard-action-title" th:text="${action.message}">Jamie Chen</p>
+                                    <p class="dashboard-action-meta"
+                                       th:text="${action.priority.name() == 'HIGH' ? 'High priority' :
+                                                 (action.priority.name() == 'MEDIUM' ? 'Medium priority' : 'Low priority')}">Check-in submitted 2h ago</p>
+                                </div>
+                            </div>
+                            <a class="dashboard-inline-button" th:href="${action.actionUrl}" th:text="${action.actionLabel}">Review</a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel">
+                    <div class="dashboard-panel-header">
+                        <h3>Client health overview</h3>
+                    </div>
+
+                    <div class="dashboard-health-pills">
+                        <span class="dashboard-health-pill dashboard-health-pill-healthy" th:text="${d.healthyClients + ' healthy'}">4 healthy</span>
+                        <span class="dashboard-health-pill dashboard-health-pill-watch" th:text="${d.watchClients + ' watch'}">0 watch</span>
+                        <span class="dashboard-health-pill dashboard-health-pill-risk" th:text="${d.atRiskClients + ' at risk'}">2 at risk</span>
+                        <span class="dashboard-health-pill dashboard-health-pill-churning" th:text="${d.churningClients + ' churning'}">1 churning</span>
+                    </div>
+
+                    <div th:if="${healthOverviewRows.isEmpty()}" class="dashboard-empty-state">
+                        <p>No client health scores yet.</p>
+                    </div>
+
+                    <div th:if="${!healthOverviewRows.isEmpty()}" class="dashboard-health-list">
+                        <div th:each="row : ${healthOverviewRows}" class="dashboard-health-row">
+                            <div class="dashboard-health-row-copy">
+                                <a th:href="@{/pt/clients/{id}(id=${row.clientRecordId})}" th:text="${row.name}">Mia Johnson</a>
+                            </div>
+                            <div class="dashboard-health-row-bar">
+                                <div class="dashboard-health-row-fill"
+                                     th:classappend="${row.healthScore >= 70 ? ' dashboard-health-row-fill-healthy' :
+                                                     (row.healthScore >= 50 ? ' dashboard-health-row-fill-watch' :
+                                                     (row.healthScore >= 30 ? ' dashboard-health-row-fill-risk' :
+                                                     ' dashboard-health-row-fill-churning'))}"
+                                     th:style="'width:' + ${row.healthScore} + '%'"></div>
+                            </div>
+                            <span class="dashboard-health-row-score" th:text="${row.healthScore}">90</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-panel-footer">
+                        <a th:href="@{/pt/business}">View all clients &rarr;</a>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel">
+                    <div class="dashboard-panel-header">
+                        <h3>Weekly summaries</h3>
+                    </div>
+
+                    <div th:if="${weeklySummaries.isEmpty()}" class="dashboard-empty-state">
+                        <p>No recent client activity yet.</p>
+                    </div>
+
+                    <div th:if="${!weeklySummaries.isEmpty()}" class="dashboard-summary-list">
+                        <div th:each="item : ${weeklySummaries}" class="dashboard-summary-row">
+                            <div class="dashboard-summary-avatar"
+                                 th:text="${#strings.substring(item.clientName, 0, 1)}">E</div>
+                            <div class="dashboard-summary-copy">
+                                <p>
+                                    <a th:href="@{/pt/clients/{id}(id=${item.clientRecordId})}" th:text="${item.clientName}">Emeka Okafor</a>
+                                    <span th:text="${' — ' + item.summary}">Completed 0 workouts. No check-in submitted.</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="dashboard-side-column">
+                <section class="dashboard-panel">
+                    <div class="dashboard-panel-header">
+                        <h3>Pending check-ins</h3>
+                        <span class="dashboard-panel-badge" th:text="${d.pendingCheckInCount}">2</span>
+                    </div>
+
+                    <div th:if="${d.recentPendingCheckIns.isEmpty()}" class="dashboard-empty-state">
+                        <p>No pending check-ins.</p>
+                    </div>
+
+                    <div th:if="${!d.recentPendingCheckIns.isEmpty()}" class="dashboard-side-list">
+                        <div th:each="checkIn : ${d.recentPendingCheckIns}" class="dashboard-side-row">
+                            <div class="dashboard-side-avatar"
+                                 th:text="${#strings.substring(checkIn.clientRecord.clientUser.fullName, 0, 1)}">M</div>
+                            <div class="dashboard-side-copy">
+                                <p class="dashboard-side-title" th:text="${checkIn.clientRecord.clientUser.fullName}">Mia Johnson</p>
+                                <p class="dashboard-side-meta"
+                                   th:text="${'Submitted ' + #temporals.format(checkIn.submittedAt, 'dd MMM yyyy')}">Submitted 02 Apr 2026</p>
+                            </div>
+                            <a class="dashboard-inline-button" th:href="@{/pt/checkins/{id}(id=${checkIn.id})}">Review</a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel">
+                    <div class="dashboard-panel-header">
+                        <h3>Recent milestones</h3>
+                    </div>
+
+                    <div th:if="${recentMilestoneFeed.isEmpty()}" class="dashboard-empty-state">
+                        <p>No recent milestones yet.</p>
+                    </div>
+
+                    <div th:if="${!recentMilestoneFeed.isEmpty()}" class="dashboard-milestone-list">
+                        <div th:each="item : ${recentMilestoneFeed}" class="dashboard-milestone-row">
+                            <span class="dashboard-milestone-icon">🏆</span>
+                            <p th:text="${item}">Jamie Chen — 4-week check-in streak</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-panel">
+                    <div class="dashboard-panel-header">
+                        <h3>Quick actions</h3>
+                    </div>
+
+                    <div class="dashboard-quick-actions">
+                        <a th:href="@{/pt/clients/new}" class="dashboard-quick-action">Add new client</a>
+                        <a th:href="@{/pt/workouts/new}" class="dashboard-quick-action">Create workout</a>
+                        <a th:href="@{/pt/business}" class="dashboard-quick-action">View business analytics</a>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
