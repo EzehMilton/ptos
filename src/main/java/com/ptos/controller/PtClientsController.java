@@ -173,6 +173,7 @@ public class PtClientsController {
         model.addAttribute("activeMealPlan", nutritionService.getActiveMealPlan(record).orElse(null));
         model.addAttribute("healthScore", healthScoreService.calculateHealthScore(record));
         model.addAttribute("riskInsight", insightService.getAtRiskInsight(record));
+        model.addAttribute("clientInitials", initialsOf(detail.getClientName()));
         model.addAttribute("existingConversation",
                 messagingService.getConversationForPTAndClient(ptUser, record.getClientUser()).orElse(null));
         model.addAttribute("clientRecordNotes", clientRecordService.getNotesForClientRecord(record));
@@ -254,6 +255,7 @@ public class PtClientsController {
             model.addAttribute("activeMealPlan", nutritionService.getActiveMealPlan(record).orElse(null));
             model.addAttribute("healthScore", healthScoreService.calculateHealthScore(record));
             model.addAttribute("riskInsight", insightService.getAtRiskInsight(record));
+            model.addAttribute("clientInitials", initialsOf(record.getClientUser().getFullName()));
             model.addAttribute("existingConversation",
                     messagingService.getConversationForPTAndClient(ptUser, record.getClientUser()).orElse(null));
             model.addAttribute("clientRecordNotes", clientRecordService.getNotesForClientRecord(record));
@@ -274,12 +276,17 @@ public class PtClientsController {
                 .limit(5)
                 .toList();
         List<Milestone> milestones = milestoneService.getMilestones(record, record.getClientUser());
+        CheckIn latestCheckIn = recentCheckIns.isEmpty() ? null : recentCheckIns.get(0);
+        CheckIn previousCheckIn = recentCheckIns.size() > 1 ? recentCheckIns.get(1) : null;
 
         model.addAttribute("assignments", assignments);
         model.addAttribute("assignmentCount", assignments.size());
         model.addAttribute("completedAssignmentCount", completedAssignmentCount);
         model.addAttribute("recentCheckIns", recentCheckIns);
         model.addAttribute("milestones", milestones);
+        model.addAttribute("latestCheckIn", latestCheckIn);
+        model.addAttribute("previousCheckIn", previousCheckIn);
+        model.addAttribute("recentWeightDelta", buildWeightDelta(latestCheckIn, previousCheckIn));
     }
 
     private void addNewClientPageAttributes(Model model, String activeMode) {
@@ -366,6 +373,21 @@ public class PtClientsController {
             case "name", "status" -> sort;
             default -> "health";
         };
+    }
+
+    private String buildWeightDelta(CheckIn latestCheckIn, CheckIn previousCheckIn) {
+        if (latestCheckIn == null || previousCheckIn == null
+                || latestCheckIn.getCurrentWeightKg() == null
+                || previousCheckIn.getCurrentWeightKg() == null) {
+            return "No recent comparison";
+        }
+
+        double delta = latestCheckIn.getCurrentWeightKg() - previousCheckIn.getCurrentWeightKg();
+        if (Math.abs(delta) < 0.05d) {
+            return "Stable vs last check-in";
+        }
+
+        return String.format("%s%.1f kg vs last check-in", delta > 0 ? "+" : "", delta);
     }
 
     private String initialsOf(String name) {

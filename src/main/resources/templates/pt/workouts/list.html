@@ -7,52 +7,61 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="page-header">
-        <h1>My Workouts</h1>
-        <a th:href="@{/pt/workouts/new}" class="btn btn-primary">Create Workout</a>
-    </div>
+    <div class="workouts-directory-shell">
+        <div class="workouts-directory-header">
+            <div>
+                <h1 class="workouts-directory-title">My Workouts</h1>
+                <p class="workouts-directory-subtitle">Build, reuse, and assign training programmes from one library.</p>
+            </div>
+            <a th:href="@{/pt/workouts/new}" class="btn btn-primary">Create Workout</a>
+        </div>
 
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
 
-    <div th:if="${workouts.isEmpty()}" class="card text-center">
-        <p class="text-muted">No workouts yet. Create your first workout.</p>
-    </div>
+        <div th:if="${workouts.isEmpty()}" class="workouts-directory-empty">
+            <h2>No workouts yet</h2>
+            <p>Create your first workout to start assigning programmes to clients.</p>
+            <a th:href="@{/pt/workouts/new}" class="btn btn-primary btn-sm">Create Workout</a>
+        </div>
 
-    <div th:if="${!workouts.isEmpty()}" class="card">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Exercises</th>
-                    <th>Type</th>
-                    <th>Created</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="w : ${workouts}">
-                    <td>
-                        <a th:href="@{/pt/workouts/{id}(id=${w.id})}" th:text="${w.name}"></a>
-                    </td>
-                    <td>
-                        <span class="badge badge-neutral" th:text="${w.category.name()}"></span>
-                    </td>
-                    <td th:text="${w.exercises.size()}"></td>
-                    <td>
-                        <span th:if="${w.template}" class="badge badge-active">Template</span>
-                    </td>
-                    <td th:text="${#temporals.format(w.createdAt, 'dd MMM yyyy')}"></td>
-                    <td style="width: 120px; text-align: right;">
-                        <form th:action="@{/pt/workouts/{id}/delete(id=${w.id})}" method="post"
-                              onsubmit="return confirm('Delete this workout? This will also remove any assignments based on it.');">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div th:if="${!workouts.isEmpty()}" class="workouts-directory-list">
+            <article class="workout-directory-card" th:each="w : ${workouts}">
+                <div class="workout-directory-identity">
+                    <div class="workout-directory-avatar" th:text="${#strings.substring(w.name, 0, 1).toUpperCase()}">W</div>
+                    <div class="workout-directory-copy">
+                        <div class="workout-directory-name-row">
+                            <a th:href="@{/pt/workouts/{id}(id=${w.id})}" class="workout-directory-name" th:text="${w.name}">Workout Name</a>
+                            <span class="badge badge-active" th:if="${w.template}">Template</span>
+                        </div>
+                        <p class="workout-directory-meta"
+                           th:text="${(w.description != null and !w.description.isBlank() ? w.description : 'No description added.')}">Description</p>
+                        <div class="workout-directory-stat-row">
+                            <span class="workout-directory-stat-chip">
+                                <span class="workout-directory-stat-label">Category</span>
+                                <strong th:text="${#strings.capitalizeWords(w.category.name().replace('_', ' ').toLowerCase())}">Strength</strong>
+                            </span>
+                            <span class="workout-directory-stat-chip">
+                                <span class="workout-directory-stat-label">Exercises</span>
+                                <strong th:text="${w.exercises.size()}">3</strong>
+                            </span>
+                            <span class="workout-directory-stat-chip">
+                                <span class="workout-directory-stat-label">Created</span>
+                                <strong th:text="${#temporals.format(w.createdAt, 'dd MMM yyyy')}">04 Apr 2026</strong>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workout-directory-actions">
+                    <a th:href="@{/pt/workouts/{id}(id=${w.id})}" class="workouts-pill-button">Open</a>
+                    <form th:action="@{/pt/workouts/{id}/delete(id=${w.id})}" method="post"
+                          onsubmit="return confirm('Delete this workout? This will also remove any assignments based on it.');">
+                        <button type="submit" class="workouts-pill-button workouts-pill-button-danger">Delete</button>
+                    </form>
+                </div>
+            </article>
+        </div>
     </div>
 </div>
 </body>

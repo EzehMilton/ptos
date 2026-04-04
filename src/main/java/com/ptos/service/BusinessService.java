@@ -3,6 +3,8 @@ package com.ptos.service;
 import com.ptos.domain.*;
 import com.ptos.dto.BusinessView;
 import com.ptos.dto.BusinessView.ClientBusinessRow;
+import com.ptos.dto.BusinessView.ClientTrendRow;
+import com.ptos.dto.BusinessView.MonthlyRevenue;
 import com.ptos.dto.ClientHealthScoreResult;
 import com.ptos.repository.CheckInRepository;
 import com.ptos.repository.ClientProfileRepository;
@@ -16,7 +18,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -95,23 +100,38 @@ public class BusinessService {
         int churnRiskCount = (int) currentScores.stream()
                 .filter(score -> score.getRiskLevel() == RiskLevel.AT_RISK || score.getRiskLevel() == RiskLevel.CHURNING)
                 .count();
+
+        int healthyCount = (int) currentScores.stream().filter(s -> s.getRiskLevel() == RiskLevel.HEALTHY).count();
+        int watchCount = (int) currentScores.stream().filter(s -> s.getRiskLevel() == RiskLevel.WATCH).count();
+        int atRiskCount = (int) currentScores.stream().filter(s -> s.getRiskLevel() == RiskLevel.AT_RISK).count();
+        int churningCount = (int) currentScores.stream().filter(s -> s.getRiskLevel() == RiskLevel.CHURNING).count();
+
+        List<ClientTrendRow> trendClients = new ArrayList<>();
         int clientsImproving = 0;
         int clientsSlipping = 0;
         for (ClientRecord activeRecord : activeRecords) {
             int current = healthScoreService.calculateHealthScore(activeRecord).getOverallScore();
             int previous = healthScoreService.calculateHealthScore(activeRecord, twoWeeksAgo).getOverallScore();
-            if (current > previous) {
+            int delta = current - previous;
+            if (delta > 0) {
                 clientsImproving++;
-            } else if (current < previous) {
+            } else if (delta < 0) {
                 clientsSlipping++;
             }
+            if (delta != 0) {
+                trendClients.add(ClientTrendRow.builder()
+                        .clientRecordId(activeRecord.getId())
+                        .name(activeRecord.getClientUser().getFullName())
+                        .currentScore(current)
+                        .scoreDelta(delta)
+                        .build());
+            }
         }
+        trendClients.sort(Comparator.comparingInt(ClientTrendRow::getScoreDelta).reversed());
         int clientsStable = activeRecords.size() - clientsImproving - clientsSlipping;
 
         List<ClientHealthScoreResult> reEngagementCandidates = currentScores.stream()
                 .filter(score -> score.getRiskLevel() == RiskLevel.AT_RISK || score.getRiskLevel() == RiskLevel.CHURNING)
-                .filter(score -> score.getDaysSinceLastCheckIn() != null)
-                .filter(score -> score.getDaysSinceLastCheckIn() > 14 && score.getDaysSinceLastCheckIn() < 60)
                 .sorted(Comparator.comparing(ClientHealthScoreResult::getOverallScore))
                 .toList();
 
@@ -121,6 +141,18 @@ public class BusinessService {
                 .orElse(0);
         BigDecimal estimatedClientLifetimeValue = avgRevenue.multiply(BigDecimal.valueOf(averageTenureMonths))
                 .setScale(2, RoundingMode.HALF_UP);
+
+        int retentionRate = totalCount > 0
+                ? (int) ((records.stream().filter(r -> r.getStatus() == ClientStatus.ACTIVE || r.getStatus() == ClientStatus.AT_RISK).count() * 100) / totalCount)
+                : 0;
+
+        List<ClientBusinessRow> topRevenueClients = rows.stream()
+                .filter(r -> r.getStatus() == ClientStatus.ACTIVE && r.getPackagePrice() != null)
+                .sorted(Comparator.comparing(ClientBusinessRow::getPackagePrice).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
+
+        List<MonthlyRevenue> revenueTrend = computeRevenueTrend(records, 6);
 
         List<ClientBusinessRow> incomplete = rows.stream()
                 .filter(r -> r.getProfileCompletion() < 4)
@@ -136,6 +168,7 @@ public class BusinessService {
                 .clientsImproving(clientsImproving)
                 .clientsStable(clientsStable)
                 .clientsSlipping(clientsSlipping)
+                .retentionRate(retentionRate)
                 .profileCompletionRate(completionRate)
                 .checkInComplianceRate(checkInComplianceRate)
                 .workoutCompletionRate(workoutCompletionRate)
@@ -145,7 +178,56 @@ public class BusinessService {
                 .totalClientCount(totalCount)
                 .incompleteProfileClients(incomplete)
                 .reEngagementCandidates(reEngagementCandidates)
+                .healthyCount(healthyCount)
+                .watchCount(watchCount)
+                .atRiskCount(atRiskCount)
+                .churningCount(churningCount)
+                .trendClients(trendClients)
+                .topRevenueClients(topRevenueClients)
+                .revenueTrend(revenueTrend)
                 .build();
+    }
+
+    private List<MonthlyRevenue> computeRevenueTrend(List<ClientRecord> records, int months) {
+        List<MonthlyRevenue> trend = new ArrayList<>();
+        YearMonth current = YearMonth.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM");
+
+        BigDecimal maxRevenue = BigDecimal.ZERO;
+        List<BigDecimal> amounts = new ArrayList<>();
+
+        for (int i = months - 1; i >= 0; i--) {
+            YearMonth month = current.minusMonths(i);
+            LocalDate monthEnd = month.atEndOfMonth();
+
+            BigDecimal monthRevenue = records.stream()
+                    .filter(r -> !r.getStartDate().isAfter(monthEnd))
+                    .filter(r -> r.getStatus() == ClientStatus.ACTIVE || r.getStatus() == ClientStatus.AT_RISK)
+                    .filter(r -> r.getMonthlyPackagePrice() != null)
+                    .map(ClientRecord::getMonthlyPackagePrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            amounts.add(monthRevenue);
+            if (monthRevenue.compareTo(maxRevenue) > 0) {
+                maxRevenue = monthRevenue;
+            }
+        }
+
+        int idx = 0;
+        for (int i = months - 1; i >= 0; i--) {
+            YearMonth month = current.minusMonths(i);
+            BigDecimal amount = amounts.get(idx);
+            int heightPercent = maxRevenue.compareTo(BigDecimal.ZERO) > 0
+                    ? amount.multiply(BigDecimal.valueOf(100)).divide(maxRevenue, 0, RoundingMode.HALF_UP).intValue()
+                    : 0;
+            trend.add(MonthlyRevenue.builder()
+                    .label(month.format(formatter))
+                    .amount(amount)
+                    .heightPercent(Math.max(heightPercent, 5))
+                    .build());
+            idx++;
+        }
+        return trend;
     }
 
     private ClientBusinessRow toRow(ClientRecord record) {

@@ -195,24 +195,40 @@
         </div>
     </section>
 
-    <section class="landing-cta" id="pricing">
-        <h2>Simple pricing. Built for real PT businesses.</h2>
+    <section class="landing-pricing" id="pricing">
+        <div class="landing-pricing-testimonial">
+            <p class="landing-pricing-quote">
+                “Setly replaced 5 different apps I was using to run my PT business. I save at least 4 hours a week on admin,
+                and my clients love the check-in system.”
+            </p>
+            <div class="landing-pricing-person">
+                <strong>Michael E.</strong>
+                <span>Online PT, London • 16 clients</span>
+            </div>
+        </div>
 
-        <p>
-            Join personal trainers using SETLY to manage clients, deliver better coaching, and stay on top of business performance.
-        </p>
+        <div class="landing-pricing-grid">
+            <article class="landing-pricing-card">
+                <div class="landing-pricing-plan">Free</div>
+                <div class="landing-pricing-price">£0<span>/mo</span></div>
+                <p class="landing-pricing-copy">Up to 3 clients</p>
+                <a th:href="@{/pt/signup}" class="landing-pricing-button landing-pricing-button-muted">Get started</a>
+            </article>
 
-        <p>
-            SETLY gives you the structure most PT businesses are missing. Instead of relying on scattered tools, messages, and guesswork, you get a single system to manage clients, track progress, and make better coaching decisions.
-            Everything is designed to reduce friction in your day-to-day work while giving you clearer visibility into how your business is performing.
-        </p>
+            <article class="landing-pricing-card landing-pricing-card-featured">
+                <div class="landing-pricing-badge">Popular</div>
+                <div class="landing-pricing-plan">Pro</div>
+                <div class="landing-pricing-price">£15<span>/mo</span></div>
+                <p class="landing-pricing-copy">Up to 25 clients</p>
+                <a th:href="@{/pt/signup}" class="landing-pricing-button landing-pricing-button-primary">Start free trial</a>
+            </article>
 
-        <p>
-            The platform is available for £19 per month, with no contracts or long-term commitments. It’s a simple, predictable investment in running a more organised and scalable PT business,
-            without the overhead of complex software or bloated systems.
-        </p>
-        <div class="landing-cta-note">
-            Simple setup. PT-first workflow. No generic admin bloat.
+            <article class="landing-pricing-card">
+                <div class="landing-pricing-plan">Pro+</div>
+                <div class="landing-pricing-price">£29<span>/mo</span></div>
+                <p class="landing-pricing-copy">Unlimited clients + AI</p>
+                <a th:href="@{/pt/signup}" class="landing-pricing-button landing-pricing-button-muted">Start free trial</a>
+            </article>
         </div>
     </section>
 </div>

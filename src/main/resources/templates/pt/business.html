@@ -8,183 +8,149 @@
 <body>
 <div layout:fragment="content">
     <div class="page-header">
-        <h1>Business Overview</h1>
+        <h1>Business overview</h1>
+        <p class="text-muted" th:text="'Last 30 days • ' + ${b.activeClientCount} + ' active clients'"></p>
     </div>
 
     <!-- Row 1: KPI cards -->
-    <div class="stat-grid mb-3">
+    <div class="stat-grid stat-grid-4 mb-3">
         <div class="card stat-card">
-            <div class="stat-value"
-                 th:text="'£' + ${#numbers.formatDecimal(b.estimatedMonthlyRevenue, 1, 2)}"></div>
-            <div class="stat-label">Monthly Revenue</div>
+            <div class="stat-value" th:text="'£' + ${#numbers.formatDecimal(b.estimatedMonthlyRevenue, 1, 'COMMA', 0, 'POINT')}"></div>
+            <div class="stat-label">Monthly revenue</div>
         </div>
         <div class="card stat-card">
-            <div class="stat-value"
-                 th:text="'£' + ${#numbers.formatDecimal(b.averageRevenuePerClient, 1, 2)} + '/mo'"></div>
-            <div class="stat-label">Avg per Client</div>
+            <div class="stat-value" th:text="'£' + ${#numbers.formatDecimal(b.averageRevenuePerClient, 1, 0)}"></div>
+            <div class="stat-label">Revenue per client</div>
+            <div class="stat-note text-muted" th:text="'Avg across ' + ${b.activeClientCount} + ' clients'"></div>
         </div>
         <div class="card stat-card">
-            <div class="stat-value" style="color: #16a34a;" th:text="${b.activeClientCount}"></div>
-            <div class="stat-label">Active Clients</div>
+            <div class="stat-value" style="color: #4ade80;" th:text="${b.retentionRate} + '%'"></div>
+            <div class="stat-label">Retention rate</div>
         </div>
         <div class="card stat-card">
-            <div class="stat-value"
-                 th:style="${b.churnRiskCount > 0} ? 'color: #d97706;' : 'color: #16a34a;'"
-                 th:text="${b.churnRiskCount}"></div>
-            <div class="stat-label">Churn Risk Count</div>
-        </div>
-        <div class="card stat-card">
-            <div class="stat-value"
-                 th:style="${b.averageHealthScore < 50} ? 'color: #b91c1c;' : (${b.averageHealthScore < 70} ? 'color: #d97706;' : 'color: #16a34a;')"
-                 th:text="${#numbers.formatDecimal(b.averageHealthScore, 1, 1)}"></div>
-            <div class="stat-label">Average Health Score</div>
-        </div>
-        <div class="card stat-card">
-            <div class="stat-value"
-                 th:text="'£' + ${#numbers.formatDecimal(b.estimatedClientLifetimeValue, 1, 2)}"></div>
-            <div class="stat-label">Est. Client Lifetime Value</div>
+            <div class="stat-value" th:text="'£' + ${#numbers.formatDecimal(b.estimatedClientLifetimeValue, 1, 0)}"></div>
+            <div class="stat-label">Est. client lifetime value</div>
+            <div class="stat-note text-muted">Based on avg tenure</div>
         </div>
     </div>
 
-    <!-- Row 2: Client Overview table -->
-    <div class="card mb-3">
-        <h3 class="card-title">Client Overview</h3>
-        <div th:if="${b.clientBreakdown.isEmpty()}">
-            <p class="text-muted">No clients yet.</p>
-        </div>
-        <table th:if="${!b.clientBreakdown.isEmpty()}">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Package</th>
-                    <th>Profile</th>
-                    <th>Last Check-in</th>
-                    <th>Workouts</th>
-                    <th>Health Score</th>
-                    <th>Risk</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="c : ${b.clientBreakdown}">
-                    <td>
-                        <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.name}"></a>
-                    </td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${c.status.name() == 'ACTIVE'} ? 'badge-active' :
-                                             (${c.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
-                              th:text="${c.status.name()}"></span>
-                    </td>
-                    <td>
-                        <span th:if="${c.packagePrice != null}"
-                              th:text="'£' + ${#numbers.formatDecimal(c.packagePrice, 1, 2)} + '/mo'"></span>
-                        <span th:if="${c.packagePrice == null}" class="text-muted">&mdash;</span>
-                    </td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${c.profileCompletion >= 4} ? 'badge-active' : 'badge-warning'"
-                              th:text="${c.profileCompletion} + '/6'"></span>
-                    </td>
-                    <td>
-                        <span th:if="${c.lastCheckInDate != null}"
-                              th:text="${#temporals.format(c.lastCheckInDate, 'dd MMM yyyy')}"></span>
-                        <span th:if="${c.lastCheckInDate == null}" class="text-muted">&mdash;</span>
-                    </td>
-                    <td>
-                        <span th:text="${c.workoutsCompleted + '/' + c.workoutsAssigned}"></span>
-                    </td>
-                    <td>
-                        <div class="health-score-cell">
-                            <span style="font-weight: 700;" th:text="${c.healthScore}"></span>
-                            <div class="health-score-track">
-                                <div class="health-score-fill"
-                                     th:classappend="${c.healthScore >= 70} ? 'health-score-fill-healthy' :
-                                                    (${c.healthScore >= 50} ? 'health-score-fill-watch' :
-                                                    (${c.healthScore >= 30} ? 'health-score-fill-risk' : 'health-score-fill-churning'))"
-                                     th:style="'width:' + ${c.healthScore} + '%'"></div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${c.riskLevel.name() == 'HEALTHY'} ? 'badge-active' :
-                                             (${c.riskLevel.name() == 'WATCH'} ? 'badge-warning' :
-                                             (${c.riskLevel.name() == 'AT_RISK'} ? 'badge-danger' : 'badge-neutral'))"
-                              th:text="${c.riskLevel.name().replace('_', ' ')}"></span>
-                    </td>
-                </tr>
-                </tbody>
-        </table>
-    </div>
-
-    <!-- Row 3: Re-engagement Opportunities -->
-    <div class="card mb-3">
-        <h3 class="card-title">Re-engagement Opportunities</h3>
-        <div th:if="${b.reEngagementCandidates.isEmpty()}">
-            <p class="text-muted">All clients are actively engaged.</p>
-        </div>
-        <div th:if="${!b.reEngagementCandidates.isEmpty()}">
-            <div th:each="candidate : ${b.reEngagementCandidates}" class="suggested-action-row suggested-action-high">
-                <div class="suggested-action-copy">
-                    <span class="suggested-action-icon">⚠️</span>
-                    <span th:text="${candidate.clientName + ' • Score ' + candidate.overallScore + ' • Last activity ' + (candidate.daysSinceLastActivity != null ? candidate.daysSinceLastActivity + ' days ago' : 'unknown')}"></span>
+    <!-- Row 2: Revenue trend + Improving vs slipping -->
+    <div class="biz-grid-2 mb-3">
+        <div class="card">
+            <h3 class="card-title">Revenue trend (6 months)</h3>
+            <div class="biz-bar-chart">
+                <div th:each="entry,iter : ${b.revenueTrend}" class="biz-bar-col">
+                    <div class="biz-bar-track">
+                        <div class="biz-bar-fill"
+                             th:classappend="${iter.last} ? 'biz-bar-fill-current'"
+                             th:style="'height:' + ${entry.heightPercent} + '%'"></div>
+                    </div>
+                    <div class="biz-bar-value" th:text="'£' + ${#numbers.formatDecimal(entry.amount, 1, 'COMMA', 0, 'POINT')}"></div>
+                    <div class="biz-bar-label" th:text="${entry.label}"></div>
                 </div>
-                <a class="btn btn-secondary btn-sm"
-                   th:href="@{/pt/messages/new/{id}(id=${candidate.clientRecordId})}">Send Message</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Improving vs slipping</h3>
+            <div class="health-summary-grid mb-2">
+                <div class="health-summary-pill health-summary-healthy"
+                     th:text="${b.clientsImproving + ' improving'}"></div>
+                <div class="health-summary-pill health-summary-watch"
+                     th:text="${b.clientsStable + ' stable'}"></div>
+                <div class="health-summary-pill health-summary-risk"
+                     th:text="${b.clientsSlipping + ' slipping'}"></div>
+            </div>
+            <div th:if="${b.trendClients.isEmpty()}">
+                <p class="text-muted">All clients are stable.</p>
+            </div>
+            <div th:if="${!b.trendClients.isEmpty()}" class="biz-trend-list">
+                <div th:each="t : ${b.trendClients}" class="biz-trend-row">
+                    <div class="biz-trend-left">
+                        <span class="biz-trend-arrow"
+                              th:classappend="${t.scoreDelta > 0} ? 'biz-trend-up' : 'biz-trend-down'"
+                              th:text="${t.scoreDelta > 0} ? '↑' : '↓'"></span>
+                        <a th:href="@{/pt/clients/{id}(id=${t.clientRecordId})}" th:text="${t.name}"></a>
+                    </div>
+                    <div class="biz-trend-right"
+                         th:classappend="${t.scoreDelta > 0} ? 'biz-trend-positive' : 'biz-trend-negative'"
+                         th:text="'Score: ' + ${t.currentScore} + ' (' + (${t.scoreDelta > 0} ? '+' : '') + ${t.scoreDelta} + ')'"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Row 4: Improving vs Slipping -->
-    <div class="card mb-3">
-        <h3 class="card-title">Improving vs Slipping</h3>
-        <div class="health-summary-grid">
-            <div class="health-summary-pill health-summary-healthy"
-                 th:text="${b.clientsImproving + ' clients improving'}"></div>
-            <div class="health-summary-pill health-summary-watch"
-                 th:text="${b.clientsStable + ' clients stable'}"></div>
-            <div class="health-summary-pill health-summary-risk"
-                 th:text="${b.clientsSlipping + ' clients slipping'}"></div>
+    <!-- Row 3: Health distribution + Revenue by client -->
+    <div class="biz-grid-2 mb-3">
+        <div class="card">
+            <h3 class="card-title">Client health distribution</h3>
+            <div class="biz-donut-wrapper">
+                <div class="biz-donut"
+                     th:style="'--healthy:' + ${b.healthyCount} + '; --watch:' + ${b.watchCount} + '; --atrisk:' + ${b.atRiskCount + b.churningCount} + ';'">
+                    <div class="biz-donut-center">
+                        <strong th:text="${b.activeClientCount}"></strong>
+                        <span>Clients</span>
+                    </div>
+                </div>
+                <div class="biz-donut-legend">
+                    <div><span class="biz-legend-dot biz-legend-healthy"></span> <span th:text="'Healthy (' + ${b.healthyCount} + ')'"></span></div>
+                    <div><span class="biz-legend-dot biz-legend-watch"></span> <span th:text="'Watch (' + ${b.watchCount} + ')'"></span></div>
+                    <div><span class="biz-legend-dot biz-legend-atrisk"></span> <span th:text="'At risk (' + ${b.atRiskCount + b.churningCount} + ')'"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Revenue by client</h3>
+            <div th:if="${b.topRevenueClients.isEmpty()}">
+                <p class="text-muted">No active clients with package prices.</p>
+            </div>
+            <div th:if="${!b.topRevenueClients.isEmpty()}" class="biz-revenue-list">
+                <div th:each="c : ${b.topRevenueClients}" class="biz-revenue-row">
+                    <a th:href="@{/pt/clients/{id}(id=${c.clientRecordId})}" th:text="${c.name}"></a>
+                    <span th:text="'£' + ${#numbers.formatDecimal(c.packagePrice, 1, 0)} + '/mo'"></span>
+                </div>
+            </div>
+            <p class="mt-2" th:if="${b.activeClientCount > 5}">
+                <a th:href="@{/pt/clients}" class="text-muted">View all &rarr;</a>
+            </p>
         </div>
     </div>
 
-    <!-- Row 5: Incomplete Profiles -->
-    <div class="card">
-        <h3 class="card-title">Incomplete Profiles</h3>
-        <div th:if="${b.incompleteProfileClients.isEmpty()}">
-            <p class="text-muted">All client profiles have at least 4 of 6 key fields completed.</p>
+    <!-- Row 4: Re-engagement + Incomplete profiles -->
+    <div class="biz-grid-2 mb-3">
+        <div class="card">
+            <h3 class="card-title">Re-engagement opportunities</h3>
+            <div th:if="${b.reEngagementCandidates.isEmpty()}">
+                <p class="text-muted">All clients are actively engaged.</p>
+            </div>
+            <div th:if="${!b.reEngagementCandidates.isEmpty()}" class="biz-reengage-list">
+                <div th:each="candidate : ${b.reEngagementCandidates}" class="biz-reengage-row">
+                    <div class="biz-reengage-avatar"
+                         th:text="${candidate.clientName.substring(0,1) + (candidate.clientName.contains(' ') ? candidate.clientName.substring(candidate.clientName.lastIndexOf(' ') + 1, candidate.clientName.lastIndexOf(' ') + 2) : '')}"></div>
+                    <div class="biz-reengage-info">
+                        <strong th:text="${candidate.clientName}"></strong>
+                        <span class="text-muted"
+                              th:text="'Score: ' + ${candidate.overallScore} + ' • ' + (${candidate.daysSinceLastActivity != null} ? 'Last activity: ' + ${candidate.daysSinceLastActivity} + ' days ago' : 'No activity for 14 days')"></span>
+                    </div>
+                    <a class="btn btn-secondary btn-sm"
+                       th:href="@{/pt/messages/new/{id}(id=${candidate.clientRecordId})}">Send message</a>
+                </div>
+            </div>
         </div>
-        <table th:if="${!b.incompleteProfileClients.isEmpty()}">
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Profile Completion</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="client : ${b.incompleteProfileClients}">
-                    <td>
-                        <a th:href="@{/pt/clients/{id}(id=${client.clientRecordId})}" th:text="${client.name}"></a>
-                    </td>
-                    <td>
-                        <span class="badge badge-warning" th:text="${client.profileCompletion} + '/6 complete'"></span>
-                    </td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${client.status.name() == 'ACTIVE'} ? 'badge-active' :
-                                             (${client.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
-                              th:text="${client.status.name()}"></span>
-                    </td>
-                    <td style="text-align: right;">
-                        <a class="btn btn-secondary btn-sm"
-                           th:href="@{/pt/clients/{id}(id=${client.clientRecordId})}">View Client</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+
+        <div class="card">
+            <h3 class="card-title">Incomplete profiles</h3>
+            <div th:if="${b.incompleteProfileClients.isEmpty()}">
+                <p class="text-muted">All profiles are complete.</p>
+            </div>
+            <div th:if="${!b.incompleteProfileClients.isEmpty()}" class="biz-incomplete-list">
+                <div th:each="client : ${b.incompleteProfileClients}" class="biz-incomplete-row">
+                    <a th:href="@{/pt/clients/{id}(id=${client.clientRecordId})}" th:text="${client.name}"></a>
+                    <span class="badge badge-warning" th:text="${client.profileCompletion} + '/6'"></span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </body>

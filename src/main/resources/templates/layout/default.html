@@ -5,13 +5,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
     <title layout:title-pattern="$CONTENT_TITLE - PTOS">SETLY</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body th:classappend="${currentPath == '/' or currentPath == '/login' ? 'landing-body' : (currentPath == '/pt/signup' ? 'signup-public-body' : ((currentPath == '/pt/dashboard' or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages')) ? 'dashboard-page-body' : ''))}">
+<body th:classappend="${currentPath == '/' or currentPath == '/login' ? 'landing-body' : (currentPath == '/pt/signup' ? 'signup-public-body' : ((currentPath == '/pt/dashboard' or currentPath == '/pt/business' or currentPath == '/pt/checkins' or currentPath.startsWith('/pt/checkins/') or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages') or currentPath.startsWith('/pt/workouts')) ? 'dashboard-page-body' : ''))}">
 
 <nav class="navbar"
-     th:classappend="${currentPath == '/' or currentPath == '/login' ? ' navbar-public' : (currentPath == '/pt/signup' ? ' navbar-auth-light' : ((currentPath == '/pt/dashboard' or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages')) ? ' navbar-dashboard' : ''))}">
+     th:classappend="${currentPath == '/' or currentPath == '/login' ? ' navbar-public' : (currentPath == '/pt/signup' ? ' navbar-auth-light' : ((currentPath == '/pt/dashboard' or currentPath == '/pt/business' or currentPath == '/pt/checkins' or currentPath.startsWith('/pt/checkins/') or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages') or currentPath.startsWith('/pt/workouts')) ? ' navbar-dashboard' : ''))}">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">SETLY</a>
         <div class="navbar-menu navbar-menu-public"
@@ -33,7 +34,7 @@
              th:if="${currentPath == '/login'}">
             <ul class="navbar-nav navbar-nav-actions navbar-nav-public-actions login-public-actions">
                 <li><a th:href="@{/login}" class="btn btn-ghost btn-sm">Log in</a></li>
-                <li><a th:href="@{/pt/signup}" class="btn btn-primary btn-sm">Sign up free</a></li>
+                <li><a th:href="@{/pt/signup}" class="btn btn-primary btn-sm">Sign up</a></li>
             </ul>
         </div>
 
@@ -114,7 +115,7 @@
      layout:fragment="content">
 </div>
 
-<footer class="footer" th:classappend="${currentPath == '/' or currentPath == '/login' ? ' footer-public' : (currentPath == '/pt/signup' ? ' footer-auth-light' : ((currentPath == '/pt/dashboard' or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages')) ? ' footer-dashboard' : ''))}">
+<footer class="footer" th:classappend="${currentPath == '/' or currentPath == '/login' ? ' footer-public' : (currentPath == '/pt/signup' ? ' footer-auth-light' : ((currentPath == '/pt/dashboard' or currentPath == '/pt/business' or currentPath == '/pt/checkins' or currentPath.startsWith('/pt/checkins/') or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages') or currentPath.startsWith('/pt/workouts')) ? ' footer-dashboard' : ''))}">
     <div class="container">
         <div th:if="${currentPath == '/login'}" class="footer-public-login">
             <span>© 2026 Setly</span>

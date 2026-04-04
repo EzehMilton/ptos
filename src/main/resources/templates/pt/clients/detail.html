@@ -7,413 +7,302 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="mb-2">
-        <a th:href="@{/pt/clients}">&larr; All Clients</a>
-    </div>
-    <div class="page-header">
-        <h1 th:text="${detail.clientName}"></h1>
-        <span class="badge"
-              th:classappend="${detail.status.name() == 'ACTIVE'} ? 'badge-active' :
-                             (${detail.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
-              th:text="${detail.status.name()}"></span>
-    </div>
+    <div class="client-detail-page">
+        <div class="client-detail-back">
+            <a th:href="@{/pt/clients}">&larr; All clients</a>
+        </div>
 
-    <div class="mb-2" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="btn btn-secondary btn-sm"
-           th:text="${existingConversation != null} ? 'Open Conversation' : 'Start Conversation'"></a>
-        <a th:href="@{/pt/clients/{id}/delete(id=${detail.clientRecordId})}" class="btn btn-danger btn-sm">Delete Client</a>
-    </div>
+        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+        <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
 
-    <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-    <div th:if="${error}" class="flash flash-error" th:text="${error}"></div>
+        <section class="client-detail-hero-card">
+            <div class="client-detail-hero-main">
+                <div class="client-detail-avatar" th:text="${clientInitials}">MJ</div>
+                <div class="client-detail-hero-copy">
+                    <div class="client-detail-name-row">
+                        <h1 th:text="${detail.clientName}">Mia Johnson</h1>
+                        <span class="badge"
+                              th:classappend="${detail.status.name() == 'ACTIVE'} ? 'badge-active' :
+                                             (${detail.status.name() == 'AT_RISK'} ? 'badge-warning' : 'badge-neutral')"
+                              th:text="${detail.status.name().replace('_', ' ').toLowerCase()}">active</span>
+                    </div>
 
-    <!-- Section 1: Client Overview -->
-    <div class="card mb-3">
-        <h3 class="card-title">Client Overview</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <div>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td style="width:160px; font-weight:500;">Email</td>
-                            <td th:text="${detail.clientEmail}"></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:500;">Start Date</td>
-                            <td th:text="${#temporals.format(detail.startDate, 'dd MMM yyyy')}"></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:500;">Days as Client</td>
-                            <td th:text="${detail.daysSinceStart} + ' days'"></td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:500;">Package</td>
-                            <td>
-                                <span th:if="${detail.monthlyPackagePrice != null}"
-                                      th:text="'£' + ${#numbers.formatDecimal(detail.monthlyPackagePrice, 1, 2)} + '/mo'"></span>
-                                <span th:if="${detail.monthlyPackagePrice == null}" class="text-muted">&mdash;</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <p class="client-detail-hero-meta">
+                        <span th:text="${detail.clientEmail}">mia@ptos.local</span>
+                        <span>&bull;</span>
+                        <span th:text="${detail.goalType != null ? #strings.capitalizeWords(detail.goalType.name().replace('_', ' ').toLowerCase()) : 'No goal set'}">Weight loss</span>
+                        <span>&bull;</span>
+                        <span th:text="${detail.trainingExperience != null ? #strings.capitalize(detail.trainingExperience.name().toLowerCase()) : 'No experience set'}">Beginner</span>
+                        <span>&bull;</span>
+                        <span th:text="${'Client for ' + detail.daysSinceStart + ' days'}">Client for 10 days</span>
+                        <span th:if="${detail.monthlyPackagePrice != null}">&bull;</span>
+                        <span th:if="${detail.monthlyPackagePrice != null}"
+                              th:text="${'£' + #numbers.formatDecimal(detail.monthlyPackagePrice, 1, 0)} + '/mo'">£130/mo</span>
+                    </p>
+
+                    <div class="client-detail-hero-actions">
+                        <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="client-detail-action-button"
+                           th:text="${existingConversation != null} ? 'Message' : 'Message'">Message</a>
+                        <a th:href="@{/pt/workouts}" class="client-detail-action-button">Assign workout</a>
+                        <a th:href="${activeMealPlan != null ? '/pt/clients/' + detail.clientRecordId + '/nutrition' : '/pt/clients/' + detail.clientRecordId + '/nutrition/new'}"
+                           class="client-detail-action-button"
+                           th:text="${activeMealPlan != null} ? 'View meal plan' : 'Create meal plan'">Create meal plan</a>
+                        <a th:href="@{/pt/clients/{id}/delete(id=${detail.clientRecordId})}" class="client-detail-action-button client-detail-action-danger">Delete client</a>
+                    </div>
+                </div>
             </div>
-            <div>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td style="width:160px; font-weight:500;">Profile</td>
-                            <td>
+
+            <div class="client-detail-health-ring"
+                 th:classappend="${healthScore.overallScore >= 70} ? ' client-detail-health-ring-healthy' :
+                                 (${healthScore.overallScore >= 50} ? ' client-detail-health-ring-watch' :
+                                 (${healthScore.overallScore >= 30} ? ' client-detail-health-ring-risk' : ' client-detail-health-ring-churning'))">
+                <strong th:text="${healthScore.overallScore}">100</strong>
+                <span>Health</span>
+            </div>
+        </section>
+
+        <nav class="client-detail-tabs">
+            <a href="#overview" class="client-detail-tab client-detail-tab-active">Overview</a>
+            <a href="#assigned-workouts" class="client-detail-tab">Workouts</a>
+            <a href="#recent-checkins" class="client-detail-tab">Check-ins</a>
+            <a href="#progress" class="client-detail-tab">Progress</a>
+            <a th:href="@{/pt/clients/{id}/nutrition(id=${detail.clientRecordId})}" class="client-detail-tab">Nutrition</a>
+            <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="client-detail-tab">Messages</a>
+            <a href="#pt-notes" class="client-detail-tab">Notes</a>
+            <a href="#client-settings" class="client-detail-tab">Settings</a>
+        </nav>
+
+        <div class="client-detail-grid" id="overview">
+            <div class="client-detail-main-column">
+                <section class="client-detail-card">
+                    <div class="client-detail-card-header">
+                        <h3>Health score breakdown</h3>
+                    </div>
+                    <p class="client-detail-card-note" th:if="${healthScore.riskLevel.name() == 'HEALTHY'}">This client is actively engaged and making progress.</p>
+                    <p class="client-detail-card-note" th:if="${healthScore.riskLevel.name() == 'WATCH'}">Engagement is declining. Consider reaching out.</p>
+                    <p class="client-detail-card-note" th:if="${healthScore.riskLevel.name() == 'AT_RISK'}">This client is at risk of dropping off. Take action.</p>
+                    <p class="client-detail-card-note" th:if="${healthScore.riskLevel.name() == 'CHURNING'}">This client has not engaged recently. Urgent attention needed.</p>
+
+                    <div class="client-detail-score-list">
+                        <div class="client-detail-score-row">
+                            <span>Profile</span>
+                            <div class="client-detail-score-track"><div class="client-detail-score-fill" th:style="'width:' + ${(healthScore.profileCompletionScore * 100) / 10} + '%'"></div></div>
+                            <strong th:text="${healthScore.profileCompletionScore} + '/10'">10/10</strong>
+                        </div>
+                        <div class="client-detail-score-row">
+                            <span>Check-ins</span>
+                            <div class="client-detail-score-track"><div class="client-detail-score-fill" th:style="'width:' + ${(healthScore.checkInActivityScore * 100) / 30} + '%'"></div></div>
+                            <strong th:text="${healthScore.checkInActivityScore} + '/30'">30/30</strong>
+                        </div>
+                        <div class="client-detail-score-row">
+                            <span>Workouts</span>
+                            <div class="client-detail-score-track"><div class="client-detail-score-fill" th:style="'width:' + ${(healthScore.workoutActivityScore * 100) / 30} + '%'"></div></div>
+                            <strong th:text="${healthScore.workoutActivityScore} + '/30'">30/30</strong>
+                        </div>
+                        <div class="client-detail-score-row">
+                            <span>Goal progress</span>
+                            <div class="client-detail-score-track"><div class="client-detail-score-fill" th:style="'width:' + ${(healthScore.goalProgressScore * 100) / 15} + '%'"></div></div>
+                            <strong th:text="${healthScore.goalProgressScore} + '/15'">15/15</strong>
+                        </div>
+                        <div class="client-detail-score-row">
+                            <span>Communication</span>
+                            <div class="client-detail-score-track"><div class="client-detail-score-fill" th:style="'width:' + ${(healthScore.communicationScore * 100) / 15} + '%'"></div></div>
+                            <strong th:text="${healthScore.communicationScore} + '/15'">15/15</strong>
+                        </div>
+                    </div>
+
+                    <div th:if="${healthScore.riskLevel.name() == 'WATCH' or healthScore.riskLevel.name() == 'AT_RISK' or healthScore.riskLevel.name() == 'CHURNING'}"
+                         class="client-detail-insight-box"
+                         th:classappend="${healthScore.riskLevel.name() == 'WATCH'} ? ' client-detail-insight-watch' :
+                                         (${healthScore.riskLevel.name() == 'AT_RISK'} ? ' client-detail-insight-risk' : ' client-detail-insight-churning')">
+                        <p th:text="${riskInsight}"></p>
+                    </div>
+                </section>
+
+                <section class="client-detail-card" id="assigned-workouts">
+                    <div class="client-detail-card-header">
+                        <h3>Assigned workouts</h3>
+                    </div>
+
+                    <div th:if="${assignmentCount == 0}" class="client-detail-empty-state">
+                        <p>No workouts assigned yet.</p>
+                        <a th:href="@{/pt/workouts}" class="client-detail-outline-button">+ Assign workout</a>
+                    </div>
+
+                    <div th:if="${assignmentCount > 0}" class="client-detail-workout-list">
+                        <div th:each="assignment : ${assignments}" class="client-detail-workout-row">
+                            <div class="client-detail-workout-copy">
+                                <a th:href="@{/pt/workouts/{id}(id=${assignment.workout.id})}" th:text="${assignment.workout.name}">Strength Builder</a>
+                                <p th:text="${'Assigned ' + #temporals.format(assignment.assignedDate, 'dd MMM') + ' • ' + assignment.workout.category.name().replace('_', ' ').toLowerCase()}">Assigned 30 Mar • Strength</p>
+                            </div>
+                            <div class="client-detail-workout-meta">
                                 <span class="badge"
-                                      th:classappend="${detail.profileComplete} ? 'badge-active' : 'badge-warning'"
-                                      th:text="${detail.profileCompletionCount} + '/6 complete'"></span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:500;">Goal</td>
-                            <td>
-                                <span th:if="${detail.goalType != null}" th:switch="${detail.goalType.name()}">
-                                    <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
-                                    <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
-                                    <span th:case="'STRENGTH'">Strength</span>
-                                    <span th:case="'ENDURANCE'">Endurance</span>
-                                    <span th:case="'GENERAL_FITNESS'">General Fitness</span>
-                                </span>
-                                <span th:if="${detail.goalType == null}" class="text-muted">&mdash;</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:500;">Weight</td>
-                            <td>
-                                <span th:if="${detail.currentWeightKg != null}">
-                                    <span th:text="${detail.currentWeightKg}"></span>
-                                    <span th:if="${detail.targetWeightKg != null}">
-                                        &rarr; <span th:text="${detail.targetWeightKg}"></span>
-                                    </span>
-                                    kg
-                                </span>
-                                <span th:if="${detail.currentWeightKg == null}" class="text-muted">&mdash;</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:500;">Experience</td>
-                            <td>
-                                <span th:if="${detail.trainingExperience != null}" th:switch="${detail.trainingExperience.name()}">
-                                    <span th:case="'BEGINNER'">Beginner</span>
-                                    <span th:case="'INTERMEDIATE'">Intermediate</span>
-                                    <span th:case="'ADVANCED'">Advanced</span>
-                                </span>
-                                <span th:if="${detail.trainingExperience == null}" class="text-muted">&mdash;</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
-            <div>
-                <p style="font-weight: 600; margin-bottom: 4px;">Messaging</p>
-                <p class="text-muted"
-                   th:text="${existingConversation != null}
-                   ? 'A conversation already exists. Open it here to send a new message.'
-                   : 'No conversation yet. Start one here to message this client directly.'"></p>
-            </div>
-            <a th:href="@{/pt/messages/new/{id}(id=${detail.clientRecordId})}" class="btn btn-primary"
-               th:text="${existingConversation != null} ? 'Open Conversation' : 'Start Conversation'"></a>
-        </div>
-    </div>
+                                      th:classappend="${assignment.status.name() == 'ASSIGNED'} ? 'badge-info' :
+                                                     (${assignment.status.name() == 'IN_PROGRESS'} ? 'badge-warning' : 'badge-active')"
+                                      th:text="${assignment.status.name().replace('_', ' ').toLowerCase()}">completed</span>
+                                <span class="client-detail-subdate"
+                                      th:text="${assignment.completedAt != null ? #temporals.format(assignment.completedAt, 'dd MMM') : 'Reassign'}">31 Mar</span>
+                                <form th:action="@{/pt/workouts/assignments/{id}/delete(id=${assignment.id})}" method="post"
+                                      onsubmit="return confirm('Unassign this workout from the client?');">
+                                    <button type="submit" class="client-detail-tag-button">Unassign</button>
+                                </form>
+                            </div>
+                        </div>
+                        <a th:href="@{/pt/workouts}" class="client-detail-outline-button">+ Assign workout</a>
+                    </div>
+                </section>
 
-    <!-- Section 2: Profile Details -->
-    <div class="card mb-3">
-        <h3 class="card-title">Health Score</h3>
-        <div class="health-score-hero">
-            <div class="health-score-number"
-                 th:classappend="${healthScore.overallScore >= 70} ? 'health-score-text-healthy' :
-                                (${healthScore.overallScore >= 50} ? 'health-score-text-watch' :
-                                (${healthScore.overallScore >= 30} ? 'health-score-text-risk' : 'health-score-text-churning'))"
-                 th:text="${healthScore.overallScore}"></div>
-            <span class="badge"
-                  th:classappend="${healthScore.riskLevel.name() == 'HEALTHY'} ? 'badge-active' :
-                                 (${healthScore.riskLevel.name() == 'WATCH'} ? 'badge-warning' :
-                                 (${healthScore.riskLevel.name() == 'AT_RISK'} ? 'badge-danger' : 'badge-neutral'))"
-                  th:text="${healthScore.riskLevel.name().replace('_', ' ')}"></span>
-        </div>
-        <p class="mt-2"
-           th:if="${healthScore.riskLevel.name() == 'HEALTHY'}">This client is actively engaged and making progress.</p>
-        <p class="mt-2"
-           th:if="${healthScore.riskLevel.name() == 'WATCH'}">Engagement is declining. Consider reaching out.</p>
-        <p class="mt-2"
-           th:if="${healthScore.riskLevel.name() == 'AT_RISK'}">This client is at risk of dropping off. Take action.</p>
-        <p class="mt-2"
-           th:if="${healthScore.riskLevel.name() == 'CHURNING'}">This client has not engaged recently. Urgent attention needed.</p>
+                <section class="client-detail-card" id="recent-checkins">
+                    <div class="client-detail-card-header">
+                        <h3>Recent check-ins</h3>
+                    </div>
 
-        <div class="component-score-list mt-2">
-            <div class="component-score-row">
-                <div class="component-score-label">Profile Completion</div>
-                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.profileCompletionScore * 100) / 10} + '%'"></div></div>
-                <div class="component-score-value" th:text="${healthScore.profileCompletionScore} + '/10'"></div>
-            </div>
-            <div class="component-score-row">
-                <div class="component-score-label">Check-in Activity</div>
-                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.checkInActivityScore * 100) / 30} + '%'"></div></div>
-                <div class="component-score-value" th:text="${healthScore.checkInActivityScore} + '/30'"></div>
-            </div>
-            <div class="component-score-row">
-                <div class="component-score-label">Workout Activity</div>
-                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.workoutActivityScore * 100) / 30} + '%'"></div></div>
-                <div class="component-score-value" th:text="${healthScore.workoutActivityScore} + '/30'"></div>
-            </div>
-            <div class="component-score-row">
-                <div class="component-score-label">Goal Progress</div>
-                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.goalProgressScore * 100) / 15} + '%'"></div></div>
-                <div class="component-score-value" th:text="${healthScore.goalProgressScore} + '/15'"></div>
-            </div>
-            <div class="component-score-row">
-                <div class="component-score-label">Communication</div>
-                <div class="component-score-track"><div class="component-score-fill" th:style="'width:' + ${(healthScore.communicationScore * 100) / 15} + '%'"></div></div>
-                <div class="component-score-value" th:text="${healthScore.communicationScore} + '/15'"></div>
-            </div>
-        </div>
-    </div>
+                    <div th:if="${recentCheckIns.isEmpty()}" class="client-detail-empty-state">
+                        <p>No check-ins yet.</p>
+                    </div>
 
-    <div class="card mb-3"
-         th:if="${healthScore.riskLevel.name() == 'WATCH' or healthScore.riskLevel.name() == 'AT_RISK' or healthScore.riskLevel.name() == 'CHURNING'}"
-         th:classappend="${healthScore.riskLevel.name() == 'WATCH'} ? 'risk-insight-card risk-insight-watch' :
-                        (${healthScore.riskLevel.name() == 'AT_RISK'} ? 'risk-insight-card risk-insight-risk' : 'risk-insight-card risk-insight-churning')">
-        <h3 class="card-title">Insight</h3>
-        <p th:text="${riskInsight}"></p>
-    </div>
+                    <div th:if="${!recentCheckIns.isEmpty()}" class="client-detail-checkin-list">
+                        <div th:each="checkIn : ${recentCheckIns}" class="client-detail-checkin-row">
+                            <div class="client-detail-checkin-date" th:text="${#temporals.format(checkIn.submittedAt, 'dd MMM')}">30 Mar</div>
+                            <div class="client-detail-checkin-weight" th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'">69.9 kg</div>
+                            <div class="client-detail-checkin-status">
+                                <span class="badge"
+                                      th:classappend="${checkIn.status.name() == 'PENDING_REVIEW'} ? 'badge-info' : 'badge-active'"
+                                      th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'awaiting review' : 'reviewed'}">reviewed</span>
+                            </div>
+                            <div class="client-detail-checkin-action">
+                                <a th:if="${checkIn.status.name() == 'PENDING_REVIEW'}"
+                                   th:href="@{/pt/checkins/{id}(id=${checkIn.id})}">Review</a>
+                                <span th:if="${checkIn.status.name() != 'PENDING_REVIEW'}" class="text-muted">Reviewed</span>
+                            </div>
+                        </div>
+                        <a th:href="@{/pt/checkins}" class="client-detail-view-link">View all check-ins &rarr;</a>
+                    </div>
+                </section>
 
-    <div class="card mb-3">
-        <h3 class="card-title">Profile Details</h3>
-        <table>
-            <tbody>
-                <tr>
-                    <td style="width:200px; font-weight:500;">Age</td>
-                    <td th:text="${detail.age != null ? detail.age : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Height</td>
-                    <td th:text="${detail.heightCm != null ? detail.heightCm + ' cm' : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Current Weight</td>
-                    <td th:text="${detail.currentWeightKg != null ? detail.currentWeightKg + ' kg' : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Goal</td>
-                    <td>
-                        <span th:if="${detail.goalType != null}" th:switch="${detail.goalType.name()}">
-                            <span th:case="'WEIGHT_LOSS'">Weight Loss</span>
-                            <span th:case="'MUSCLE_GAIN'">Muscle Gain</span>
-                            <span th:case="'STRENGTH'">Strength</span>
-                            <span th:case="'ENDURANCE'">Endurance</span>
-                            <span th:case="'GENERAL_FITNESS'">General Fitness</span>
-                        </span>
-                        <span th:if="${detail.goalType == null}">&mdash;</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Target Weight</td>
-                    <td th:text="${detail.targetWeightKg != null ? detail.targetWeightKg + ' kg' : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Experience</td>
-                    <td>
-                        <span th:if="${detail.trainingExperience != null}" th:switch="${detail.trainingExperience.name()}">
-                            <span th:case="'BEGINNER'">Beginner</span>
-                            <span th:case="'INTERMEDIATE'">Intermediate</span>
-                            <span th:case="'ADVANCED'">Advanced</span>
-                        </span>
-                        <span th:if="${detail.trainingExperience == null}">&mdash;</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Injuries / Conditions</td>
-                    <td th:text="${detail.injuriesOrConditions != null and !detail.injuriesOrConditions.isBlank() ? detail.injuriesOrConditions : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Dietary Preferences</td>
-                    <td th:text="${detail.dietaryPreferences != null and !detail.dietaryPreferences.isBlank() ? detail.dietaryPreferences : '—'}"></td>
-                </tr>
-                <tr>
-                    <td style="font-weight:500;">Client Notes</td>
-                    <td th:text="${detail.clientNotes != null and !detail.clientNotes.isBlank() ? detail.clientNotes : '—'}"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                <section class="client-detail-card" id="pt-notes">
+                    <div class="client-detail-card-header">
+                        <h3>PT notes</h3>
+                        <span class="client-detail-tag-button">+ Add note</span>
+                    </div>
 
-    <!-- Section 3: PT Notes & Settings -->
-    <div class="card mb-3">
-        <h3 class="card-title">Milestones</h3>
-        <div class="milestone-list">
-            <div th:each="milestone : ${milestones}" class="milestone-row"
-                 th:classappend="${milestone.achievedDate == null ? 'milestone-row-pending' : ''}">
-                <div>
-                    <p style="font-weight: 600;"
-                       th:text="${(milestone.achievedDate != null ? '✅ ' : '○ ') + milestone.title}"></p>
-                    <p class="text-muted"
-                       th:text="${milestone.achievedDate != null ? #temporals.format(milestone.achievedDate, 'dd MMM yyyy') : 'Not yet'}"></p>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <form th:action="@{/pt/clients/{id}(id=${detail.clientRecordId})}" th:object="${updateForm}" method="post" class="client-detail-note-form">
+                        <input type="hidden" name="status" th:value="${updateForm.status}">
+                        <input type="hidden" name="monthlyPackagePrice" th:value="${updateForm.monthlyPackagePrice}">
+                        <textarea id="ptNotes" th:field="*{ptNotes}" rows="4" placeholder="Add private notes about this client that only you can see."></textarea>
+                        <div class="form-error" th:if="${#fields.hasErrors('ptNotes')}" th:errors="*{ptNotes}"></div>
+                        <button type="submit" class="client-detail-note-submit">Save note</button>
+                    </form>
 
-    <!-- Section 4: Meal Plan -->
-    <div class="card mb-3">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
-            <h3 class="card-title" style="margin-bottom: 0;">Meal Plan</h3>
-            <a th:if="${activeMealPlan != null}"
-               th:href="@{/pt/clients/{id}/nutrition(id=${detail.clientRecordId})}"
-               class="btn btn-secondary btn-sm">View</a>
-        </div>
-        <div th:if="${activeMealPlan != null}">
-            <p style="font-weight: 600;" th:text="${activeMealPlan.title}"></p>
-            <p class="text-muted mt-1">Active nutrition guidance is available for this client.</p>
-        </div>
-        <div th:if="${activeMealPlan == null}">
-            <p class="text-muted">
-                No meal plan.
-                <a th:href="@{/pt/clients/{id}/nutrition/new(id=${detail.clientRecordId})}">Create one &rarr;</a>
-            </p>
-        </div>
-    </div>
+                    <div th:if="${clientRecordNotes.isEmpty()}" class="client-detail-empty-state">
+                        <p>No notes added yet.</p>
+                    </div>
 
-    <!-- Section 5: PT Notes & Settings -->
-    <div class="card mb-3">
-        <h3 class="card-title">PT Notes &amp; Settings</h3>
-        <form th:action="@{/pt/clients/{id}(id=${detail.clientRecordId})}" th:object="${updateForm}" method="post">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
-                <div class="form-group">
-                    <label for="status">Status</label>
-                    <select id="status" th:field="*{status}">
-                        <option th:each="s : ${T(com.ptos.domain.ClientStatus).values()}"
-                                th:value="${s}" th:text="${s.name()}"></option>
-                    </select>
-                    <div class="form-error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
-                </div>
-                <div class="form-group">
-                    <label for="monthlyPackagePrice">Monthly Package (£)</label>
-                    <input type="number" id="monthlyPackagePrice" th:field="*{monthlyPackagePrice}" step="0.01" min="0">
-                    <div class="form-error" th:if="${#fields.hasErrors('monthlyPackagePrice')}" th:errors="*{monthlyPackagePrice}"></div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="ptNotes">PT Notes</label>
-                <p class="text-muted mb-1">Add a new note. Saved notes appear below with their date.</p>
-                <textarea id="ptNotes" th:field="*{ptNotes}" rows="4"></textarea>
-                <div class="form-error" th:if="${#fields.hasErrors('ptNotes')}" th:errors="*{ptNotes}"></div>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-        </form>
-    </div>
-
-    <div class="card mb-3">
-        <h3 class="card-title">PT Note History</h3>
-        <div th:if="${clientRecordNotes.isEmpty()}">
-            <p class="text-muted">No PT notes added yet.</p>
-        </div>
-        <table th:if="${!clientRecordNotes.isEmpty()}">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Note</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="note : ${clientRecordNotes}">
-                    <td style="width: 180px;">
-                        <span th:text="${#temporals.format(note.createdAt, 'dd MMM yyyy')}"></span>
-                    </td>
-                    <td style="white-space: pre-line;" th:text="${note.noteText}"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Section 6: Activity -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <h3 class="card-title" style="margin-bottom: 0;">Assigned Workouts</h3>
-                <a th:href="@{/pt/workouts}" class="btn btn-secondary btn-sm">Assign Workout</a>
-            </div>
-            <p class="text-muted mb-2"
-               th:text="${assignmentCount + ' workouts assigned, ' + completedAssignmentCount + ' completed'}"></p>
-
-            <div th:if="${assignmentCount == 0}">
-                <p class="text-muted">No workouts assigned yet. Assign one from the Workouts page.</p>
+                    <div th:if="${!clientRecordNotes.isEmpty()}" class="client-detail-note-history">
+                        <div th:each="note : ${clientRecordNotes}" class="client-detail-note-row">
+                            <span class="client-detail-note-date" th:text="${#temporals.format(note.createdAt, 'dd MMM yyyy')}">20 Mar 2026</span>
+                            <p th:text="${note.noteText}">Add private notes about this client.</p>
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <table th:if="${assignmentCount > 0}">
-                <thead>
-                    <tr>
-                        <th>Workout</th>
-                        <th>Assigned Date</th>
-                        <th>Status</th>
-                        <th>Completed Date</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="assignment : ${assignments}">
-                        <td>
-                            <a th:href="@{/pt/workouts/{id}(id=${assignment.workout.id})}"
-                               th:text="${assignment.workout.name}"></a>
-                        </td>
-                        <td th:text="${#temporals.format(assignment.assignedDate, 'dd MMM yyyy')}"></td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${assignment.status.name() == 'ASSIGNED'} ? 'badge-info' :
-                                                 (${assignment.status.name() == 'IN_PROGRESS'} ? 'badge-warning' : 'badge-active')"
-                                  th:text="${assignment.status.name().replace('_', ' ')}"></span>
-                        </td>
-                        <td>
-                            <span th:if="${assignment.completedAt != null}"
-                                  th:text="${#temporals.format(assignment.completedAt, 'dd MMM yyyy')}"></span>
-                            <span th:if="${assignment.completedAt == null}" class="text-muted">&mdash;</span>
-                        </td>
-                        <td style="width: 120px; text-align: right;">
-                            <form th:action="@{/pt/workouts/assignments/{id}/delete(id=${assignment.id})}" method="post"
-                                  onsubmit="return confirm('Unassign this workout from the client?');">
-                                <button type="submit" class="btn btn-secondary btn-sm">Unassign</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="card">
-            <h3 class="card-title">Recent Check-ins</h3>
-            <div th:if="${recentCheckIns.isEmpty()}">
-                <p class="text-muted">No check-ins yet.</p>
+            <div class="client-detail-side-column">
+                <section class="client-detail-card">
+                    <div class="client-detail-card-header">
+                        <h3>At a glance</h3>
+                    </div>
+
+                    <div class="client-detail-stat-grid">
+                        <div class="client-detail-stat-tile">
+                            <strong th:text="${detail.currentWeightKg != null ? #numbers.formatDecimal(detail.currentWeightKg, 1, 1) : '—'}">69.9</strong>
+                            <span>Current (kg)</span>
+                        </div>
+                        <div class="client-detail-stat-tile">
+                            <strong th:text="${detail.targetWeightKg != null ? #numbers.formatDecimal(detail.targetWeightKg, 1, 1) : '—'}">70.0</strong>
+                            <span>Target (kg)</span>
+                        </div>
+                        <div class="client-detail-stat-tile client-detail-stat-tile-positive">
+                            <strong th:text="${recentWeightDelta}">-19.9</strong>
+                            <span>Weight trend</span>
+                        </div>
+                        <div class="client-detail-stat-tile">
+                            <strong th:text="${completedAssignmentCount + '/' + assignmentCount}">2/2</strong>
+                            <span>Workouts done</span>
+                        </div>
+                    </div>
+
+                    <div class="client-detail-trend-box" id="progress">
+                        <span>Weight trend</span>
+                        <div class="client-detail-trend-line">
+                            <i></i>
+                        </div>
+                        <small th:text="${latestCheckIn != null ? 'Latest update ' + #temporals.format(latestCheckIn.submittedAt, 'dd MMM yyyy') : 'No recent check-ins yet'}">Latest update 30 Mar 2026</small>
+                    </div>
+
+                    <div class="client-detail-profile-table">
+                        <div class="client-detail-profile-row"><span>Age</span><strong th:text="${detail.age != null ? detail.age : '—'}">22</strong></div>
+                        <div class="client-detail-profile-row"><span>Height</span><strong th:text="${detail.heightCm != null ? #numbers.formatDecimal(detail.heightCm, 1, 1) + ' cm' : '—'}">162.0 cm</strong></div>
+                        <div class="client-detail-profile-row"><span>Start weight</span><strong th:text="${latestCheckIn != null ? #numbers.formatDecimal(latestCheckIn.currentWeightKg, 1, 1) + ' kg' : '—'}">89.9 kg</strong></div>
+                        <div class="client-detail-profile-row"><span>Goal</span><strong th:text="${detail.goalType != null ? #strings.capitalizeWords(detail.goalType.name().replace('_', ' ').toLowerCase()) : 'None'}">Weight loss</strong></div>
+                        <div class="client-detail-profile-row"><span>Experience</span><strong th:text="${detail.trainingExperience != null ? #strings.capitalize(detail.trainingExperience.name().toLowerCase()) : 'None'}">Beginner</strong></div>
+                        <div class="client-detail-profile-row"><span>Injuries</span><strong th:text="${detail.injuriesOrConditions != null and !detail.injuriesOrConditions.isBlank() ? detail.injuriesOrConditions : 'None'}">None</strong></div>
+                        <div class="client-detail-profile-row"><span>Dietary</span><strong th:text="${detail.dietaryPreferences != null and !detail.dietaryPreferences.isBlank() ? detail.dietaryPreferences : 'None'}">Gluten-free</strong></div>
+                    </div>
+                </section>
+
+                <section class="client-detail-card">
+                    <div class="client-detail-card-header">
+                        <h3>Milestones</h3>
+                    </div>
+                    <div class="client-detail-milestone-list">
+                        <div th:each="milestone : ${milestones}" class="client-detail-milestone-row"
+                             th:classappend="${milestone.achievedDate == null ? ' client-detail-milestone-row-pending' : ''}">
+                            <span class="client-detail-milestone-dot"></span>
+                            <div>
+                                <p th:text="${milestone.title}">Profile complete</p>
+                                <small th:text="${milestone.achievedDate != null ? #temporals.format(milestone.achievedDate, 'dd MMM') : 'Not yet'}">3 Apr</small>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="client-detail-card">
+                    <div class="client-detail-card-header">
+                        <h3>Meal plan</h3>
+                    </div>
+                    <div th:if="${activeMealPlan != null}">
+                        <p class="client-detail-mealplan-title" th:text="${activeMealPlan.title}">Routine Builder Plan</p>
+                        <p class="client-detail-card-note">Active nutrition guidance available.</p>
+                        <a th:href="@{/pt/clients/{id}/nutrition(id=${detail.clientRecordId})}" class="client-detail-outline-button">View plan</a>
+                    </div>
+                    <div th:if="${activeMealPlan == null}" class="client-detail-empty-state">
+                        <p>No meal plan assigned.</p>
+                        <a th:href="@{/pt/clients/{id}/nutrition/new(id=${detail.clientRecordId})}" class="client-detail-outline-button">Create meal plan</a>
+                    </div>
+                </section>
+
+                <section class="client-detail-card" id="client-settings">
+                    <div class="client-detail-card-header">
+                        <h3>Client settings</h3>
+                    </div>
+                    <form th:action="@{/pt/clients/{id}(id=${detail.clientRecordId})}" th:object="${updateForm}" method="post" class="client-detail-settings-form">
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select id="status" th:field="*{status}">
+                                <option th:each="s : ${T(com.ptos.domain.ClientStatus).values()}" th:value="${s}" th:text="${s.name()}"></option>
+                            </select>
+                            <div class="form-error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="monthlyPackagePrice">Monthly package (£)</label>
+                            <input type="number" id="monthlyPackagePrice" th:field="*{monthlyPackagePrice}" step="0.01" min="0">
+                            <div class="form-error" th:if="${#fields.hasErrors('monthlyPackagePrice')}" th:errors="*{monthlyPackagePrice}"></div>
+                        </div>
+                        <button type="submit" class="client-detail-note-submit">Save settings</button>
+                    </form>
+                </section>
             </div>
-            <table th:if="${!recentCheckIns.isEmpty()}">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Weight</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="checkIn : ${recentCheckIns}">
-                        <td th:text="${#temporals.format(checkIn.submittedAt, 'dd MMM yyyy')}"></td>
-                        <td th:text="${#numbers.formatDecimal(checkIn.currentWeightKg, 1, 1)} + ' kg'"></td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${checkIn.status.name() == 'PENDING_REVIEW'} ? 'badge-info' : 'badge-active'"
-                                  th:text="${checkIn.status.name() == 'PENDING_REVIEW' ? 'Awaiting Review' : 'Reviewed'}"></span>
-                        </td>
-                        <td>
-                            <a th:if="${checkIn.status.name() == 'PENDING_REVIEW'}"
-                               th:href="@{/pt/checkins/{id}(id=${checkIn.id})}">Review</a>
-                            <span th:if="${checkIn.status.name() != 'PENDING_REVIEW'}" class="text-muted">Reviewed</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 </div>
