@@ -3,40 +3,54 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/default}">
 <head>
-    <title>Login</title>
+    <title>Log In</title>
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="card" style="max-width: 440px; margin: 60px auto;">
-        <h2 class="card-title text-center">Log In</h2>
+    <section class="auth-login-shell">
+        <div class="auth-login-card">
+            <div class="auth-login-brand">SETLY</div>
+            <h1>Welcome back</h1>
+            <p>Log in to your PT dashboard</p>
 
-        <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
-        <div th:if="${param.error}" class="flash flash-error">
-            Invalid email or password.
-        </div>
-        <div th:if="${param.clientAccess}" class="flash flash-error">
-            Client accounts do not have web access in this application.
-        </div>
-        <div th:if="${param.logout}" class="flash flash-success">
-            You have been logged out.
-        </div>
-
-        <form th:action="@{/login}" method="post">
-            <div class="form-group">
-                <label for="username">Email</label>
-                <input type="email" id="username" name="username" required autofocus>
+            <div th:if="${success}" class="flash flash-success" th:text="${success}"></div>
+            <div th:if="${param.error}" class="flash flash-error">
+                Invalid email or password.
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+            <div th:if="${param.clientAccess}" class="flash flash-error">
+                Client accounts do not have web access in this application.
             </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
-        </form>
+            <div th:if="${param.logout}" class="flash flash-success">
+                You have been logged out.
+            </div>
 
-        <p class="text-center mt-2">
-            <a th:href="@{/pt/signup}">Need a PT account? Sign up here</a>
-        </p>
-    </div>
+            <form th:action="@{/login}" method="post" class="auth-login-form">
+                <div class="auth-field">
+                    <label for="username">Email address</label>
+                    <input type="email" id="username" name="username" required autofocus autocomplete="email">
+                </div>
+
+                <div class="auth-field">
+                    <div class="auth-field-header">
+                        <label for="password">Password</label>
+                        <a href="#" onclick="return false;" class="auth-help-link">Forgot password?</a>
+                    </div>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-login-submit">Log in</button>
+            </form>
+
+            <div class="auth-divider">
+                <span>don't have an account?</span>
+            </div>
+
+            <div class="auth-signup-cta">
+                New to SETLY?
+                <a th:href="@{/pt/signup}">Sign up as a PT — it's free</a>
+            </div>
+        </div>
+    </section>
 </div>
 </body>
 </html>

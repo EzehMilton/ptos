@@ -7,55 +7,61 @@
 </head>
 <body>
 <div layout:fragment="content">
-    <div class="card" style="max-width: 440px; margin: 60px auto;">
-        <h2 class="card-title text-center">Create PT Account</h2>
+    <section class="auth-signup-shell">
+        <div class="auth-signup-card">
+            <h1>Create PT Account</h1>
 
-        <form th:action="@{/pt/signup}" th:object="${ptSignupForm}" method="post" autocomplete="off">
-            <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" th:field="*{fullName}">
-                <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
-            </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" th:field="*{email}" autocomplete="off">
-                <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" th:field="*{password}" autocomplete="new-password">
-                <div class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
-            </div>
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" th:field="*{confirmPassword}" autocomplete="new-password">
-                <div class="form-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Create PT Account</button>
-        </form>
+            <form th:action="@{/pt/signup}" th:object="${ptSignupForm}" method="post" autocomplete="off" class="auth-signup-form">
+                <div class="auth-field auth-field-light">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" th:field="*{fullName}" autocomplete="name">
+                    <div class="form-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                </div>
 
-        <p class="text-center mt-2">
-            <a th:href="@{/login}">Already have an account? Log in</a>
-        </p>
-    </div>
+                <div class="auth-field auth-field-light">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" th:field="*{email}" autocomplete="off">
+                    <div class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const emailInput = document.getElementById("email");
-            const passwordInput = document.getElementById("password");
-            const confirmPasswordInput = document.getElementById("confirmPassword");
+                <div class="auth-field auth-field-light">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" th:field="*{password}" autocomplete="new-password">
+                    <div class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                </div>
 
-            if (emailInput) {
-                emailInput.value = "";
-            }
-            if (passwordInput) {
-                passwordInput.value = "";
-            }
-            if (confirmPasswordInput) {
-                confirmPasswordInput.value = "";
-            }
-        });
-    </script>
+                <div class="auth-field auth-field-light">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" th:field="*{confirmPassword}" autocomplete="new-password">
+                    <div class="form-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-signup-submit">Create PT Account</button>
+            </form>
+
+            <div class="auth-signup-login-link">
+                <a th:href="@{/login}">Already have an account? Log in</a>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const emailInput = document.getElementById("email");
+                const passwordInput = document.getElementById("password");
+                const confirmPasswordInput = document.getElementById("confirmPassword");
+
+                if (emailInput) {
+                    emailInput.value = "";
+                }
+                if (passwordInput) {
+                    passwordInput.value = "";
+                }
+                if (confirmPasswordInput) {
+                    confirmPasswordInput.value = "";
+                }
+            });
+        </script>
+    </section>
 </div>
 </body>
 </html>
