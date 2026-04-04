@@ -8,9 +8,10 @@
     <title layout:title-pattern="$CONTENT_TITLE - PTOS">SETLY</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body th:classappend="${currentPath == '/'} ? 'landing-body'">
+<body th:classappend="${currentPath == '/' or currentPath == '/login' ? 'landing-body' : (currentPath == '/pt/signup' ? 'signup-public-body' : ((currentPath == '/pt/dashboard' or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages')) ? 'dashboard-page-body' : ''))}">
 
-<nav class="navbar" th:classappend="${currentPath == '/'} ? ' navbar-public'">
+<nav class="navbar"
+     th:classappend="${currentPath == '/' or currentPath == '/login' ? ' navbar-public' : (currentPath == '/pt/signup' ? ' navbar-auth-light' : ((currentPath == '/pt/dashboard' or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages')) ? ' navbar-dashboard' : ''))}">
     <div class="container">
         <a class="navbar-brand" th:href="@{/}">SETLY</a>
         <div class="navbar-menu navbar-menu-public"
@@ -18,7 +19,6 @@
              th:if="${currentPath == '/'}">
             <ul class="navbar-nav navbar-nav-public">
                 <li><a href="#features">Features</a></li>
-                <li><a href="#how-it-works">How it works</a></li>
                 <li><a href="#pricing">Pricing</a></li>
             </ul>
 
@@ -28,7 +28,25 @@
             </ul>
         </div>
 
-        <div class="navbar-menu" th:if="${currentPath != '/' or #authorization.expression('isAuthenticated()')}">
+        <div class="navbar-menu navbar-menu-public"
+             sec:authorize="!isAuthenticated()"
+             th:if="${currentPath == '/login'}">
+            <ul class="navbar-nav navbar-nav-actions navbar-nav-public-actions login-public-actions">
+                <li><a th:href="@{/login}" class="btn btn-ghost btn-sm">Log in</a></li>
+                <li><a th:href="@{/pt/signup}" class="btn btn-primary btn-sm">Sign up free</a></li>
+            </ul>
+        </div>
+
+        <div class="navbar-menu navbar-menu-public"
+             sec:authorize="!isAuthenticated()"
+             th:if="${currentPath == '/pt/signup'}">
+            <ul class="navbar-nav navbar-nav-actions navbar-nav-light-actions">
+                <li><a th:href="@{/login}">Login</a></li>
+                <li><a th:href="@{/pt/signup}">PT Sign Up</a></li>
+            </ul>
+        </div>
+
+        <div class="navbar-menu" th:if="${(currentPath != '/' and currentPath != '/login' and currentPath != '/pt/signup') or #authorization.expression('isAuthenticated()')}">
         <ul class="navbar-nav">
             <!-- PT navigation -->
             <li sec:authorize="hasRole('PT')">
@@ -92,14 +110,21 @@
 </nav>
 
 <div class="container main-content"
-     th:classappend="${currentPath == '/'} ? ' landing-main-content'"
+     th:classappend="${currentPath == '/' ? ' landing-main-content' : (currentPath == '/login' ? ' auth-main-content' : (currentPath == '/pt/signup' ? ' signup-main-content' : ''))}"
      layout:fragment="content">
 </div>
 
-<footer class="footer" th:classappend="${currentPath == '/'} ? ' footer-public'">
+<footer class="footer" th:classappend="${currentPath == '/' or currentPath == '/login' ? ' footer-public' : (currentPath == '/pt/signup' ? ' footer-auth-light' : ((currentPath == '/pt/dashboard' or currentPath.startsWith('/pt/clients') or currentPath.startsWith('/pt/messages')) ? ' footer-dashboard' : ''))}">
     <div class="container">
+        <div th:if="${currentPath == '/login'}" class="footer-public-login">
+            <span>© 2026 Setly</span>
+            <a href="#" onclick="return false;">Privacy</a>
+            <a href="#" onclick="return false;">Terms</a>
+            <a href="#" onclick="return false;">Support</a>
+        </div>
         <span th:if="${currentPath == '/'}">© 2026 SETLY. Built for personal trainers.</span>
-        <span th:unless="${currentPath == '/'}">SETLY MVP</span>
+        <span th:if="${currentPath == '/pt/signup'}">SETLY MVP</span>
+        <span th:unless="${currentPath == '/' or currentPath == '/login' or currentPath == '/pt/signup'}">SETLY MVP</span>
     </div>
 </footer>
 

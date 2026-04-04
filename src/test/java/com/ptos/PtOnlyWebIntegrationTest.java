@@ -55,14 +55,15 @@ class PtOnlyWebIntegrationTest {
     void publicPagesExposeOnlyPtEntryPoints() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("PT Login")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("PT Sign Up")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Sign Up")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Run your PT business from")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Client Sign Up"))));
 
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("New client? Sign up here"))))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Need a PT account? Sign up here")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Welcome back")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Sign up as a PT")));
 
         mockMvc.perform(get("/pt/signup"))
                 .andExpect(status().isOk())
@@ -244,10 +245,10 @@ class PtOnlyWebIntegrationTest {
         mockMvc.perform(post("/pt/workouts/{id}/assign", workoutId)
                         .session(session)
                         .with(csrf())
-                        .param("clientRecordId", String.valueOf(clientRecordId))
+                        .param("clientRecordIds", String.valueOf(clientRecordId))
                         .param("assignedDate", "2026-04-03"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/pt/clients/" + clientRecordId));
+                .andExpect(redirectedUrl("/pt/workouts/" + workoutId));
 
         WorkoutAssignment assignment = workoutAssignmentRepository.findByClientRecordOrderByAssignedDateDesc(
                         clientRecordRepository.findById(clientRecordId).orElseThrow())
@@ -350,9 +351,9 @@ class PtOnlyWebIntegrationTest {
         MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
         assertThat(session).isNotNull();
 
-        mockMvc.perform(get("/pt/clients").session(session))
+        mockMvc.perform(get("/pt/clients").param("tab", "invitations").session(session))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Client Invitations")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Invitations (4)")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Layla Green")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Daniel Foster")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Priya Shah")))
@@ -382,12 +383,21 @@ class PtOnlyWebIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("PT Note History")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Travel week handled well.")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Lean Cut Plan")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Meal Plan")));
+
+        mockMvc.perform(post("/pt/clients/{id}/nutrition", clientRecordId)
+                        .session(session)
+                        .with(csrf())
+                        .param("title", "Lean Cut Plan")
+                        .param("overview", "High protein, moderate carbs.")
+                        .param("dailyGuidance", "Breakfast: eggs\nSnack: yogurt\nLunch: chicken and rice"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/pt/clients/" + clientRecordId + "/nutrition"));
 
         mockMvc.perform(get("/pt/clients/{id}/nutrition", clientRecordId).session(session))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Lean Cut Plan")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Meals were easy to prep.")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("High protein, moderate carbs.")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("followed in last 14 days")));
     }
 
