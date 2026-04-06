@@ -11,6 +11,7 @@ import com.ptos.service.ClientRecordService;
 import com.ptos.service.NutritionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -29,6 +30,7 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/pt/clients/{clientRecordId}/nutrition")
 @RequiredArgsConstructor
+@Slf4j
 public class PtNutritionController {
 
     private final NutritionService nutritionService;
@@ -37,6 +39,7 @@ public class PtNutritionController {
 
     @GetMapping
     public String viewNutrition(@PathVariable Long clientRecordId, Model model, RedirectAttributes redirectAttributes) {
+        log.info("Showing PT nutrition for client with ID: {}", clientRecordId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<ClientRecord> clientRecordOpt = clientRecordService.getClientRecord(clientRecordId, ptUser);
         if (clientRecordOpt.isEmpty()) {
@@ -60,6 +63,7 @@ public class PtNutritionController {
 
     @GetMapping("/new")
     public String newMealPlan(@PathVariable Long clientRecordId, Model model, RedirectAttributes redirectAttributes) {
+        log.info("Showing PT new meal plan form for client with ID: {}", clientRecordId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<ClientRecord> clientRecordOpt = clientRecordService.getClientRecord(clientRecordId, ptUser);
         if (clientRecordOpt.isEmpty()) {
@@ -81,6 +85,7 @@ public class PtNutritionController {
                                  BindingResult result,
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
+        log.info("Creating PT meal plan for client with ID: {}", clientRecordId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<ClientRecord> clientRecordOpt = clientRecordService.getClientRecord(clientRecordId, ptUser);
         if (clientRecordOpt.isEmpty()) {
@@ -101,6 +106,7 @@ public class PtNutritionController {
 
     @GetMapping("/edit")
     public String editMealPlan(@PathVariable Long clientRecordId, Model model, RedirectAttributes redirectAttributes) {
+        log.info("Showing PT edit meal plan form for client with ID: {}", clientRecordId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<ClientRecord> clientRecordOpt = clientRecordService.getClientRecord(clientRecordId, ptUser);
         if (clientRecordOpt.isEmpty()) {
@@ -134,6 +140,7 @@ public class PtNutritionController {
                                  BindingResult result,
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
+        log.info("Updating PT meal plan for client with ID: {}", clientRecordId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<ClientRecord> clientRecordOpt = clientRecordService.getClientRecord(clientRecordId, ptUser);
         if (clientRecordOpt.isEmpty()) {
@@ -161,6 +168,7 @@ public class PtNutritionController {
 
     @PostMapping("/delete")
     public String deleteMealPlan(@PathVariable Long clientRecordId, RedirectAttributes redirectAttributes) {
+        log.info("Deleting PT meal plan for client with ID: {}", clientRecordId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<ClientRecord> clientRecordOpt = clientRecordService.getClientRecord(clientRecordId, ptUser);
         if (clientRecordOpt.isEmpty()) {

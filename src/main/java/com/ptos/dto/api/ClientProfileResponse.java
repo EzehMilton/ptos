@@ -11,5 +11,6 @@ public record ClientProfileResponse(
         String injuriesOrConditions,
         String dietaryPreferences,
         String trainingExperience,
-        String notes
+        String additionalNotes,
+        boolean onboardingCompleted
 ) {}

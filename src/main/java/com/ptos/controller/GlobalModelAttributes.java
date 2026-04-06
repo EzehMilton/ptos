@@ -6,6 +6,7 @@ import com.ptos.service.CheckInService;
 import com.ptos.service.MessagingService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 @ControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalModelAttributes {
 
     private final CheckInService checkInService;
@@ -32,11 +34,14 @@ public class GlobalModelAttributes {
 
     @ModelAttribute("ptPendingCheckInCount")
     public long ptPendingCheckInCount() {
+        log.info("Calculating pending check-ins for PT");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof PtosUserDetails userDetails)) {
+            log.info("No authentication or user details found");
             return 0;
         }
         if (userDetails.getRole() != Role.PT) {
+            log.info("User is not a PT");
             return 0;
         }
         return checkInService.countPendingCheckIns(userDetails.getUser());
@@ -44,11 +49,14 @@ public class GlobalModelAttributes {
 
     @ModelAttribute("unreadMessageCount")
     public int unreadMessageCount() {
+        log.info("Calculating unread message count");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof PtosUserDetails userDetails)) {
+            log.info("No authentication or user details found");
             return 0;
         }
         if (userDetails.getRole() != Role.PT) {
+            log.info("User is not a PT");
             return 0;
         }
         return messagingService.getUnreadCountForPT(userDetails.getUser());

@@ -9,6 +9,7 @@ import com.ptos.service.ClientRecordService;
 import com.ptos.service.MessagingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -25,6 +26,7 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/pt/messages")
 @RequiredArgsConstructor
+@Slf4j
 public class PtMessageController {
 
     private final MessagingService messagingService;
@@ -33,6 +35,7 @@ public class PtMessageController {
 
     @GetMapping
     public String inbox(Model model) {
+        log.info("Showing PT inbox");
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         model.addAttribute("conversations", messagingService.getConversationsForPT(ptUser));
         model.addAttribute("selectedConversationId", null);
@@ -41,6 +44,7 @@ public class PtMessageController {
 
     @GetMapping("/{conversationId}")
     public String conversation(@PathVariable Long conversationId, Model model, RedirectAttributes redirectAttributes) {
+        log.info("Showing conversation with ID: {}", conversationId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<Conversation> conversationOpt = messagingService.getConversationForPT(conversationId, ptUser);
         if (conversationOpt.isEmpty()) {
@@ -63,6 +67,7 @@ public class PtMessageController {
                               BindingResult result,
                               Model model,
                               RedirectAttributes redirectAttributes) {
+        log.info("Sending message in conversation with ID: {}", conversationId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<Conversation> conversationOpt = messagingService.getConversationForPT(conversationId, ptUser);
         if (conversationOpt.isEmpty()) {
@@ -88,6 +93,7 @@ public class PtMessageController {
 
     @GetMapping("/new/{clientRecordId}")
     public String startConversation(@PathVariable Long clientRecordId, RedirectAttributes redirectAttributes) {
+        log.info("Starting conversation with client record ID: {}", clientRecordId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         return clientRecordService.getClientRecord(clientRecordId, ptUser)
                 .map(record -> {

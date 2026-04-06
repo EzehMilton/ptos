@@ -6,6 +6,7 @@ import com.ptos.security.SecurityHelper;
 import com.ptos.service.PTProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,6 +21,7 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/pt/onboarding")
 @RequiredArgsConstructor
+@Slf4j
 public class PTOnboardingController {
 
     private final PTProfileService ptProfileService;
@@ -27,6 +29,7 @@ public class PTOnboardingController {
 
     @GetMapping
     public String showOnboarding(Model model) {
+        log.info("Showing PT onboarding form");
         Long userId = securityHelper.getCurrentUserId();
         Optional<PTProfile> profileOpt = ptProfileService.getProfileForUser(userId);
         if (profileOpt.map(PTProfile::isOnboardingComplete).orElse(false)) {
@@ -50,6 +53,7 @@ public class PTOnboardingController {
     public String saveOnboarding(@Valid @ModelAttribute("ptProfileForm") PTProfileForm form,
                                  BindingResult result,
                                  RedirectAttributes redirectAttributes) {
+        log.info("Saving PT onboarding form");
         if (result.hasErrors()) {
             return "pt/onboarding";
         }
@@ -62,6 +66,7 @@ public class PTOnboardingController {
 
     @GetMapping("/skip")
     public String skipOnboarding(RedirectAttributes redirectAttributes) {
+        log.info("Skipping PT onboarding");
         ptProfileService.markOnboardingComplete(securityHelper.getCurrentUserId());
         redirectAttributes.addFlashAttribute("firstTimeWelcome", true);
         redirectAttributes.addFlashAttribute("success", "Your can set up your profile later.");

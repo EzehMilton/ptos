@@ -18,6 +18,7 @@ import com.ptos.service.ClientRecordService;
 import com.ptos.service.InsightService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -39,6 +40,7 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/pt/checkins")
 @RequiredArgsConstructor
+@Slf4j
 public class PtCheckInController {
 
     private final CheckInService checkInService;
@@ -51,6 +53,7 @@ public class PtCheckInController {
     @GetMapping
     public String listCheckIns(@RequestParam(name = "filter", required = false, defaultValue = "pending") String filter,
                                Model model) {
+        log.info("Listing check-ins with filter: {}", filter);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         String normalizedFilter = normalizeFilter(filter);
         List<CheckIn> pendingCheckIns = checkInService.getPendingCheckIns(ptUser);
@@ -71,6 +74,7 @@ public class PtCheckInController {
 
     @GetMapping("/{id}")
     public String reviewCheckIn(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        log.info("Reviewing check-in: {}", id);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<CheckIn> checkInOpt = checkInService.getCheckInForPT(id, ptUser);
         if (checkInOpt.isEmpty()) {
@@ -112,6 +116,7 @@ public class PtCheckInController {
                                  BindingResult result,
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
+        log.info("Submitting feedback for check-in: {}", id);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<CheckIn> checkInOpt = checkInService.getCheckInForPT(id, ptUser);
         if (checkInOpt.isEmpty()) {

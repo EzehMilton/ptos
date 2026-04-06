@@ -12,6 +12,7 @@ import com.ptos.service.ClientRecordService;
 import com.ptos.service.WorkoutService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +30,7 @@ import java.util.stream.IntStream;
 @Controller
 @RequestMapping("/pt/workouts")
 @RequiredArgsConstructor
+@Slf4j
 public class PtWorkoutController {
 
     private final WorkoutService workoutService;
@@ -38,6 +40,7 @@ public class PtWorkoutController {
 
     @GetMapping
     public String listWorkouts(Model model) {
+        log.info("Showing PT workouts");
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         model.addAttribute("workouts", workoutService.getWorkoutsForPT(ptUser));
         return "pt/workouts/list";
@@ -45,6 +48,7 @@ public class PtWorkoutController {
 
     @GetMapping("/new")
     public String newWorkoutForm(Model model) {
+        log.info("Showing new PT workout form");
         WorkoutForm form = new WorkoutForm();
         IntStream.range(0, 1).forEach(i -> form.getExercises().add(new WorkoutExerciseForm()));
         model.addAttribute("workoutForm", form);
@@ -55,6 +59,7 @@ public class PtWorkoutController {
     public String createWorkout(@Valid @ModelAttribute("workoutForm") WorkoutForm form,
                                 BindingResult result,
                                 RedirectAttributes redirectAttributes) {
+        log.info("Creating PT workout");
         List<WorkoutExerciseForm> populatedExercises = normalizeExercises(form.getExercises());
         form.setExercises(populatedExercises);
 
@@ -77,6 +82,7 @@ public class PtWorkoutController {
 
     @GetMapping("/{id}")
     public String workoutDetail(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        log.info("Showing PT workout detail for ID: {}", id);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         Optional<Workout> workoutOpt = workoutService.getWorkout(id, ptUser);
 
@@ -102,6 +108,7 @@ public class PtWorkoutController {
                                 @RequestParam(name = "clientRecordIds", required = false) List<Long> clientRecordIds,
                                 @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate assignedDate,
                                 RedirectAttributes redirectAttributes) {
+        log.info("Assigning PT workout to clients");
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         try {
             workoutService.assignWorkout(id, clientRecordIds, assignedDate, ptUser);
@@ -115,6 +122,7 @@ public class PtWorkoutController {
 
     @PostMapping("/{id}/delete")
     public String deleteWorkout(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        log.info("Deleting PT workout with ID: {}", id);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
 
         try {
@@ -129,6 +137,7 @@ public class PtWorkoutController {
 
     @PostMapping("/assignments/{assignmentId}/delete")
     public String unassignWorkout(@PathVariable Long assignmentId, RedirectAttributes redirectAttributes) {
+        log.info("Unassigning PT workout with ID: {}", assignmentId);
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
 
         try {
