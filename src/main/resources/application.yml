@@ -25,6 +25,10 @@ spring:
       max-file-size: 10MB
       max-request-size: 30MB
 
+jwt:
+  secret: c2V0bHktand0LXNpZ25pbmcta2V5LWZvci1obWFjLXNoYTI1Ni1taW4tMzItYnl0ZXM=
+  expiration-days: 7
+
 ptos:
   seed-data: true
   storage:
