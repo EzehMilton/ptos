@@ -5,6 +5,8 @@ import com.ptos.domain.User;
 import com.ptos.dto.api.ApiError;
 import com.ptos.dto.api.LoginRequest;
 import com.ptos.dto.api.LoginResponse;
+import com.ptos.dto.api.RegisterRequest;
+import com.ptos.service.ClientInvitationService;
 import com.ptos.repository.UserRepository;
 import com.ptos.security.JwtUtil;
 import jakarta.validation.Valid;
@@ -27,6 +29,7 @@ public class ClientAuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ClientInvitationService clientInvitationService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
@@ -49,5 +52,28 @@ public class ClientAuthController {
 
         String token = jwtUtil.generateToken(user);
         return ResponseEntity.ok(new LoginResponse(token, user.getEmail(), user.getFullName()));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        clientInvitationService.getInvitationByToken(request.inviteToken())
+                .map(invitation -> {
+                    if (!invitation.getEmail().equalsIgnoreCase(request.email().trim())) {
+                        throw new IllegalArgumentException("Email does not match the invitation.");
+                    }
+                    if (!invitation.getFullName().equalsIgnoreCase(request.fullName().trim())) {
+                        throw new IllegalArgumentException("Full name does not match the invitation.");
+                    }
+                    return invitation;
+                })
+                .orElseThrow(() -> new IllegalArgumentException("This invitation link is invalid."));
+
+        User clientUser = clientInvitationService.acceptInvitation(
+                request.inviteToken(),
+                request.password()
+        ).clientUser();
+
+        String token = jwtUtil.generateToken(clientUser);
+        return ResponseEntity.ok(new LoginResponse(token, clientUser.getEmail(), clientUser.getFullName()));
     }
 }

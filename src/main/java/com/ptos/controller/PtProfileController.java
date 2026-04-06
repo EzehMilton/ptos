@@ -6,6 +6,7 @@ import com.ptos.security.SecurityHelper;
 import com.ptos.service.PTProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -20,6 +21,7 @@ import java.util.Optional;
 @Controller
 @RequestMapping("/pt/profile")
 @RequiredArgsConstructor
+@Slf4j
 public class PtProfileController {
 
     private final PTProfileService ptProfileService;
@@ -27,6 +29,7 @@ public class PtProfileController {
 
     @GetMapping
     public String showProfile(Model model) {
+        log.info("Showing PT profile");
         Long userId = securityHelper.getCurrentUserId();
         Optional<PTProfile> profileOpt = ptProfileService.getProfileForUser(userId);
 
@@ -47,6 +50,7 @@ public class PtProfileController {
     public String updateProfile(@Valid @ModelAttribute("ptProfileForm") PTProfileForm form,
                                 BindingResult result,
                                 RedirectAttributes redirectAttributes) {
+        log.info("Updating PT profile");
         if (result.hasErrors()) {
             return "pt/profile";
         }

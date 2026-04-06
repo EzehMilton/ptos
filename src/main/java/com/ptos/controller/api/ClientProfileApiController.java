@@ -1,58 +1,74 @@
 package com.ptos.controller.api;
 
 import com.ptos.domain.ClientProfile;
-import com.ptos.domain.GoalType;
-import com.ptos.domain.TrainingExperience;
+import com.ptos.domain.ClientProfilePhoto;
 import com.ptos.domain.User;
+import com.ptos.dto.api.ClientProfilePhotoResponse;
+import com.ptos.dto.api.ClientProfilePhotoUploadResponse;
 import com.ptos.dto.api.ClientProfileResponse;
 import com.ptos.dto.api.ClientProfileUpdateRequest;
-import com.ptos.repository.ClientProfileRepository;
+import com.ptos.integration.FileStorageGateway;
 import com.ptos.security.PtosUserDetails;
+import com.ptos.service.ClientProfilePhotoService;
+import com.ptos.service.ClientProfileService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/client/profile")
 @RequiredArgsConstructor
 public class ClientProfileApiController {
 
-    private final ClientProfileRepository clientProfileRepository;
+    private final ClientProfileService clientProfileService;
+    private final ClientProfilePhotoService clientProfilePhotoService;
+    private final FileStorageGateway fileStorageGateway;
 
     @GetMapping
     public ResponseEntity<ClientProfileResponse> getProfile(@AuthenticationPrincipal PtosUserDetails userDetails) {
         User user = userDetails.getUser();
-        ClientProfile profile = clientProfileRepository.findByUserId(user.getId()).orElse(null);
+        ClientProfile profile = clientProfileService.getProfileForUser(user.getId()).orElse(null);
         return ResponseEntity.ok(toResponse(user, profile));
     }
 
     @PutMapping
     public ResponseEntity<ClientProfileResponse> updateProfile(
             @AuthenticationPrincipal PtosUserDetails userDetails,
-            @RequestBody ClientProfileUpdateRequest request) {
+            @Valid @RequestBody ClientProfileUpdateRequest request) {
         User user = userDetails.getUser();
-        ClientProfile profile = clientProfileRepository.findByUserId(user.getId())
-                .orElseGet(() -> ClientProfile.builder().user(user).build());
-
-        if (request.age() != null) profile.setAge(request.age());
-        if (request.heightCm() != null) profile.setHeightCm(request.heightCm());
-        if (request.currentWeightKg() != null) profile.setCurrentWeightKg(request.currentWeightKg());
-        if (request.targetWeightKg() != null) profile.setTargetWeightKg(request.targetWeightKg());
-        if (request.goalType() != null) profile.setGoalType(GoalType.valueOf(request.goalType()));
-        if (request.trainingExperience() != null) profile.setTrainingExperience(TrainingExperience.valueOf(request.trainingExperience()));
-        if (request.injuriesOrConditions() != null) profile.setInjuriesOrConditions(request.injuriesOrConditions());
-        if (request.dietaryPreferences() != null) profile.setDietaryPreferences(request.dietaryPreferences());
-        if (request.notes() != null) profile.setNotes(request.notes());
-
-        profile = clientProfileRepository.save(profile);
+        ClientProfile profile = clientProfileService.createOrUpdateProfile(user.getId(), request);
         return ResponseEntity.ok(toResponse(user, profile));
+    }
+
+    @PostMapping(value = "/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ClientProfilePhotoUploadResponse> uploadProfilePhotos(
+            @AuthenticationPrincipal PtosUserDetails userDetails,
+            @RequestPart(required = false) MultipartFile frontPhoto,
+            @RequestPart(required = false) MultipartFile sidePhoto,
+            @RequestPart(required = false) MultipartFile backPhoto) {
+        User user = userDetails.getUser();
+        ClientProfile profile = clientProfileService.getOrCreateProfileForUser(user.getId());
+        List<ClientProfilePhoto> savedPhotos = clientProfilePhotoService.uploadOnboardingPhotos(
+                user, frontPhoto, sidePhoto, backPhoto);
+
+        return ResponseEntity.ok(new ClientProfilePhotoUploadResponse(
+                user.getId(),
+                profile.getId(),
+                savedPhotos.size(),
+                savedPhotos.stream().map(this::toPhotoResponse).toList()
+        ));
     }
 
     private ClientProfileResponse toResponse(User user, ClientProfile profile) {
         if (profile == null) {
             return new ClientProfileResponse(user.getFullName(), user.getEmail(),
-                    null, null, null, null, null, null, null, null, null);
+                    null, null, null, null, null, null, null, null, null, false);
         }
         return new ClientProfileResponse(
                 user.getFullName(), user.getEmail(),
@@ -61,7 +77,18 @@ public class ClientProfileApiController {
                 profile.getTargetWeightKg(),
                 profile.getInjuriesOrConditions(), profile.getDietaryPreferences(),
                 profile.getTrainingExperience() != null ? profile.getTrainingExperience().name() : null,
-                profile.getNotes()
+                profile.getNotes(),
+                profile.isOnboardingComplete()
+        );
+    }
+
+    private ClientProfilePhotoResponse toPhotoResponse(ClientProfilePhoto photo) {
+        return new ClientProfilePhotoResponse(
+                photo.getPhotoType().name(),
+                photo.getStorageKey(),
+                fileStorageGateway.getUrl(photo.getStorageKey()),
+                photo.getOriginalFilename(),
+                photo.getFileSize()
         );
     }
 }

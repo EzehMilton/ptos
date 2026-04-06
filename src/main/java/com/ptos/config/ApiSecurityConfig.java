@@ -28,7 +28,10 @@ public class ApiSecurityConfig {
             .cors(Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/api/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/public/invites/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/public/auth/signup/invite").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                 .requestMatchers("/api/client/**").hasRole("CLIENT")
                 .anyRequest().authenticated()
             )

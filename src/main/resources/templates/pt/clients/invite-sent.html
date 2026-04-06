@@ -17,15 +17,21 @@
 
     <div class="card" style="max-width: 760px;">
         <p style="font-weight: 600;" th:text="|Invitation created for ${invitation.fullName} (${invitation.email})|"></p>
-        <p class="text-muted mb-3">Email delivery is not set up yet. Copy this link and share it with your client manually. It stays valid for 7 days.</p>
+        <p class="text-muted mb-3">Email delivery is not set up yet. Copy this invite token and share it with your client manually. It stays valid for 7 days.</p>
 
         <div class="form-group">
-            <label for="inviteLink">Invite Link</label>
+            <label for="inviteToken">Invite Token</label>
+            <input type="text" id="inviteToken" th:value="${inviteToken}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="inviteLink">Legacy Web Link</label>
             <input type="text" id="inviteLink" th:value="${inviteLink}" readonly>
+            <small class="text-muted">This is only needed if you still want to use the browser-based invite page.</small>
         </div>
 
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <button type="button" class="btn btn-primary" id="copyInviteLink">Copy Link</button>
+            <button type="button" class="btn btn-primary" id="copyInviteToken">Copy Token</button>
             <a th:href="@{/pt/clients/new}" class="btn btn-secondary">Invite Another Client</a>
             <a th:href="@{/pt/clients}" class="btn btn-secondary">Back to Clients</a>
         </div>
@@ -33,8 +39,8 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const button = document.getElementById("copyInviteLink");
-            const input = document.getElementById("inviteLink");
+            const button = document.getElementById("copyInviteToken");
+            const input = document.getElementById("inviteToken");
 
             if (!button || !input) {
                 return;

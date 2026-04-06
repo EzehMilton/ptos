@@ -120,6 +120,7 @@ public class PtClientsController {
                     securityHelper.getCurrentUserDetails().getUser(), form
             );
             model.addAttribute("invitation", invitation);
+            model.addAttribute("inviteToken", invitation.getToken());
             model.addAttribute("inviteLink", ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path("/invite/{token}")
                     .buildAndExpand(invitation.getToken())

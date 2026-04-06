@@ -12,6 +12,7 @@ import com.ptos.service.InsightService;
 import com.ptos.service.MilestoneService;
 import com.ptos.service.SuggestedActionsService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,7 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class PtDashboardController {
 
     private final DashboardService dashboardService;
@@ -39,6 +41,7 @@ public class PtDashboardController {
 
     @GetMapping("/pt/dashboard")
     public String dashboard(Model model, HttpServletRequest request) {
+        log.info("Rendering PT dashboard");
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         DashboardView data = dashboardService.getDashboardData(ptUser);
         BusinessView businessSnapshot = businessService.getBusinessData(ptUser);
@@ -59,6 +62,7 @@ public class PtDashboardController {
 
     @GetMapping("/pt/business")
     public String business(Model model) {
+        log.info("Rendering PT business dashboard");
         User ptUser = securityHelper.getCurrentUserDetails().getUser();
         BusinessView biz = businessService.getBusinessData(ptUser);
         model.addAttribute("b", biz);

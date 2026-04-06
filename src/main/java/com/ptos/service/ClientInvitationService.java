@@ -137,6 +137,11 @@ public class ClientInvitationService {
                 .map(this::refreshStatus);
     }
 
+    public Optional<ClientInvitation> getValidInvitationByToken(String token) {
+        return getInvitationByToken(token)
+                .filter(this::isInvitationValidForAcceptance);
+    }
+
     private void validateCanInvite(User ptUser, String email) {
         Optional<User> existingUser = userRepository.findByEmail(email);
         if (existingUser.isPresent()) {
@@ -193,5 +198,10 @@ public class ClientInvitationService {
         }
 
         return invitation;
+    }
+
+    private boolean isInvitationValidForAcceptance(ClientInvitation invitation) {
+        return invitation.getStatus() == InvitationStatus.PENDING
+                && !invitation.getExpiresAt().isBefore(LocalDateTime.now());
     }
 }
