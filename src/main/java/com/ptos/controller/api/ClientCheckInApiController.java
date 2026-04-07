@@ -37,17 +37,25 @@ public class ClientCheckInApiController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CheckInResponse> submitCheckIn(
             @AuthenticationPrincipal PtosUserDetails userDetails,
-            @RequestParam Double currentWeightKg,
+            @RequestParam(required = false) Double currentWeightKg,
+            @RequestParam(name = "weight", required = false) Double weight,
             @RequestParam(required = false) Integer moodScore,
+            @RequestParam(name = "mood", required = false) Integer mood,
             @RequestParam(required = false) Integer energyScore,
+            @RequestParam(name = "energy", required = false) Integer energy,
             @RequestParam(required = false) Integer sleepScore,
+            @RequestParam(name = "sleep", required = false) Integer sleep,
             @RequestParam(required = false) String notes,
             @RequestPart(required = false) MultipartFile frontPhoto,
             @RequestPart(required = false) MultipartFile sidePhoto,
             @RequestPart(required = false) MultipartFile backPhoto) {
         User user = userDetails.getUser();
         CheckIn checkIn = checkInService.submitCheckIn(
-                user, currentWeightKg, moodScore, energyScore, sleepScore,
+                user,
+                requireWeight(currentWeightKg, weight),
+                firstPresent(moodScore, mood),
+                firstPresent(energyScore, energy),
+                firstPresent(sleepScore, sleep),
                 notes, frontPhoto, sidePhoto, backPhoto);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(checkIn));
     }
@@ -77,5 +85,17 @@ public class ClientCheckInApiController {
                 checkIn.getFeedback() != null ? checkIn.getFeedback().getSentAt() : null,
                 photos
         );
+    }
+
+    private Double requireWeight(Double currentWeightKg, Double weight) {
+        Double resolved = firstPresent(currentWeightKg, weight);
+        if (resolved == null) {
+            throw new IllegalArgumentException("currentWeightKg is required");
+        }
+        return resolved;
+    }
+
+    private <T> T firstPresent(T primary, T alias) {
+        return primary != null ? primary : alias;
     }
 }

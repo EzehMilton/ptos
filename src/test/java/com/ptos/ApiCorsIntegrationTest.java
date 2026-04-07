@@ -306,4 +306,48 @@ class ApiCorsIntegrationTest {
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, FLUTTER_WEB_ORIGIN))
                 .andExpect(jsonPath("$.onboardingCompleted").value(true));
     }
+
+    @Test
+    void clientCanSubmitCheckInWithCanonicalMultipartFieldNames() throws Exception {
+        PtosUserDetails nnuola = new PtosUserDetails(userRepository.findByEmail("nnuola@ptos.local").orElseThrow());
+
+        mockMvc.perform(multipart("/api/client/checkins")
+                        .header(HttpHeaders.ORIGIN, FLUTTER_WEB_ORIGIN)
+                        .with(user(nnuola))
+                        .param("currentWeightKg", "75.5")
+                        .param("moodScore", "3")
+                        .param("energyScore", "3")
+                        .param("sleepScore", "3")
+                        .param("notes", "Feeling steady this week."))
+                .andExpect(status().isCreated())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, FLUTTER_WEB_ORIGIN))
+                .andExpect(jsonPath("$.currentWeightKg").value(75.5))
+                .andExpect(jsonPath("$.moodScore").value(3))
+                .andExpect(jsonPath("$.energyScore").value(3))
+                .andExpect(jsonPath("$.sleepScore").value(3))
+                .andExpect(jsonPath("$.notes").value("Feeling steady this week."))
+                .andExpect(jsonPath("$.status").value("PENDING_REVIEW"));
+    }
+
+    @Test
+    void clientCanSubmitCheckInWithFlutterAliasMultipartFieldNames() throws Exception {
+        PtosUserDetails nnuola = new PtosUserDetails(userRepository.findByEmail("nnuola@ptos.local").orElseThrow());
+
+        mockMvc.perform(multipart("/api/client/checkins")
+                        .header(HttpHeaders.ORIGIN, FLUTTER_WEB_ORIGIN)
+                        .with(user(nnuola))
+                        .param("weight", "75.5")
+                        .param("mood", "3")
+                        .param("energy", "3")
+                        .param("sleep", "3")
+                        .param("notes", "Feeling steady this week."))
+                .andExpect(status().isCreated())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, FLUTTER_WEB_ORIGIN))
+                .andExpect(jsonPath("$.currentWeightKg").value(75.5))
+                .andExpect(jsonPath("$.moodScore").value(3))
+                .andExpect(jsonPath("$.energyScore").value(3))
+                .andExpect(jsonPath("$.sleepScore").value(3))
+                .andExpect(jsonPath("$.notes").value("Feeling steady this week."))
+                .andExpect(jsonPath("$.status").value("PENDING_REVIEW"));
+    }
 }
