@@ -1,5 +1,8 @@
 package com.ptos;
 
+import com.ptos.domain.AssignmentStatus;
+import com.ptos.domain.User;
+import com.ptos.repository.WorkoutAssignmentRepository;
 import com.ptos.repository.UserRepository;
 import com.ptos.security.PtosUserDetails;
 import org.hamcrest.Matchers;
@@ -33,6 +36,9 @@ class ApiCorsIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private WorkoutAssignmentRepository workoutAssignmentRepository;
 
     @Test
     void apiLoginPreflightIsAllowedForFlutterWebOrigin() throws Exception {
@@ -349,5 +355,61 @@ class ApiCorsIntegrationTest {
                 .andExpect(jsonPath("$.sleepScore").value(3))
                 .andExpect(jsonPath("$.notes").value("Feeling steady this week."))
                 .andExpect(jsonPath("$.status").value("PENDING_REVIEW"));
+    }
+
+    @Test
+    void clientCanStartWorkoutUsingStatusField() throws Exception {
+        User jamie = userRepository.findByEmail("jamie@ptos.local").orElseThrow();
+        PtosUserDetails jamieDetails = new PtosUserDetails(jamie);
+        Long assignmentId = workoutAssignmentRepository.findByClientRecord_ClientUserOrderByAssignedDateDesc(jamie).stream()
+                .filter(assignment -> assignment.getStatus() == AssignmentStatus.ASSIGNED)
+                .findFirst()
+                .orElseThrow()
+                .getId();
+
+        mockMvc.perform(put("/api/client/workouts/{assignmentId}/status", assignmentId)
+                        .header(HttpHeaders.ORIGIN, FLUTTER_WEB_ORIGIN)
+                        .with(user(jamieDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "IN_PROGRESS"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, FLUTTER_WEB_ORIGIN))
+                .andExpect(jsonPath("$.assignmentId").value(assignmentId))
+                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.startedAt").isNotEmpty())
+                .andExpect(jsonPath("$.completedAt").isEmpty());
+    }
+
+    @Test
+    void clientCanCompleteWorkoutUsingCompleteAlias() throws Exception {
+        User ben = userRepository.findByEmail("ben@ptos.local").orElseThrow();
+        PtosUserDetails benDetails = new PtosUserDetails(ben);
+        Long assignmentId = workoutAssignmentRepository.findByClientRecord_ClientUserOrderByAssignedDateDesc(ben).stream()
+                .filter(assignment -> assignment.getStatus() == AssignmentStatus.ASSIGNED)
+                .findFirst()
+                .orElseThrow()
+                .getId();
+
+        mockMvc.perform(put("/api/client/workouts/{assignmentId}/status", assignmentId)
+                        .header(HttpHeaders.ORIGIN, FLUTTER_WEB_ORIGIN)
+                        .with(user(benDetails))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "COMPLETE",
+                                  "notes": "Finished all sets."
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, FLUTTER_WEB_ORIGIN))
+                .andExpect(jsonPath("$.assignmentId").value(assignmentId))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.startedAt").isNotEmpty())
+                .andExpect(jsonPath("$.completedAt").isNotEmpty())
+                .andExpect(jsonPath("$.completionNotes").value("Finished all sets."));
     }
 }

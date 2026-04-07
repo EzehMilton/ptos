@@ -43,16 +43,17 @@ public class ClientWorkoutApiController {
         WorkoutAssignment assignment = workoutService.getAssignment(assignmentId, user)
                 .orElseThrow(() -> new IllegalArgumentException("Assignment not found or does not belong to this client"));
 
-        return switch (request.action().toLowerCase()) {
-            case "start" -> {
+        return switch (request.resolveUpdateCommand()) {
+            case "START", "IN_PROGRESS" -> {
                 workoutService.startWorkout(assignmentId, user);
                 yield ResponseEntity.ok(toResponse(workoutService.getAssignment(assignmentId, user).orElseThrow()));
             }
-            case "complete" -> {
+            case "COMPLETE", "COMPLETED" -> {
                 workoutService.completeWorkout(assignmentId, user, request.notes());
                 yield ResponseEntity.ok(toResponse(workoutService.getAssignment(assignmentId, user).orElseThrow()));
             }
-            default -> throw new IllegalArgumentException("Action must be 'start' or 'complete'");
+            default -> throw new IllegalArgumentException(
+                    "Status update must be one of: START, IN_PROGRESS, COMPLETE, COMPLETED");
         };
     }
 
